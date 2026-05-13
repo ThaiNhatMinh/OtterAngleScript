@@ -7,6 +7,6 @@ public class AngleScriptSDK : ModuleRules
 {
 	public AngleScriptSDK(ReadOnlyTargetRules Target) : base(Target)
 	{
-		PublicSystemIncludePaths.Add("$(ModuleDir)/Public");
-	}
+        bEnforceIWYU = false;
+    }
 }

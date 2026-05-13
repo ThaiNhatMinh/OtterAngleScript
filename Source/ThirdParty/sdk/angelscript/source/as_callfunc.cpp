@@ -599,7 +599,7 @@ int CallSystemFunction(int id, asCContext *context)
 // Return value:
 //
 // The function should return the value that is returned in registers.
-asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2, void *secondObj);
+//asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2, void *secondObj);
 
 #else
 
@@ -634,6 +634,10 @@ int CallSystemFunction(int id, asCContext *context)
 	if( callConv == ICC_GENERIC_FUNC || callConv == ICC_GENERIC_METHOD )
 		return context->CallGeneric(descr);
 
+	context->SetInternalException("Native calling convention support is disabled. Make sure you're passing a correct Caller.");
+	return 0;
+
+#if 0
 #ifndef RETURN_VALUE_MAX_SIZE
 	asQWORD retQW[2] = { 0 };
 #else
@@ -987,6 +991,7 @@ int CallSystemFunction(int id, asCContext *context)
 	}
 
 	return popSize;
+#endif
 }
 
 #endif // AS_MAX_PORTABILITY
