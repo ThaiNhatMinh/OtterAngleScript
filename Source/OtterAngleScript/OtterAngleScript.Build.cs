@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 using UnrealBuildTool;
+using System.IO;
+using Microsoft.Extensions.Logging;
 
 public class OtterAngleScript : ModuleRules
 {
@@ -26,7 +28,7 @@ public class OtterAngleScript : ModuleRules
 			new string[]
 			{
 				"Core",
-				"OtterAngleScriptLibrary",
+                "AngleScriptSDK",
 				"Projects"
 				// ... add other public dependencies that you statically link with here ...
 			}
@@ -47,5 +49,12 @@ public class OtterAngleScript : ModuleRules
 				// ... add any modules that your module loads dynamically here ...
 			}
 			);
-	}
+
+        string AngleScriptSdkPath = Path.GetFullPath(Path.Combine(ModuleDirectory, "../ThirdParty/sdk/angelscript"));
+
+        /* Link to Angelscript */
+		Logger.LogInformation("Linking to AngelScript SDK at " + AngleScriptSdkPath);
+        PublicIncludePaths.Add(Path.Combine(AngleScriptSdkPath, "include"));
+        PublicIncludePaths.Add(Path.Combine(AngleScriptSdkPath, "source"));
+    }
 }
