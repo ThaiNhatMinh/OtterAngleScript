@@ -8,5 +8,8 @@ public class AngleScriptSDK : ModuleRules
 	public AngleScriptSDK(ReadOnlyTargetRules Target) : base(Target)
 	{
         bEnforceIWYU = false;
+
+		PublicDefinitions.Add("ANGELSCRIPT_EXPORT");
+
     }
 }
