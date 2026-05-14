@@ -19,6 +19,11 @@
 			"Name": "OtterAngleScript",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "OtterAngleScriptTest",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
 		}
 	]
 }

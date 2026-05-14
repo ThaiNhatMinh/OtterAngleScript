@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "OtterAngleScript.h"
+#include "Binding.h"
 #include "Misc/MessageDialog.h"
 #include "Modules/ModuleManager.h"
 #include "Interfaces/IPluginManager.h"
@@ -37,6 +38,9 @@ void FOtterAngleScriptModule::StartupModule()
 	{
 		UE_LOG(LogOtterAngleScript, Error, TEXT("Failed to set message callback for AngelScript engine"));
 	}
+
+	Bind_FString(Engine);
+	Bind_Logging(Engine);
 
 	// TODO: Multiple modules or single module?
 	ScriptModule = Engine->GetModule("OtterAngleScript", asGM_ALWAYS_CREATE);

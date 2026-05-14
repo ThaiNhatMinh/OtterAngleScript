@@ -56,5 +56,8 @@ public class OtterAngleScript : ModuleRules
 		Logger.LogInformation("Linking to AngelScript SDK at " + AngleScriptSdkPath);
         PublicIncludePaths.Add(Path.Combine(AngleScriptSdkPath, "include"));
         PublicIncludePaths.Add(Path.Combine(AngleScriptSdkPath, "source"));
+
+        string AsbindSdkPath = Path.GetFullPath(Path.Combine(ModuleDirectory, "../ThirdParty/asbind20/include"));
+        PublicIncludePaths.Add(AsbindSdkPath);
     }
 }
