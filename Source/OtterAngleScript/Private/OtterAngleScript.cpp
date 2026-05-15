@@ -40,6 +40,8 @@ void FOtterAngleScriptModule::StartupModule()
 	}
 
 	Bind_FString(Engine);
+	Bind_FVector(Engine);
+	Bind_FHitResult(Engine);
 	Bind_Logging(Engine);
 
 	// TODO: Multiple modules or single module?
