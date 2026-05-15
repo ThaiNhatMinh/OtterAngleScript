@@ -10,8 +10,7 @@ public class AngleScriptSDK : ModuleRules
 
     public AngleScriptSDK(ReadOnlyTargetRules Target) : base(Target)
     {
-        bEnforceIWYU = false;
-        Logger.LogInformation($"Target.Configuration: {Target.Configuration}, Target.bDebugBuildsActuallyUseDebugCRT: {Target.bDebugBuildsActuallyUseDebugCRT}");
+        IWYUSupport = IWYUSupport.None;
 
         string SdkRoot = Path.GetFullPath(Path.Combine(ModuleDirectory, ".."));
         string CmakeListsPath = Path.Combine(SdkRoot, "CMakeLists.txt");
