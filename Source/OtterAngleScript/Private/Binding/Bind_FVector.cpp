@@ -89,19 +89,19 @@ void Bind_FVector(asIScriptEngine* Engine)
 		asOBJ_VALUE | asGetTypeTraits<FVector>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
 	check(Result >= 0);
 
-	REGISTER_FVECTOR_BEHAVIOUR(asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FVector_DefaultConstruct), asCALL_CDECL_OBJLAST);
-	REGISTER_FVECTOR_BEHAVIOUR(asBEHAVE_CONSTRUCT, "void f(const FVector &in Other)", asFUNCTION(FVector_CopyConstruct), asCALL_CDECL_OBJLAST);
-	REGISTER_FVECTOR_BEHAVIOUR(asBEHAVE_CONSTRUCT, "void f(double X, double Y, double Z)", asFUNCTION(FVector_ConstructXYZ), asCALL_CDECL_OBJLAST);
-	REGISTER_FVECTOR_BEHAVIOUR(asBEHAVE_DESTRUCT, "void f()", asFUNCTION(FVector_Destruct), asCALL_CDECL_OBJLAST);
+	REGISTER_BEHAVIOUR(FVector, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FVector_DefaultConstruct), asCALL_CDECL_OBJLAST);
+	REGISTER_BEHAVIOUR(FVector, asBEHAVE_CONSTRUCT, "void f(const FVector &in Other)", asFUNCTION(FVector_CopyConstruct), asCALL_CDECL_OBJLAST);
+	REGISTER_BEHAVIOUR(FVector, asBEHAVE_CONSTRUCT, "void f(double X, double Y, double Z)", asFUNCTION(FVector_ConstructXYZ), asCALL_CDECL_OBJLAST);
+	REGISTER_BEHAVIOUR(FVector, asBEHAVE_DESTRUCT, "void f()", asFUNCTION(FVector_Destruct), asCALL_CDECL_OBJLAST);
 
-	REGISTER_FVECTOR_METHOD("FVector &opAssign(const FVector &in Other)", asFUNCTION(FVector_Assign), asCALL_CDECL_OBJFIRST);
-	REGISTER_FVECTOR_METHOD("bool opEquals(const FVector &in Other) const", asFUNCTION(FVector_Equals), asCALL_CDECL_OBJFIRST);
-	REGISTER_FVECTOR_METHOD("double get_X() const property", asFUNCTION(FVector_GetX), asCALL_CDECL_OBJFIRST);
-	REGISTER_FVECTOR_METHOD("double get_Y() const property", asFUNCTION(FVector_GetY), asCALL_CDECL_OBJFIRST);
-	REGISTER_FVECTOR_METHOD("double get_Z() const property", asFUNCTION(FVector_GetZ), asCALL_CDECL_OBJFIRST);
-	REGISTER_FVECTOR_METHOD("void set_X(double Value) property", asFUNCTION(FVector_SetX), asCALL_CDECL_OBJFIRST);
-	REGISTER_FVECTOR_METHOD("void set_Y(double Value) property", asFUNCTION(FVector_SetY), asCALL_CDECL_OBJFIRST);
-	REGISTER_FVECTOR_METHOD("void set_Z(double Value) property", asFUNCTION(FVector_SetZ), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector, "FVector &opAssign(const FVector &in Other)", asFUNCTION(FVector_Assign), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector, "bool opEquals(const FVector &in Other) const", asFUNCTION(FVector_Equals), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector, "double get_X() const property", asFUNCTION(FVector_GetX), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector, "double get_Y() const property", asFUNCTION(FVector_GetY), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector, "double get_Z() const property", asFUNCTION(FVector_GetZ), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector, "void set_X(double Value) property", asFUNCTION(FVector_SetX), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector, "void set_Y(double Value) property", asFUNCTION(FVector_SetY), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector, "void set_Z(double Value) property", asFUNCTION(FVector_SetZ), asCALL_CDECL_OBJFIRST);
 }
 
 #undef REGISTER_FVECTOR_METHOD

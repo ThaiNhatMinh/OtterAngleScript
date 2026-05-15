@@ -4,6 +4,14 @@
 
 class asIScriptEngine;
 
+
+#define REGISTER_BEHAVIOUR(ClassType, Behaviour, Declaration, Function, CallConv) \
+	Result = Engine->RegisterObjectBehaviour(#ClassType, Behaviour, Declaration, Function, CallConv); \
+	check(Result >= 0)
+#define REGISTER_METHOD(ClassType, Declaration, Function, CallConv) \
+	Result = Engine->RegisterObjectMethod(#ClassType, Declaration, Function, CallConv); \
+	check(Result >= 0)
+
 /**
  * Registers FString as a value type in the AngelScript engine.
  * Supports both native and generic AngelScript bindings.

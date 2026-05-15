@@ -210,45 +210,43 @@ void Bind_FHitResult(asIScriptEngine* Engine)
 		asOBJ_VALUE | asGetTypeTraits<FHitResult>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
 	check(Result >= 0);
 
-	REGISTER_FHITRESULT_BEHAVIOUR(asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FHitResult_DefaultConstruct), asCALL_CDECL_OBJLAST);
-	REGISTER_FHITRESULT_BEHAVIOUR(asBEHAVE_CONSTRUCT, "void f(const FHitResult &in Other)", asFUNCTION(FHitResult_CopyConstruct), asCALL_CDECL_OBJLAST);
-	REGISTER_FHITRESULT_BEHAVIOUR(asBEHAVE_DESTRUCT, "void f()", asFUNCTION(FHitResult_Destruct), asCALL_CDECL_OBJLAST);
+	REGISTER_BEHAVIOUR(FHitResult, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FHitResult_DefaultConstruct), asCALL_CDECL_OBJLAST);
+	REGISTER_BEHAVIOUR(FHitResult, asBEHAVE_CONSTRUCT, "void f(const FHitResult &in Other)", asFUNCTION(FHitResult_CopyConstruct), asCALL_CDECL_OBJLAST);
+	REGISTER_BEHAVIOUR(FHitResult, asBEHAVE_DESTRUCT, "void f()", asFUNCTION(FHitResult_Destruct), asCALL_CDECL_OBJLAST);
 
-	REGISTER_FHITRESULT_METHOD("FHitResult &opAssign(const FHitResult &in Other)", asFUNCTION(FHitResult_Assign), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("void Init(const FVector &in Start, const FVector &in End)", asFUNCTION(FHitResult_Init), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("void Reset(float InTime = 1.0f, bool bPreserveTraceData = false)", asFUNCTION(FHitResult_Reset), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("bool IsValidBlockingHit() const", asFUNCTION(FHitResult_IsValidBlockingHit), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("FString ToString() const", asFUNCTION(FHitResult_ToString), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "FHitResult &opAssign(const FHitResult &in Other)", asFUNCTION(FHitResult_Assign), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void Init(const FVector &in Start, const FVector &in End)", asFUNCTION(FHitResult_Init), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void Reset(float InTime = 1.0f, bool bPreserveTraceData = false)", asFUNCTION(FHitResult_Reset), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "bool IsValidBlockingHit() const", asFUNCTION(FHitResult_IsValidBlockingHit), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "FString ToString() const", asFUNCTION(FHitResult_ToString), asCALL_CDECL_OBJFIRST);
 
-	REGISTER_FHITRESULT_METHOD("bool get_BlockingHit() const property", asFUNCTION(FHitResult_GetBlockingHit), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("void set_BlockingHit(bool Value) property", asFUNCTION(FHitResult_SetBlockingHit), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("bool get_StartPenetrating() const property", asFUNCTION(FHitResult_GetStartPenetrating), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("void set_StartPenetrating(bool Value) property", asFUNCTION(FHitResult_SetStartPenetrating), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("float get_Time() const property", asFUNCTION(FHitResult_GetTime), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("void set_Time(float Value) property", asFUNCTION(FHitResult_SetTime), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("float get_Distance() const property", asFUNCTION(FHitResult_GetDistance), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("void set_Distance(float Value) property", asFUNCTION(FHitResult_SetDistance), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("float get_PenetrationDepth() const property", asFUNCTION(FHitResult_GetPenetrationDepth), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("void set_PenetrationDepth(float Value) property", asFUNCTION(FHitResult_SetPenetrationDepth), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("int get_FaceIndex() const property", asFUNCTION(FHitResult_GetFaceIndex), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("void set_FaceIndex(int Value) property", asFUNCTION(FHitResult_SetFaceIndex), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("int get_Item() const property", asFUNCTION(FHitResult_GetItem), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("void set_Item(int Value) property", asFUNCTION(FHitResult_SetItem), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("int get_ElementIndex() const property", asFUNCTION(FHitResult_GetElementIndex), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("void set_ElementIndex(int Value) property", asFUNCTION(FHitResult_SetElementIndex), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("FVector get_Location() const property", asFUNCTION(FHitResult_GetLocation), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("void set_Location(const FVector &in Value) property", asFUNCTION(FHitResult_SetLocation), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("FVector get_ImpactPoint() const property", asFUNCTION(FHitResult_GetImpactPoint), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("void set_ImpactPoint(const FVector &in Value) property", asFUNCTION(FHitResult_SetImpactPoint), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("FVector get_Normal() const property", asFUNCTION(FHitResult_GetNormal), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("void set_Normal(const FVector &in Value) property", asFUNCTION(FHitResult_SetNormal), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("FVector get_ImpactNormal() const property", asFUNCTION(FHitResult_GetImpactNormal), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("void set_ImpactNormal(const FVector &in Value) property", asFUNCTION(FHitResult_SetImpactNormal), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("FVector get_TraceStart() const property", asFUNCTION(FHitResult_GetTraceStart), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("void set_TraceStart(const FVector &in Value) property", asFUNCTION(FHitResult_SetTraceStart), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("FVector get_TraceEnd() const property", asFUNCTION(FHitResult_GetTraceEnd), asCALL_CDECL_OBJFIRST);
-	REGISTER_FHITRESULT_METHOD("void set_TraceEnd(const FVector &in Value) property", asFUNCTION(FHitResult_SetTraceEnd), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "bool get_BlockingHit() const property", asFUNCTION(FHitResult_GetBlockingHit), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void set_BlockingHit(bool Value) property", asFUNCTION(FHitResult_SetBlockingHit), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "bool get_StartPenetrating() const property", asFUNCTION(FHitResult_GetStartPenetrating), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void set_StartPenetrating(bool Value) property", asFUNCTION(FHitResult_SetStartPenetrating), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "float get_Time() const property", asFUNCTION(FHitResult_GetTime), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void set_Time(float Value) property", asFUNCTION(FHitResult_SetTime), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "float get_Distance() const property", asFUNCTION(FHitResult_GetDistance), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void set_Distance(float Value) property", asFUNCTION(FHitResult_SetDistance), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "float get_PenetrationDepth() const property", asFUNCTION(FHitResult_GetPenetrationDepth), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void set_PenetrationDepth(float Value) property", asFUNCTION(FHitResult_SetPenetrationDepth), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "int get_FaceIndex() const property", asFUNCTION(FHitResult_GetFaceIndex), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void set_FaceIndex(int Value) property", asFUNCTION(FHitResult_SetFaceIndex), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "int get_Item() const property", asFUNCTION(FHitResult_GetItem), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void set_Item(int Value) property", asFUNCTION(FHitResult_SetItem), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "int get_ElementIndex() const property", asFUNCTION(FHitResult_GetElementIndex), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void set_ElementIndex(int Value) property", asFUNCTION(FHitResult_SetElementIndex), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "FVector get_Location() const property", asFUNCTION(FHitResult_GetLocation), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void set_Location(const FVector &in Value) property", asFUNCTION(FHitResult_SetLocation), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "FVector get_ImpactPoint() const property", asFUNCTION(FHitResult_GetImpactPoint), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void set_ImpactPoint(const FVector &in Value) property", asFUNCTION(FHitResult_SetImpactPoint), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "FVector get_Normal() const property", asFUNCTION(FHitResult_GetNormal), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void set_Normal(const FVector &in Value) property", asFUNCTION(FHitResult_SetNormal), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "FVector get_ImpactNormal() const property", asFUNCTION(FHitResult_GetImpactNormal), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void set_ImpactNormal(const FVector &in Value) property", asFUNCTION(FHitResult_SetImpactNormal), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "FVector get_TraceStart() const property", asFUNCTION(FHitResult_GetTraceStart), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void set_TraceStart(const FVector &in Value) property", asFUNCTION(FHitResult_SetTraceStart), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "FVector get_TraceEnd() const property", asFUNCTION(FHitResult_GetTraceEnd), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void set_TraceEnd(const FVector &in Value) property", asFUNCTION(FHitResult_SetTraceEnd), asCALL_CDECL_OBJFIRST);
 }
 
-#undef REGISTER_FHITRESULT_METHOD
-#undef REGISTER_FHITRESULT_BEHAVIOUR

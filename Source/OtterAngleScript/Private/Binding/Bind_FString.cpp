@@ -306,14 +306,6 @@ namespace
 	}
 }
 
-#define REGISTER_FSTRING_BEHAVIOUR(Behaviour, Declaration, Function, CallConv) \
-	Result = Engine->RegisterObjectBehaviour("FString", Behaviour, Declaration, Function, CallConv); \
-	check(Result >= 0)
-
-#define REGISTER_FSTRING_METHOD(Declaration, Function, CallConv) \
-	Result = Engine->RegisterObjectMethod("FString", Declaration, Function, CallConv); \
-	check(Result >= 0)
-
 void Bind_FString(asIScriptEngine* Engine)
 {
 	check(Engine != nullptr);
@@ -324,61 +316,59 @@ void Bind_FString(asIScriptEngine* Engine)
 		asOBJ_VALUE | asGetTypeTraits<FString>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
 	check(Result >= 0);
 
-	REGISTER_FSTRING_BEHAVIOUR(asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FString_DefaultConstruct), asCALL_CDECL_OBJLAST);
-	REGISTER_FSTRING_BEHAVIOUR(asBEHAVE_CONSTRUCT, "void f(const FString &in Other)", asFUNCTION(FString_CopyConstruct), asCALL_CDECL_OBJLAST);
-	REGISTER_FSTRING_BEHAVIOUR(asBEHAVE_DESTRUCT, "void f()", asFUNCTION(FString_Destruct), asCALL_CDECL_OBJLAST);
+	REGISTER_BEHAVIOUR(FString, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FString_DefaultConstruct), asCALL_CDECL_OBJLAST);
+	REGISTER_BEHAVIOUR(FString, asBEHAVE_CONSTRUCT, "void f(const FString &in Other)", asFUNCTION(FString_CopyConstruct), asCALL_CDECL_OBJLAST);
+	REGISTER_BEHAVIOUR(FString, asBEHAVE_DESTRUCT, "void f()", asFUNCTION(FString_Destruct), asCALL_CDECL_OBJLAST);
 
-	REGISTER_FSTRING_METHOD("FString &opAssign(const FString &in Other)", asFUNCTION(FString_Assign), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("FString &opAddAssign(const FString &in Other)", asFUNCTION(FString_AddAssign), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("FString opAdd(const FString &in Other) const", asFUNCTION(FString_Add), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("bool opEquals(const FString &in Other) const", asFUNCTION(FString_OpEquals), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("int opCmp(const FString &in Other) const", asFUNCTION(FString_OpCmp), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("uint opIndex(uint Index) const", asFUNCTION(FString_OpIndex), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString &opAssign(const FString &in Other)", asFUNCTION(FString_Assign), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString &opAddAssign(const FString &in Other)", asFUNCTION(FString_AddAssign), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString opAdd(const FString &in Other) const", asFUNCTION(FString_Add), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "bool opEquals(const FString &in Other) const", asFUNCTION(FString_OpEquals), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "int opCmp(const FString &in Other) const", asFUNCTION(FString_OpCmp), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "uint opIndex(uint Index) const", asFUNCTION(FString_OpIndex), asCALL_CDECL_OBJFIRST);
 
-	REGISTER_FSTRING_METHOD("int Len() const", asFUNCTION(FString_Len), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("bool IsEmpty() const", asFUNCTION(FString_IsEmpty), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("bool IsNumeric() const", asFUNCTION(FString_IsNumeric), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("void Empty()", asFUNCTION(FString_Empty), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "int Len() const", asFUNCTION(FString_Len), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "bool IsEmpty() const", asFUNCTION(FString_IsEmpty), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "bool IsNumeric() const", asFUNCTION(FString_IsNumeric), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "void Empty()", asFUNCTION(FString_Empty), asCALL_CDECL_OBJFIRST);
 
-	REGISTER_FSTRING_METHOD("FString Left(int Count) const", asFUNCTION(FString_Left), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("FString LeftChop(int Count) const", asFUNCTION(FString_LeftChop), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("FString Right(int Count) const", asFUNCTION(FString_Right), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("FString RightChop(int Count) const", asFUNCTION(FString_RightChop), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("FString Mid(int Start) const", asFUNCTION(FString_Mid), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("FString Mid(int Start, int Count) const", asFUNCTION(FString_MidCount), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString Left(int Count) const", asFUNCTION(FString_Left), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString LeftChop(int Count) const", asFUNCTION(FString_LeftChop), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString Right(int Count) const", asFUNCTION(FString_Right), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString RightChop(int Count) const", asFUNCTION(FString_RightChop), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString Mid(int Start) const", asFUNCTION(FString_Mid), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString Mid(int Start, int Count) const", asFUNCTION(FString_MidCount), asCALL_CDECL_OBJFIRST);
 
-	REGISTER_FSTRING_METHOD("bool Equals(const FString &in Other, bool bCaseSensitive = false) const", asFUNCTION(FString_Equals), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("int Compare(const FString &in Other, bool bCaseSensitive = false) const", asFUNCTION(FString_Compare), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("bool StartsWith(const FString &in Prefix, bool bCaseSensitive = false) const", asFUNCTION(FString_StartsWith), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("bool EndsWith(const FString &in Suffix, bool bCaseSensitive = false) const", asFUNCTION(FString_EndsWith), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("bool Contains(const FString &in Substring, bool bCaseSensitive = false, bool bSearchFromEnd = false) const", asFUNCTION(FString_Contains), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("int Find(const FString &in Substring, bool bCaseSensitive = false, bool bSearchFromEnd = false, int StartPosition = -1) const", asFUNCTION(FString_Find), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("bool FindChar(uint Character, int &out Index) const", asFUNCTION(FString_FindChar), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("bool FindLastChar(uint Character, int &out Index) const", asFUNCTION(FString_FindLastChar), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("bool Split(const FString &in Delimiter, FString &out LeftPart, FString &out RightPart, bool bCaseSensitive = false, bool bSearchFromEnd = false) const", asFUNCTION(FString_Split), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "bool Equals(const FString &in Other, bool bCaseSensitive = false) const", asFUNCTION(FString_Equals), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "int Compare(const FString &in Other, bool bCaseSensitive = false) const", asFUNCTION(FString_Compare), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "bool StartsWith(const FString &in Prefix, bool bCaseSensitive = false) const", asFUNCTION(FString_StartsWith), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "bool EndsWith(const FString &in Suffix, bool bCaseSensitive = false) const", asFUNCTION(FString_EndsWith), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "bool Contains(const FString &in Substring, bool bCaseSensitive = false, bool bSearchFromEnd = false) const", asFUNCTION(FString_Contains), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "int Find(const FString &in Substring, bool bCaseSensitive = false, bool bSearchFromEnd = false, int StartPosition = -1) const", asFUNCTION(FString_Find), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "bool FindChar(uint Character, int &out Index) const", asFUNCTION(FString_FindChar), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "bool FindLastChar(uint Character, int &out Index) const", asFUNCTION(FString_FindLastChar), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "bool Split(const FString &in Delimiter, FString &out LeftPart, FString &out RightPart, bool bCaseSensitive = false, bool bSearchFromEnd = false) const", asFUNCTION(FString_Split), asCALL_CDECL_OBJFIRST);
 
-	REGISTER_FSTRING_METHOD("FString Replace(const FString &in From, const FString &in To, bool bCaseSensitive = false) const", asFUNCTION(FString_Replace), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("int ReplaceInline(const FString &in From, const FString &in To, bool bCaseSensitive = false)", asFUNCTION(FString_ReplaceInline), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString Replace(const FString &in From, const FString &in To, bool bCaseSensitive = false) const", asFUNCTION(FString_Replace), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "int ReplaceInline(const FString &in From, const FString &in To, bool bCaseSensitive = false)", asFUNCTION(FString_ReplaceInline), asCALL_CDECL_OBJFIRST);
 
-	REGISTER_FSTRING_METHOD("FString ToLower() const", asFUNCTION(FString_ToLower), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("FString ToUpper() const", asFUNCTION(FString_ToUpper), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("void ToLowerInline()", asFUNCTION(FString_ToLowerInline), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("void ToUpperInline()", asFUNCTION(FString_ToUpperInline), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString ToLower() const", asFUNCTION(FString_ToLower), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString ToUpper() const", asFUNCTION(FString_ToUpper), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "void ToLowerInline()", asFUNCTION(FString_ToLowerInline), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "void ToUpperInline()", asFUNCTION(FString_ToUpperInline), asCALL_CDECL_OBJFIRST);
 
-	REGISTER_FSTRING_METHOD("FString TrimStart() const", asFUNCTION(FString_TrimStart), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("FString TrimEnd() const", asFUNCTION(FString_TrimEnd), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("FString TrimStartAndEnd() const", asFUNCTION(FString_TrimStartAndEnd), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("void TrimStartInline()", asFUNCTION(FString_TrimStartInline), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("void TrimEndInline()", asFUNCTION(FString_TrimEndInline), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("void TrimStartAndEndInline()", asFUNCTION(FString_TrimStartAndEndInline), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString TrimStart() const", asFUNCTION(FString_TrimStart), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString TrimEnd() const", asFUNCTION(FString_TrimEnd), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString TrimStartAndEnd() const", asFUNCTION(FString_TrimStartAndEnd), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "void TrimStartInline()", asFUNCTION(FString_TrimStartInline), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "void TrimEndInline()", asFUNCTION(FString_TrimEndInline), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "void TrimStartAndEndInline()", asFUNCTION(FString_TrimStartAndEndInline), asCALL_CDECL_OBJFIRST);
 
-	REGISTER_FSTRING_METHOD("void ReverseString()", asFUNCTION(FString_ReverseString), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("bool RemoveFromStart(const FString &in Prefix, bool bCaseSensitive = false)", asFUNCTION(FString_RemoveFromStart), asCALL_CDECL_OBJFIRST);
-	REGISTER_FSTRING_METHOD("bool RemoveFromEnd(const FString &in Suffix, bool bCaseSensitive = false)", asFUNCTION(FString_RemoveFromEnd), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "void ReverseString()", asFUNCTION(FString_ReverseString), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "bool RemoveFromStart(const FString &in Prefix, bool bCaseSensitive = false)", asFUNCTION(FString_RemoveFromStart), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "bool RemoveFromEnd(const FString &in Suffix, bool bCaseSensitive = false)", asFUNCTION(FString_RemoveFromEnd), asCALL_CDECL_OBJFIRST);
 
 	Result = Engine->RegisterStringFactory("FString", new FStringFactory());
 	check(Result >= 0);
 }
 
-#undef REGISTER_FSTRING_METHOD
-#undef REGISTER_FSTRING_BEHAVIOUR
