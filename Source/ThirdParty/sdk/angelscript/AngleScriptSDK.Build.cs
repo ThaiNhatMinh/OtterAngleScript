@@ -58,6 +58,7 @@ public class AngleScriptSDK : ModuleRules
         Logger.LogInformation("LibraryPath " + LibraryPath);
         if (!ShouldBuildLibrary(cmakeListsPath, LibraryPath))
         {
+            Logger.LogInformation("AngelScript library is up to date, skipping build.");
             return;
         }
 
