@@ -5,7 +5,8 @@
 class asIScriptEngine;
 
 /**
- * Registers FString as a value type in the AngelScript engine using asbind20.
+ * Registers FString as a value type in the AngelScript engine.
+ * Supports both native and generic AngelScript bindings.
  * The type is exposed as "FString" in scripts.
  */
 void Bind_FString(asIScriptEngine* Engine);

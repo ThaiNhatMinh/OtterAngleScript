@@ -36,8 +36,6 @@
 
 #include "as_config.h"
 
-#if 0
-
 #ifndef AS_MAX_PORTABILITY
 #ifdef AS_X64_MSVC
 
@@ -215,6 +213,5 @@ END_AS_NAMESPACE
 
 #endif // AS_X64_MSVC
 #endif // AS_MAX_PORTABILITY
-#endif
 
 
