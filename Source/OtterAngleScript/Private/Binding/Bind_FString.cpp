@@ -4,6 +4,7 @@
 #include "Containers\UnrealString.h"
 #include "Misc\AssertionMacros.h"
 #include "angelscript.h"
+#include "OtterAngleScript.h"
 
 #include <new>
 
@@ -17,14 +18,6 @@ namespace
 	static ESearchDir::Type ToSearchDir(bool bSearchFromEnd)
 	{
 		return bSearchFromEnd ? ESearchDir::FromEnd : ESearchDir::FromStart;
-	}
-
-	static void SetScriptException(const char* Message)
-	{
-		if (asIScriptContext* Context = asGetActiveContext())
-		{
-			Context->SetException(Message);
-		}
 	}
 
 	class FStringFactory : public asIStringFactory

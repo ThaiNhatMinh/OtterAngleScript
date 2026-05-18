@@ -9,7 +9,10 @@ DECLARE_LOG_CATEGORY_EXTERN(LogOtterAngleScript, Log, All);
 class asIScriptEngine;
 class asIScriptModule;
 
-asIScriptEngine* GetScriptEngine();
+OTTERANGLESCRIPT_API asIScriptEngine* GetScriptEngine();
+
+
+void SetScriptException(const char* Message);
 
 class FOtterAngleScriptModule : public IModuleInterface
 {

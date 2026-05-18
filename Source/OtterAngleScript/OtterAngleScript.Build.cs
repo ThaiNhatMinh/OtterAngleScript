@@ -28,8 +28,9 @@ public class OtterAngleScript : ModuleRules
 			new string[]
 			{
 				"Core",
+				"CoreUObject",
                 "AngleScriptSDK",
-				"Projects"
+                "Projects"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -39,9 +40,10 @@ public class OtterAngleScript : ModuleRules
 			new string[]
 			{
 				"Engine",
+				"PhysicsCore",
 				// ... add private dependencies that you statically link with here ...	
 			}
-			);
+            );
 		
 		
 		DynamicallyLoadedModuleNames.AddRange(

@@ -40,8 +40,21 @@ void FOtterAngleScriptModule::StartupModule()
 	}
 
 	Bind_FString(Engine);
+	Bind_FName(Engine);
+	Bind_EAxisType(Engine);
+	Bind_EForceInit(Engine);
+	Bind_FVector2D(Engine);
+	Bind_FRotator(Engine);
+	Bind_FQuat(Engine);
+	Bind_FPlane(Engine);
+	Bind_FText(Engine);
 	Bind_FVector(Engine);
+	Bind_FTransform(Engine);
+	Bind_FBox(Engine);
+	Bind_FActorInstanceHandle(Engine);
+	Bind_TWeakObjectPtr(Engine);
 	Bind_FHitResult(Engine);
+	Bind_FMath(Engine);
 	Bind_Logging(Engine);
 
 	// TODO: Multiple modules or single module?
@@ -71,4 +84,13 @@ asIScriptEngine* GetScriptEngine()
 		UE_LOG(LogOtterAngleScript, Error, TEXT("Failed to get OtterAngleScript module"));
 	}
 	return nullptr;
+}
+
+
+void SetScriptException(const char* Message)
+{
+	if (asIScriptContext* Context = asGetActiveContext())
+	{
+		Context->SetException(Message);
+	}
 }

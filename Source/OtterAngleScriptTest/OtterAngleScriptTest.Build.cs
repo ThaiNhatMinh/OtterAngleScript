@@ -11,8 +11,9 @@ public class OtterAngleScriptTest : ModuleRules
 			{
 				"CQTest",
 				"Core",
+				"PhysicsCore",
 				"CoreUObject",
-				"Engine",
+                "Engine",
 				"OtterAngleScript"
 			}
 		);
