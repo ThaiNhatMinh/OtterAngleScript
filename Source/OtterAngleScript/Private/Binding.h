@@ -23,6 +23,16 @@ class asIScriptEngine;
 void Bind_FName(asIScriptEngine* Engine);
 
 /**
+ * Registers UObject as a reference type in the AngelScript engine.
+ */
+void Bind_UObject(asIScriptEngine* Engine);
+
+/**
+ * Registers UClass as a reference type in the AngelScript engine.
+ */
+void Bind_UClass(asIScriptEngine* Engine);
+
+/**
  * Registers FActorInstanceHandle as a value type in the AngelScript engine.
  * The type is exposed as "FActorInstanceHandle" in scripts.
  */
@@ -49,6 +59,16 @@ void Bind_EAxisType(asIScriptEngine* Engine);
  * Registers EForceInit for constructors that support explicit zero-initialization.
  */
 void Bind_EForceInit(asIScriptEngine* Engine);
+
+/**
+ * Registers EObjectTypeQuery used by Kismet overlap helpers.
+ */
+void Bind_EObjectTypeQuery(asIScriptEngine* Engine);
+
+/**
+ * Registers ETraceTypeQuery used by Kismet trace helpers.
+ */
+void Bind_ETraceTypeQuery(asIScriptEngine* Engine);
 
 /**
  * Registers FVector2D as a value type in the AngelScript engine.
@@ -98,9 +118,24 @@ void Bind_FVector(asIScriptEngine* Engine);
 void Bind_FHitResult(asIScriptEngine* Engine);
 
 /**
+ * Registers FTimerHandle as a value type in the AngelScript engine.
+ */
+void Bind_FTimerHandle(asIScriptEngine* Engine);
+
+/**
+ * Registers FLatentActionInfo as a value type in the AngelScript engine.
+ */
+void Bind_FLatentActionInfo(asIScriptEngine* Engine);
+
+/**
  * Registers global FMath helpers under the FMath script namespace.
  */
 void Bind_FMath(asIScriptEngine* Engine);
+
+/**
+ * Registers the initial script-safe UKismetSystemLibrary helpers.
+ */
+void Bind_UKismetSystemLibrary(asIScriptEngine* Engine);
 
 /**
  * Registers global logging helpers for scripts.
