@@ -205,187 +205,478 @@ TEST_CLASS_WITH_FLAGS(
 		Engine = nullptr;
 	}
 
-	TEST_METHOD(ConstructorsOperatorsAndProperties)
+	TEST_METHOD(TypesRegistered)
 	{
 		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("FBox")));
 		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("FVector")));
 		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("FTransform")));
 		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("EForceInitType")));
+	}
 
+	TEST_METHOD(DefaultConstructor)
+	{
 		static const char Script[] = R"(
-int RunConstructorsOperatorsAndProperties()
+int RunDefaultConstructor()
 {
-    FBox DefaultBox;
-    if (DefaultBox.IsValid)
+    FBox Box;
+    if (Box.IsValid)
     {
         return -1;
     }
-
-    DefaultBox += FVector(1.0, 2.0, 3.0);
-    if (!DefaultBox.IsValid || !DefaultBox.Min.Equals(FVector(1.0, 2.0, 3.0), 0.0001) || !DefaultBox.Max.Equals(FVector(1.0, 2.0, 3.0), 0.0001))
-    {
-        return -2;
-    }
-
-    FBox ForceInitBox(ForceInit);
-    if (ForceInitBox.IsValid || !ForceInitBox.Min.Equals(FVector(0.0, 0.0, 0.0), 0.0001) || !ForceInitBox.Max.Equals(FVector(0.0, 0.0, 0.0), 0.0001))
-    {
-        return -3;
-    }
-
-    FBox MinMax(FVector(1.0, 2.0, 3.0), FVector(4.0, 5.0, 6.0));
-    if (!MinMax.IsValid || !MinMax.opEquals(UnrealBuildBox(1.0, 2.0, 3.0, 4.0, 5.0, 6.0)))
-    {
-        return -4;
-    }
-
-    FBox Copy(MinMax);
-    if (!Copy.opEquals(MinMax))
-    {
-        return -5;
-    }
-
-    FBox Assigned;
-    Assigned = MinMax;
-    if (!Assigned.opEquals(MinMax))
-    {
-        return -6;
-    }
-
-    FBox AddedPoint = MinMax + FVector(-2.0, 7.0, 5.0);
-    if (!AddedPoint.Min.Equals(FVector(-2.0, 2.0, 3.0), 0.0001) || !AddedPoint.Max.Equals(FVector(4.0, 7.0, 6.0), 0.0001))
-    {
-        return -7;
-    }
-
-    FBox AddedBox = MinMax + FBox(FVector(-1.0, 0.0, 1.0), FVector(3.0, 6.0, 9.0));
-    if (!AddedBox.Min.Equals(FVector(-1.0, 0.0, 1.0), 0.0001) || !AddedBox.Max.Equals(FVector(4.0, 6.0, 9.0), 0.0001))
-    {
-        return -8;
-    }
-
-    FBox AddAssignPoint(FVector(1.0, 2.0, 3.0), FVector(4.0, 5.0, 6.0));
-    AddAssignPoint += FVector(0.0, 10.0, 2.0);
-    if (!AddAssignPoint.Min.Equals(FVector(0.0, 2.0, 2.0), 0.0001) || !AddAssignPoint.Max.Equals(FVector(4.0, 10.0, 6.0), 0.0001))
-    {
-        return -9;
-    }
-
-    FBox AddAssignBox(FVector(1.0, 2.0, 3.0), FVector(4.0, 5.0, 6.0));
-    AddAssignBox += FBox(FVector(-3.0, 3.0, 2.0), FVector(2.0, 6.0, 9.0));
-    if (!AddAssignBox.Min.Equals(FVector(-3.0, 2.0, 2.0), 0.0001) || !AddAssignBox.Max.Equals(FVector(4.0, 6.0, 9.0), 0.0001))
-    {
-        return -10;
-    }
-
-    FBox Indexed(FVector(1.0, 2.0, 3.0), FVector(4.0, 5.0, 6.0));
-    Indexed[0] = FVector(-1.0, -2.0, -3.0);
-    if (!Indexed[0].Equals(FVector(-1.0, -2.0, -3.0), 0.0001))
-    {
-        return -11;
-    }
-
-    const FBox ConstIndexed(Indexed);
-    if (!ConstIndexed[1].Equals(FVector(4.0, 5.0, 6.0), 0.0001))
-    {
-        return -12;
-    }
-
-    if (!Indexed.Equals(FBox(FVector(-1.0, -2.0, -3.0), FVector(4.0, 5.0, 6.0)), 0.0001))
-    {
-        return -13;
-    }
-
-    Indexed.IsValid = false;
-    if (Indexed.IsValid)
-    {
-        return -14;
-    }
-
-    Indexed.IsValid = true;
-    Indexed.Min = FVector(1.0, 2.0, 3.0);
-    Indexed.Max = FVector(4.0, 5.0, 6.0);
-    if (!Indexed.opEquals(MinMax))
-    {
-        return -15;
-    }
-
-    if (!UnrealAcceptsBox(Indexed))
-    {
-        return -16;
-    }
-
     return 0;
 }
 )";
 
-		asIScriptFunction* Function = BuildFunction("FBoxConstructorsOperatorsAndProperties", Script, "int RunConstructorsOperatorsAndProperties()");
+		asIScriptFunction* Function = BuildFunction("FBoxDefaultConstructor", Script, "int RunDefaultConstructor()");
 		ASSERT_THAT(IsNotNull(Function));
-        ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
-	TEST_METHOD(GeometryQueriesAndTransforms)
+	TEST_METHOD(ForceInitConstructor)
 	{
 		static const char Script[] = R"(
-int RunGeometryQueriesAndTransforms()
+int RunForceInitConstructor()
+{
+    FBox Box(ForceInit);
+    if (Box.IsValid || !Box.Min.Equals(FVector(0.0, 0.0, 0.0), 0.0001) || !Box.Max.Equals(FVector(0.0, 0.0, 0.0), 0.0001))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxForceInitConstructor", Script, "int RunForceInitConstructor()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(MinMaxConstructor)
+	{
+		static const char Script[] = R"(
+int RunMinMaxConstructor()
+{
+    FBox Box(FVector(1.0, 2.0, 3.0), FVector(4.0, 5.0, 6.0));
+    if (!Box.IsValid || !Box.opEquals(UnrealBuildBox(1.0, 2.0, 3.0, 4.0, 5.0, 6.0)))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxMinMaxConstructor", Script, "int RunMinMaxConstructor()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(CopyConstructor)
+	{
+		static const char Script[] = R"(
+int RunCopyConstructor()
+{
+    FBox Original(FVector(1.0, 2.0, 3.0), FVector(4.0, 5.0, 6.0));
+    FBox Copy(Original);
+    if (!Copy.opEquals(Original))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxCopyConstructor", Script, "int RunCopyConstructor()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(AssignmentOperator)
+	{
+		static const char Script[] = R"(
+int RunAssignmentOperator()
+{
+    FBox Source(FVector(1.0, 2.0, 3.0), FVector(4.0, 5.0, 6.0));
+    FBox Dest;
+    Dest = Source;
+    if (!Dest.opEquals(Source))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxAssignmentOperator", Script, "int RunAssignmentOperator()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(EqualityOperator)
+	{
+		static const char Script[] = R"(
+int RunEqualityOperator()
+{
+    FBox A(FVector(1.0, 2.0, 3.0), FVector(4.0, 5.0, 6.0));
+    FBox B(FVector(1.0, 2.0, 3.0), FVector(4.0, 5.0, 6.0));
+    FBox C(FVector(0.0, 0.0, 0.0), FVector(1.0, 1.0, 1.0));
+    if (!A.opEquals(B) || A.opEquals(C))
+    {
+        return -1;
+    }
+    if (!A.Equals(B, 0.0001) || A.Equals(C, 0.0001))
+    {
+        return -2;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxEqualityOperator", Script, "int RunEqualityOperator()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(AddPointOperator)
+	{
+		static const char Script[] = R"(
+int RunAddPointOperator()
+{
+    FBox Box(FVector(1.0, 2.0, 3.0), FVector(4.0, 5.0, 6.0));
+    FBox Result = Box + FVector(-2.0, 7.0, 5.0);
+    if (!Result.Min.Equals(FVector(-2.0, 2.0, 3.0), 0.0001) || !Result.Max.Equals(FVector(4.0, 7.0, 6.0), 0.0001))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxAddPointOperator", Script, "int RunAddPointOperator()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(AddBoxOperator)
+	{
+		static const char Script[] = R"(
+int RunAddBoxOperator()
+{
+    FBox Box(FVector(1.0, 2.0, 3.0), FVector(4.0, 5.0, 6.0));
+    FBox Result = Box + FBox(FVector(-1.0, 0.0, 1.0), FVector(3.0, 6.0, 9.0));
+    if (!Result.Min.Equals(FVector(-1.0, 0.0, 1.0), 0.0001) || !Result.Max.Equals(FVector(4.0, 6.0, 9.0), 0.0001))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxAddBoxOperator", Script, "int RunAddBoxOperator()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(AddAssignPointOperator)
+	{
+		static const char Script[] = R"(
+int RunAddAssignPointOperator()
+{
+    FBox Default;
+    Default += FVector(1.0, 2.0, 3.0);
+    if (!Default.IsValid || !Default.Min.Equals(FVector(1.0, 2.0, 3.0), 0.0001) || !Default.Max.Equals(FVector(1.0, 2.0, 3.0), 0.0001))
+    {
+        return -1;
+    }
+
+    FBox Box(FVector(1.0, 2.0, 3.0), FVector(4.0, 5.0, 6.0));
+    Box += FVector(0.0, 10.0, 2.0);
+    if (!Box.Min.Equals(FVector(0.0, 2.0, 2.0), 0.0001) || !Box.Max.Equals(FVector(4.0, 10.0, 6.0), 0.0001))
+    {
+        return -2;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxAddAssignPointOperator", Script, "int RunAddAssignPointOperator()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(AddAssignBoxOperator)
+	{
+		static const char Script[] = R"(
+int RunAddAssignBoxOperator()
+{
+    FBox Box(FVector(1.0, 2.0, 3.0), FVector(4.0, 5.0, 6.0));
+    Box += FBox(FVector(-3.0, 3.0, 2.0), FVector(2.0, 6.0, 9.0));
+    if (!Box.Min.Equals(FVector(-3.0, 2.0, 2.0), 0.0001) || !Box.Max.Equals(FVector(4.0, 6.0, 9.0), 0.0001))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxAddAssignBoxOperator", Script, "int RunAddAssignBoxOperator()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(IndexOperator)
+	{
+		static const char Script[] = R"(
+int RunIndexOperator()
+{
+    FBox Box(FVector(1.0, 2.0, 3.0), FVector(4.0, 5.0, 6.0));
+    Box[0] = FVector(-1.0, -2.0, -3.0);
+    if (!Box[0].Equals(FVector(-1.0, -2.0, -3.0), 0.0001))
+    {
+        return -1;
+    }
+    const FBox ConstBox(Box);
+    if (!ConstBox[1].Equals(FVector(4.0, 5.0, 6.0), 0.0001))
+    {
+        return -2;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxIndexOperator", Script, "int RunIndexOperator()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(IsValidProperty)
+	{
+		static const char Script[] = R"(
+int RunIsValidProperty()
+{
+    FBox Box(FVector(1.0, 2.0, 3.0), FVector(4.0, 5.0, 6.0));
+    Box.IsValid = false;
+    if (Box.IsValid)
+    {
+        return -1;
+    }
+    Box.IsValid = true;
+    if (!Box.IsValid)
+    {
+        return -2;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxIsValidProperty", Script, "int RunIsValidProperty()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(MinMaxProperties)
+	{
+		static const char Script[] = R"(
+int RunMinMaxProperties()
+{
+    FBox Box(FVector(1.0, 2.0, 3.0), FVector(4.0, 5.0, 6.0));
+    Box.Min = FVector(0.0, 0.0, 0.0);
+    Box.Max = FVector(10.0, 10.0, 10.0);
+    if (!Box.Min.Equals(FVector(0.0, 0.0, 0.0), 0.0001) || !Box.Max.Equals(FVector(10.0, 10.0, 10.0), 0.0001))
+    {
+        return -1;
+    }
+
+    Box.IsValid = true;
+    Box.Min = FVector(1.0, 2.0, 3.0);
+    Box.Max = FVector(4.0, 5.0, 6.0);
+    if (!UnrealAcceptsBox(Box))
+    {
+        return -2;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxMinMaxProperties", Script, "int RunMinMaxProperties()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(ComputeSquaredDistanceToPoint)
+	{
+		static const char Script[] = R"(
+int RunComputeSquaredDistanceToPoint()
 {
     FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
     if (!FMath::IsNearlyEqual(Box.ComputeSquaredDistanceToPoint(FVector(3.0, 4.0, 1.0)), 5.0, 0.0001))
     {
         return -1;
     }
+    return 0;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FBoxComputeSquaredDistanceToPoint", Script, "int RunComputeSquaredDistanceToPoint()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(ComputeSquaredDistanceToBox)
+	{
+		static const char Script[] = R"(
+int RunComputeSquaredDistanceToBox()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
     if (!FMath::IsNearlyEqual(Box.ComputeSquaredDistanceToBox(FBox(FVector(4.0, 0.0, 0.0), FVector(6.0, 2.0, 2.0))), 4.0, 0.0001))
     {
-        return -2;
+        return -1;
     }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxComputeSquaredDistanceToBox", Script, "int RunComputeSquaredDistanceToBox()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(ExpandBy)
+	{
+		static const char Script[] = R"(
+int RunExpandBy()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
 
     FBox ScalarExpanded = Box.ExpandBy(2.0);
     if (!ScalarExpanded.Min.Equals(FVector(-2.0, -2.0, -2.0), 0.0001) || !ScalarExpanded.Max.Equals(FVector(4.0, 4.0, 4.0), 0.0001))
     {
-        return -3;
+        return -1;
     }
 
     FBox VectorExpanded = Box.ExpandBy(FVector(1.0, 2.0, 3.0));
     if (!VectorExpanded.Min.Equals(FVector(-1.0, -2.0, -3.0), 0.0001) || !VectorExpanded.Max.Equals(FVector(3.0, 4.0, 5.0), 0.0001))
     {
-        return -4;
+        return -2;
     }
 
     FBox MinMaxExpanded = Box.ExpandBy(FVector(1.0, 0.5, 0.0), FVector(0.0, 1.5, 2.0));
     if (!MinMaxExpanded.Min.Equals(FVector(-1.0, -0.5, 0.0), 0.0001) || !MinMaxExpanded.Max.Equals(FVector(2.0, 3.5, 4.0), 0.0001))
     {
-        return -5;
+        return -3;
     }
+    return 0;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FBoxExpandBy", Script, "int RunExpandBy()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(ShiftBy)
+	{
+		static const char Script[] = R"(
+int RunShiftBy()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
     if (!Box.ShiftBy(FVector(3.0, 4.0, 5.0)).opEquals(FBox(FVector(3.0, 4.0, 5.0), FVector(5.0, 6.0, 7.0))))
     {
-        return -6;
+        return -1;
     }
+    return 0;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FBoxShiftBy", Script, "int RunShiftBy()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(MoveTo)
+	{
+		static const char Script[] = R"(
+int RunMoveTo()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
     if (!Box.MoveTo(FVector(10.0, 20.0, 30.0)).opEquals(FBox(FVector(9.0, 19.0, 29.0), FVector(11.0, 21.0, 31.0))))
     {
-        return -7;
+        return -1;
     }
+    return 0;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FBoxMoveTo", Script, "int RunMoveTo()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(GetCenter)
+	{
+		static const char Script[] = R"(
+int RunGetCenter()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
     if (!Box.GetCenter().Equals(FVector(1.0, 1.0, 1.0), 0.0001))
     {
-        return -8;
+        return -1;
     }
+    return 0;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FBoxGetCenter", Script, "int RunGetCenter()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(GetCenterAndExtents)
+	{
+		static const char Script[] = R"(
+int RunGetCenterAndExtents()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
     FVector Center;
     FVector Extents;
     Box.GetCenterAndExtents(Center, Extents);
     if (!Center.Equals(FVector(1.0, 1.0, 1.0), 0.0001) || !Extents.Equals(FVector(1.0, 1.0, 1.0), 0.0001))
     {
-        return -9;
+        return -1;
     }
+    return 0;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FBoxGetCenterAndExtents", Script, "int RunGetCenterAndExtents()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(GetClosestPointTo)
+	{
+		static const char Script[] = R"(
+int RunGetClosestPointTo()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
     if (!Box.GetClosestPointTo(FVector(3.0, -1.0, 1.0)).Equals(FVector(2.0, 0.0, 1.0), 0.0001))
     {
-        return -10;
+        return -1;
     }
+    return 0;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FBoxGetClosestPointTo", Script, "int RunGetClosestPointTo()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(GetVertices)
+	{
+		static const char Script[] = R"(
+int RunGetVertices()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
     FVector V0;
     FVector V1;
     FVector V2;
@@ -397,141 +688,409 @@ int RunGeometryQueriesAndTransforms()
     Box.GetVertices(V0, V1, V2, V3, V4, V5, V6, V7);
     if (!V0.Equals(FVector(0.0, 0.0, 0.0), 0.0001) || !V7.Equals(FVector(2.0, 2.0, 2.0), 0.0001))
     {
-        return -11;
+        return -1;
     }
-
-    if (!Box.GetExtent().Equals(FVector(1.0, 1.0, 1.0), 0.0001) || !Box.GetSize().Equals(FVector(2.0, 2.0, 2.0), 0.0001))
-    {
-        return -12;
-    }
-
-    if (!FMath::IsNearlyEqual(Box.GetVolume(), 8.0, 0.0001) || !FMath::IsNearlyEqual(UnrealBoxVolume(Box), 8.0, 0.0001))
-    {
-        return -13;
-    }
-
-    if (!Box.Intersect(FBox(FVector(1.0, 1.0, 1.0), FVector(3.0, 3.0, 3.0))))
-    {
-        return -14;
-    }
-
-    if (Box.Intersect(FBox(FVector(3.1, 0.0, 0.0), FVector(4.0, 1.0, 1.0))))
-    {
-        return -15;
-    }
-
-    if (!Box.IntersectXY(FBox(FVector(1.0, 1.0, 100.0), FVector(3.0, 3.0, 200.0))))
-    {
-        return -16;
-    }
-
-    FBox Overlap = Box.Overlap(FBox(FVector(1.0, -1.0, 1.0), FVector(3.0, 1.5, 4.0)));
-    if (!Overlap.opEquals(FBox(FVector(1.0, 0.0, 1.0), FVector(2.0, 1.5, 2.0))))
-    {
-        return -17;
-    }
-
-    FTransform Translation(FVector(5.0, 6.0, 7.0));
-    FBox Transformed = Box.TransformBy(Translation);
-    if (!Transformed.opEquals(FBox(FVector(5.0, 6.0, 7.0), FVector(7.0, 8.0, 9.0))))
-    {
-        return -18;
-    }
-
-    if (!Transformed.InverseTransformBy(Translation).opEquals(Box))
-    {
-        return -19;
-    }
-
-    if (!Box.IsInside(FVector(1.0, 1.0, 1.0)) || Box.IsInside(FVector(0.0, 0.0, 0.0)))
-    {
-        return -20;
-    }
-
-    if (!Box.IsInsideOrOn(FVector(0.0, 0.0, 0.0)))
-    {
-        return -21;
-    }
-
-    if (!Box.IsInside(FBox(FVector(0.5, 0.5, 0.5), FVector(1.5, 1.5, 1.5))) || Box.IsInside(FBox(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0))))
-    {
-        return -22;
-    }
-
-    if (!Box.IsInsideOrOn(FBox(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0))))
-    {
-        return -23;
-    }
-
-    if (!Box.IsInsideXY(FVector(1.0, 1.0, 99.0)) || Box.IsInsideXY(FVector(0.0, 0.0, 0.0)))
-    {
-        return -24;
-    }
-
-    if (!Box.IsInsideOrOnXY(FVector(0.0, 2.0, -50.0)))
-    {
-        return -25;
-    }
-
-    if (!Box.IsInsideXY(FBox(FVector(0.5, 0.5, -10.0), FVector(1.5, 1.5, 10.0))) || Box.IsInsideXY(FBox(FVector(0.0, 0.0, -10.0), FVector(2.0, 2.0, 10.0))))
-    {
-        return -26;
-    }
-
-    FBox ResetBox(FVector(3.0, 4.0, 5.0), FVector(6.0, 7.0, 8.0));
-    ResetBox.Init();
-    if (ResetBox.IsValid || !ResetBox.Min.Equals(FVector(0.0, 0.0, 0.0), 0.0001) || !ResetBox.Max.Equals(FVector(0.0, 0.0, 0.0), 0.0001))
-    {
-        return -27;
-    }
-
     return 0;
 }
 )";
 
-		asIScriptFunction* Function = BuildFunction("FBoxGeometryQueriesAndTransforms", Script, "int RunGeometryQueriesAndTransforms()");
+		asIScriptFunction* Function = BuildFunction("FBoxGetVertices", Script, "int RunGetVertices()");
 		ASSERT_THAT(IsNotNull(Function));
-        ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
-	TEST_METHOD(StringsNamespaceHelpersAndNaN)
+	TEST_METHOD(GetExtent)
 	{
 		static const char Script[] = R"(
-int RunStringsNamespaceHelpersAndNaN()
+int RunGetExtent()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
+    if (!Box.GetExtent().Equals(FVector(1.0, 1.0, 1.0), 0.0001))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxGetExtent", Script, "int RunGetExtent()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(GetSize)
+	{
+		static const char Script[] = R"(
+int RunGetSize()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
+    if (!Box.GetSize().Equals(FVector(2.0, 2.0, 2.0), 0.0001))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxGetSize", Script, "int RunGetSize()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(GetVolume)
+	{
+		static const char Script[] = R"(
+int RunGetVolume()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
+    if (!FMath::IsNearlyEqual(Box.GetVolume(), 8.0, 0.0001) || !FMath::IsNearlyEqual(UnrealBoxVolume(Box), 8.0, 0.0001))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxGetVolume", Script, "int RunGetVolume()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(Init)
+	{
+		static const char Script[] = R"(
+int RunInit()
+{
+    FBox Box(FVector(3.0, 4.0, 5.0), FVector(6.0, 7.0, 8.0));
+    Box.Init();
+    if (Box.IsValid || !Box.Min.Equals(FVector(0.0, 0.0, 0.0), 0.0001) || !Box.Max.Equals(FVector(0.0, 0.0, 0.0), 0.0001))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxInit", Script, "int RunInit()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(Intersect)
+	{
+		static const char Script[] = R"(
+int RunIntersect()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
+    if (!Box.Intersect(FBox(FVector(1.0, 1.0, 1.0), FVector(3.0, 3.0, 3.0))))
+    {
+        return -1;
+    }
+    if (Box.Intersect(FBox(FVector(3.1, 0.0, 0.0), FVector(4.0, 1.0, 1.0))))
+    {
+        return -2;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxIntersect", Script, "int RunIntersect()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(IntersectXY)
+	{
+		static const char Script[] = R"(
+int RunIntersectXY()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
+    if (!Box.IntersectXY(FBox(FVector(1.0, 1.0, 100.0), FVector(3.0, 3.0, 200.0))))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxIntersectXY", Script, "int RunIntersectXY()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(Overlap)
+	{
+		static const char Script[] = R"(
+int RunOverlap()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
+    FBox Result = Box.Overlap(FBox(FVector(1.0, -1.0, 1.0), FVector(3.0, 1.5, 4.0)));
+    if (!Result.opEquals(FBox(FVector(1.0, 0.0, 1.0), FVector(2.0, 1.5, 2.0))))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxOverlap", Script, "int RunOverlap()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(TransformBy)
+	{
+		static const char Script[] = R"(
+int RunTransformBy()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
+    FTransform Translation(FVector(5.0, 6.0, 7.0));
+    FBox Transformed = Box.TransformBy(Translation);
+    if (!Transformed.opEquals(FBox(FVector(5.0, 6.0, 7.0), FVector(7.0, 8.0, 9.0))))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxTransformBy", Script, "int RunTransformBy()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(InverseTransformBy)
+	{
+		static const char Script[] = R"(
+int RunInverseTransformBy()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
+    FTransform Translation(FVector(5.0, 6.0, 7.0));
+    FBox Transformed = Box.TransformBy(Translation);
+    if (!Transformed.InverseTransformBy(Translation).opEquals(Box))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxInverseTransformBy", Script, "int RunInverseTransformBy()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(IsInsidePoint)
+	{
+		static const char Script[] = R"(
+int RunIsInsidePoint()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
+    if (!Box.IsInside(FVector(1.0, 1.0, 1.0)) || Box.IsInside(FVector(0.0, 0.0, 0.0)))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxIsInsidePoint", Script, "int RunIsInsidePoint()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(IsInsideOrOnPoint)
+	{
+		static const char Script[] = R"(
+int RunIsInsideOrOnPoint()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
+    if (!Box.IsInsideOrOn(FVector(0.0, 0.0, 0.0)))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxIsInsideOrOnPoint", Script, "int RunIsInsideOrOnPoint()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(IsInsideBox)
+	{
+		static const char Script[] = R"(
+int RunIsInsideBox()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
+    if (!Box.IsInside(FBox(FVector(0.5, 0.5, 0.5), FVector(1.5, 1.5, 1.5))) || Box.IsInside(FBox(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0))))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxIsInsideBox", Script, "int RunIsInsideBox()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(IsInsideOrOnBox)
+	{
+		static const char Script[] = R"(
+int RunIsInsideOrOnBox()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
+    if (!Box.IsInsideOrOn(FBox(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0))))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxIsInsideOrOnBox", Script, "int RunIsInsideOrOnBox()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(IsInsideXYPoint)
+	{
+		static const char Script[] = R"(
+int RunIsInsideXYPoint()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
+    if (!Box.IsInsideXY(FVector(1.0, 1.0, 99.0)) || Box.IsInsideXY(FVector(0.0, 0.0, 0.0)))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxIsInsideXYPoint", Script, "int RunIsInsideXYPoint()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(IsInsideOrOnXYPoint)
+	{
+		static const char Script[] = R"(
+int RunIsInsideOrOnXYPoint()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
+    if (!Box.IsInsideOrOnXY(FVector(0.0, 2.0, -50.0)))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxIsInsideOrOnXYPoint", Script, "int RunIsInsideOrOnXYPoint()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(IsInsideXYBox)
+	{
+		static const char Script[] = R"(
+int RunIsInsideXYBox()
+{
+    FBox Box(FVector(0.0, 0.0, 0.0), FVector(2.0, 2.0, 2.0));
+    if (!Box.IsInsideXY(FBox(FVector(0.5, 0.5, -10.0), FVector(1.5, 1.5, 10.0))) || Box.IsInsideXY(FBox(FVector(0.0, 0.0, -10.0), FVector(2.0, 2.0, 10.0))))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxIsInsideXYBox", Script, "int RunIsInsideXYBox()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(BuildAABB)
+	{
+		static const char Script[] = R"(
+int RunBuildAABB()
 {
     FBox Box = FBox::BuildAABB(FVector(5.0, 6.0, 7.0), FVector(1.0, 2.0, 3.0));
     if (!Box.opEquals(FBox(FVector(4.0, 4.0, 4.0), FVector(6.0, 8.0, 10.0))))
     {
         return -1;
     }
-
-    if (Box.ToString() != UnrealBoxToString(Box))
-    {
-        return -2;
-    }
-
-    if (Box.ToCompactString() != UnrealBoxToCompactString(Box))
-    {
-        return -3;
-    }
-
-    if (Box.ContainsNaN())
-    {
-        return -4;
-    }
-
-    if (!UnrealBoxWithNaN().ContainsNaN())
-    {
-        return -5;
-    }
-
     return 0;
 }
 )";
 
-		asIScriptFunction* Function = BuildFunction("FBoxStringsNamespaceHelpersAndNaN", Script, "int RunStringsNamespaceHelpersAndNaN()");
+		asIScriptFunction* Function = BuildFunction("FBoxBuildAABB", Script, "int RunBuildAABB()");
 		ASSERT_THAT(IsNotNull(Function));
-        ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(ToString)
+	{
+		static const char Script[] = R"(
+int RunToString()
+{
+    FBox Box = FBox::BuildAABB(FVector(5.0, 6.0, 7.0), FVector(1.0, 2.0, 3.0));
+    if (Box.ToString() != UnrealBoxToString(Box))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxToString", Script, "int RunToString()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(ToCompactString)
+	{
+		static const char Script[] = R"(
+int RunToCompactString()
+{
+    FBox Box = FBox::BuildAABB(FVector(5.0, 6.0, 7.0), FVector(1.0, 2.0, 3.0));
+    if (Box.ToCompactString() != UnrealBoxToCompactString(Box))
+    {
+        return -1;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxToCompactString", Script, "int RunToCompactString()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(ContainsNaN)
+	{
+		static const char Script[] = R"(
+int RunContainsNaN()
+{
+    FBox Box = FBox::BuildAABB(FVector(5.0, 6.0, 7.0), FVector(1.0, 2.0, 3.0));
+    if (Box.ContainsNaN())
+    {
+        return -1;
+    }
+    if (!UnrealBoxWithNaN().ContainsNaN())
+    {
+        return -2;
+    }
+    return 0;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FBoxContainsNaN", Script, "int RunContainsNaN()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 };
 
