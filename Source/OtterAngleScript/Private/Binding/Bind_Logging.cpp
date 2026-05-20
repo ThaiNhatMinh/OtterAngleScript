@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "OtterAngleScript.h"
-#include <asbind20/asbind.hpp>
+#include "asbind20/asbind.hpp"
 
 static void ScriptLogInfo(const FString& Message)
 {

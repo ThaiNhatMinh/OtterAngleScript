@@ -94,11 +94,6 @@ void Bind_FHitResult(asIScriptEngine* Engine)
 	REGISTER_METHOD(FHitResult, "bool IsValidBlockingHit() const", asFUNCTION(FHitResult_IsValidBlockingHit), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FHitResult, "FString ToString() const", asFUNCTION(FHitResult_ToString), asCALL_CDECL_OBJFIRST);
 
-	REGISTER_METHOD(FHitResult, "bool get_BlockingHit() const property", asFUNCTION(FHitResult_GetBlockingHit), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FHitResult, "void set_BlockingHit(bool Value) property", asFUNCTION(FHitResult_SetBlockingHit), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FHitResult, "bool get_StartPenetrating() const property", asFUNCTION(FHitResult_GetStartPenetrating), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FHitResult, "void set_StartPenetrating(bool Value) property", asFUNCTION(FHitResult_SetStartPenetrating), asCALL_CDECL_OBJFIRST);
-
 	REGISTER_PROPERTY(FHitResult, "int FaceIndex", FaceIndex);
 	REGISTER_PROPERTY(FHitResult, "float Time", Time);
 	REGISTER_PROPERTY(FHitResult, "float Distance", Distance);
