@@ -333,9 +333,9 @@ namespace
 		Value.TrimQuotesInline(nullptr);
 	}
 
-	static int32 FString_RemoveSpacesInline(FString& Value)
+	static void FString_RemoveSpacesInline(FString& Value)
 	{
-		return Value.RemoveSpacesInline();
+		Value.RemoveSpacesInline();
 	}
 
 	static void FString_Shrink(FString& Value)
@@ -418,7 +418,7 @@ void Bind_FString(asIScriptEngine* Engine)
 	REGISTER_METHOD(FString, "FString RightPad(int ChCount) const", asFUNCTION(FString_RightPad), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FString, "FString TrimQuotes() const", asFUNCTION(FString_TrimQuotes), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FString, "void TrimQuotesInline()", asFUNCTION(FString_TrimQuotesInline), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FString, "int RemoveSpacesInline()", asFUNCTION(FString_RemoveSpacesInline), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "void RemoveSpacesInline()", asFUNCTION(FString_RemoveSpacesInline), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FString, "void Shrink()", asFUNCTION(FString_Shrink), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FString, "void ConvertTabsToSpacesInline(int SpacesPerTab)", asFUNCTION(FString_ConvertTabsToSpacesInline), asCALL_CDECL_OBJFIRST);
 
