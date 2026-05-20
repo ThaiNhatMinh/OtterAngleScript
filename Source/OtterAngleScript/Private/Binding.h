@@ -51,24 +51,9 @@ void Bind_TWeakObjectPtr(asIScriptEngine* Engine);
 void Bind_FString(asIScriptEngine* Engine);
 
 /**
- * Registers EAxisType for axis-based FVector helpers.
+ * Registers all script-exposed enums: EAxisType, EForceInitType, EObjectTypeQuery, ETraceTypeQuery.
  */
-void Bind_EAxisType(asIScriptEngine* Engine);
-
-/**
- * Registers EForceInit for constructors that support explicit zero-initialization.
- */
-void Bind_EForceInit(asIScriptEngine* Engine);
-
-/**
- * Registers EObjectTypeQuery used by Kismet overlap helpers.
- */
-void Bind_EObjectTypeQuery(asIScriptEngine* Engine);
-
-/**
- * Registers ETraceTypeQuery used by Kismet trace helpers.
- */
-void Bind_ETraceTypeQuery(asIScriptEngine* Engine);
+void Bind_Enums(asIScriptEngine* Engine);
 
 /**
  * Registers FVector2D as a value type in the AngelScript engine.

@@ -536,6 +536,276 @@ FString BuildStringForUnreal(const FString &in Prefix, const FString &in Value)
 		ASSERT_THAT(IsNotNull(ReturnValue));
 		ASSERT_THAT(IsTrue(*ReturnValue == FString(TEXT("Unreal-Input!"))));
 	}
+
+	TEST_METHOD(AppendInt)
+	{
+		static const char Script[] = R"(
+int RunAppendInt()
+{
+    FString Value = "Count: ";
+    Value.AppendInt(42);
+    if (Value != "Count: 42")
+    {
+        return -1;
+    }
+
+    FString Negative = "Num: ";
+    Negative.AppendInt(-5);
+    if (Negative != "Num: -5")
+    {
+        return -2;
+    }
+
+    return 0;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("FStringAppendInt", Script, "int RunAppendInt()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(IsValidIndex)
+	{
+		static const char Script[] = R"(
+int RunIsValidIndex()
+{
+    FString Value = "ABC";
+    if (!Value.IsValidIndex(0))
+    {
+        return -1;
+    }
+
+    if (!Value.IsValidIndex(2))
+    {
+        return -2;
+    }
+
+    if (Value.IsValidIndex(3))
+    {
+        return -3;
+    }
+
+    if (Value.IsValidIndex(-1))
+    {
+        return -4;
+    }
+
+    return 0;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("FStringIsValidIndex", Script, "int RunIsValidIndex()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(ToBool)
+	{
+		static const char Script[] = R"(
+int RunToBool()
+{
+    if (!"true".ToBool())
+    {
+        return -1;
+    }
+
+    if (!"True".ToBool())
+    {
+        return -2;
+    }
+
+    if (!"1".ToBool())
+    {
+        return -3;
+    }
+
+    if ("false".ToBool())
+    {
+        return -4;
+    }
+
+    if ("0".ToBool())
+    {
+        return -5;
+    }
+
+    return 0;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("FStringToBool", Script, "int RunToBool()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(LeftPad)
+	{
+		static const char Script[] = R"(
+int RunLeftPad()
+{
+    FString Value = "Hi";
+    FString Padded = Value.LeftPad(5);
+    if (Padded != "   Hi")
+    {
+        return -1;
+    }
+
+    FString NoPad = Value.LeftPad(1);
+    if (NoPad != "Hi")
+    {
+        return -2;
+    }
+
+    return 0;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("FStringLeftPad", Script, "int RunLeftPad()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(RightPad)
+	{
+		static const char Script[] = R"(
+int RunRightPad()
+{
+    FString Value = "Hi";
+    FString Padded = Value.RightPad(5);
+    if (Padded != "Hi   ")
+    {
+        return -1;
+    }
+
+    FString NoPad = Value.RightPad(1);
+    if (NoPad != "Hi")
+    {
+        return -2;
+    }
+
+    return 0;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("FStringRightPad", Script, "int RunRightPad()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(TrimQuotes)
+	{
+		static const char Script[] = R"(
+int RunTrimQuotes()
+{
+    FString Quoted = "\"Hello\"";
+    FString Trimmed = Quoted.TrimQuotes();
+    if (Trimmed != "Hello")
+    {
+        return -1;
+    }
+
+    FString Unquoted = "NoQuotes";
+    if (Unquoted.TrimQuotes() != "NoQuotes")
+    {
+        return -2;
+    }
+
+    return 0;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("FStringTrimQuotes", Script, "int RunTrimQuotes()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(TrimQuotesInline)
+	{
+		static const char Script[] = R"(
+int RunTrimQuotesInline()
+{
+    FString Value = "\"World\"";
+    Value.TrimQuotesInline();
+    if (Value != "World")
+    {
+        return -1;
+    }
+
+    FString Plain = "NoBrackets";
+    Plain.TrimQuotesInline();
+    if (Plain != "NoBrackets")
+    {
+        return -2;
+    }
+
+    return 0;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("FStringTrimQuotesInline", Script, "int RunTrimQuotesInline()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(RemoveSpacesInline)
+	{
+		static const char Script[] = R"(
+int RunRemoveSpacesInline()
+{
+    FString Value = "a b c";
+    int Removed = Value.RemoveSpacesInline();
+    if (Removed != 2)
+    {
+        return -1;
+    }
+
+    if (Value != "abc")
+    {
+        return -2;
+    }
+
+    return 0;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("FStringRemoveSpacesInline", Script, "int RunRemoveSpacesInline()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(Shrink)
+	{
+		static const char Script[] = R"(
+int RunShrink()
+{
+    FString Value = "Hello World";
+    Value.Empty();
+    Value.Shrink();
+    if (!Value.IsEmpty())
+    {
+        return -1;
+    }
+
+    return 0;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("FStringShrink", Script, "int RunShrink()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
+
+	TEST_METHOD(ConvertTabsToSpacesInline)
+	{
+		static const char Script[] = R"(
+int RunConvertTabsToSpacesInline()
+{
+    FString Value = "A	B";
+    Value.ConvertTabsToSpacesInline(4);
+    if (Value != "A    B")
+    {
+        return -1;
+    }
+
+    return 0;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("FStringConvertTabs", Script, "int RunConvertTabsToSpacesInline()");
+		ASSERT_THAT(IsNotNull(Function));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+	}
 };
 
 #endif // WITH_EDITOR

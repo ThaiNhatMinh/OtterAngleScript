@@ -297,6 +297,56 @@ namespace
 	{
 		return Value.Split(Delimiter, &LeftPart, &RightPart, ToSearchCase(bCaseSensitive), ToSearchDir(bSearchFromEnd));
 	}
+
+	static void FString_AppendInt(FString& Value, int32 InNum)
+	{
+		Value.AppendInt(InNum);
+	}
+
+	static bool FString_IsValidIndex(const FString& Value, int32 Index)
+	{
+		return Value.IsValidIndex(Index);
+	}
+
+	static bool FString_ToBool(const FString& Value)
+	{
+		return Value.ToBool();
+	}
+
+	static FString FString_LeftPad(const FString& Value, int32 ChCount)
+	{
+		return Value.LeftPad(ChCount);
+	}
+
+	static FString FString_RightPad(const FString& Value, int32 ChCount)
+	{
+		return Value.RightPad(ChCount);
+	}
+
+	static FString FString_TrimQuotes(const FString& Value)
+	{
+		return Value.TrimQuotes();
+	}
+
+	static void FString_TrimQuotesInline(FString& Value)
+	{
+		Value.TrimQuotesInline(nullptr);
+	}
+
+	static int32 FString_RemoveSpacesInline(FString& Value)
+	{
+		return Value.RemoveSpacesInline();
+	}
+
+	static void FString_Shrink(FString& Value)
+	{
+		Value.Shrink();
+	}
+
+	static void FString_ConvertTabsToSpacesInline(FString& Value, int32 SpacesPerTab)
+	{
+		Value.ConvertTabsToSpacesInline(SpacesPerTab);
+	}
 }
 
 void Bind_FString(asIScriptEngine* Engine)
@@ -360,6 +410,17 @@ void Bind_FString(asIScriptEngine* Engine)
 	REGISTER_METHOD(FString, "void ReverseString()", asFUNCTION(FString_ReverseString), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FString, "bool RemoveFromStart(const FString &in Prefix, bool bCaseSensitive = false)", asFUNCTION(FString_RemoveFromStart), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FString, "bool RemoveFromEnd(const FString &in Suffix, bool bCaseSensitive = false)", asFUNCTION(FString_RemoveFromEnd), asCALL_CDECL_OBJFIRST);
+
+	REGISTER_METHOD(FString, "void AppendInt(int InNum)", asFUNCTION(FString_AppendInt), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "bool IsValidIndex(int Index) const", asFUNCTION(FString_IsValidIndex), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "bool ToBool() const", asFUNCTION(FString_ToBool), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString LeftPad(int ChCount) const", asFUNCTION(FString_LeftPad), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString RightPad(int ChCount) const", asFUNCTION(FString_RightPad), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "FString TrimQuotes() const", asFUNCTION(FString_TrimQuotes), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "void TrimQuotesInline()", asFUNCTION(FString_TrimQuotesInline), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "int RemoveSpacesInline()", asFUNCTION(FString_RemoveSpacesInline), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "void Shrink()", asFUNCTION(FString_Shrink), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FString, "void ConvertTabsToSpacesInline(int SpacesPerTab)", asFUNCTION(FString_ConvertTabsToSpacesInline), asCALL_CDECL_OBJFIRST);
 
 	Result = Engine->RegisterStringFactory("FString", new FStringFactory());
 	check(Result >= 0);

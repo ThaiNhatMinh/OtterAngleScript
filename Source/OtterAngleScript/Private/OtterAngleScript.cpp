@@ -43,10 +43,7 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_FName(Engine);
 	Bind_UObject(Engine);
 	Bind_UClass(Engine);
-	Bind_EAxisType(Engine);
-	Bind_EForceInit(Engine);
-	Bind_EObjectTypeQuery(Engine);
-	Bind_ETraceTypeQuery(Engine);
+	Bind_Enums(Engine);
 	Bind_FVector2D(Engine);
 	Bind_FRotator(Engine);
 	Bind_FQuat(Engine);
