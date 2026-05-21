@@ -123,6 +123,12 @@ void Bind_FMath(asIScriptEngine* Engine);
 void Bind_UKismetSystemLibrary(asIScriptEngine* Engine);
 
 /**
+ * Registers FLinearColor as a value type in the AngelScript engine.
+ * The type is exposed as "FLinearColor" in scripts.
+ */
+void Bind_FLinearColor(asIScriptEngine* Engine);
+
+/**
  * Registers global logging helpers for scripts.
  * Messages are routed through LogOtterAngleScript.
  */

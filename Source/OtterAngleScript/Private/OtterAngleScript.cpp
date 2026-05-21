@@ -57,6 +57,7 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_FHitResult(Engine);
 	Bind_FTimerHandle(Engine);
 	Bind_FLatentActionInfo(Engine);
+	Bind_FLinearColor(Engine);
 	Bind_FMath(Engine);
 	Bind_UKismetSystemLibrary(Engine);
 	Bind_Logging(Engine);
