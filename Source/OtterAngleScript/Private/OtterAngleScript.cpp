@@ -41,8 +41,8 @@ void FOtterAngleScriptModule::StartupModule()
 
 	Bind_FString(Engine);
 	Bind_FName(Engine);
-	Bind_UObject(Engine);
 	Bind_UClass(Engine);
+	Bind_UObject(Engine);
 	Bind_Enums(Engine);
 	Bind_FVector2D(Engine);
 	Bind_FRotator(Engine);

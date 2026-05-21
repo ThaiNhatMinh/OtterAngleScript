@@ -137,7 +137,7 @@ void Bind_UObject(asIScriptEngine* Engine)
 {
 	check(Engine != nullptr);
 
-	int Result = Engine->RegisterObjectType("UObject", 0, asOBJ_REF | asOBJ_NOCOUNT);
+	int Result = Engine->RegisterObjectType("UObject", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
 	check(Result >= 0);
 
 	REGISTER_METHOD(UObject, "UClass@ GetClass() const", asFUNCTION(UObject_GetClass), asCALL_CDECL_OBJFIRST);

@@ -62,7 +62,7 @@ void Bind_UClass(asIScriptEngine* Engine)
 {
 	check(Engine != nullptr);
 
-	int Result = Engine->RegisterObjectType("UClass", 0, asOBJ_REF | asOBJ_NOCOUNT);
+	int Result = Engine->RegisterObjectType("UClass", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
 	check(Result >= 0);
 
 	REGISTER_METHOD(UClass, "FName GetFName() const", asFUNCTION(UClass_GetFName), asCALL_CDECL_OBJFIRST);
