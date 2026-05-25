@@ -756,7 +756,7 @@ int TestToString()
 int TestInitFromString()
 {
     FLinearColor Value;
-    if (!Value.InitFromString("(R=0.500000,G=0.250000,B=0.750000,A=1.000000)"))
+    if (!Value.InitFromString(\"(R=0.500000,G=0.250000,B=0.750000,A=1.000000)\"))
     {
         return -1;
     }

@@ -53,6 +53,7 @@ Plugins/**/Binaries/*
 
 # Builds
 Build/*
+Source/OtterAngleScriptUbtPlugin/obj/*
 
 # Whitelist PakBlacklist-<BuildConfiguration>.txt files
 !Build/*/

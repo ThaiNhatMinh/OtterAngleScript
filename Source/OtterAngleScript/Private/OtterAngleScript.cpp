@@ -9,6 +9,10 @@
 #include "HAL/PlatformProcess.h"
 #include "angelscript.h"
 
+#if __has_include("GeneratedAngelScriptBindings.inl")
+#include "GeneratedAngelScriptBindings.inl"
+#endif
+
 DEFINE_LOG_CATEGORY(LogOtterAngleScript);
 
 #define LOCTEXT_NAMESPACE "FOtterAngleScriptModule"
@@ -66,7 +70,6 @@ void FOtterAngleScriptModule::StartupModule()
 	// The .inl file is produced by OtterAngleScriptUbtPlugin before the C++ compiler
 	// runs, so __has_include guards the first bootstrap build safely.
 #if __has_include("GeneratedAngelScriptBindings.inl")
-#include "GeneratedAngelScriptBindings.inl"
 	Bind_Generated(Engine);
 #endif
 
