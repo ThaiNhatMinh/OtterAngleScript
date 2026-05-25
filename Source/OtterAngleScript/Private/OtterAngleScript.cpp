@@ -62,6 +62,15 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_UKismetSystemLibrary(Engine);
 	Bind_Logging(Engine);
 
+	// Include and invoke the UHT-generated AngelScript bindings if they exist.
+	// The .inl file is produced by OtterAngleScriptUbtPlugin before the C++ compiler
+	// runs, so __has_include guards the first bootstrap build safely.
+#if __has_include("GeneratedAngelScriptBindings.inl")
+#include "GeneratedAngelScriptBindings.inl"
+	Bind_Generated(Engine);
+#endif
+
+
 	// TODO: Multiple modules or single module?
 	ScriptModule = Engine->GetModule("OtterAngleScript", asGM_ALWAYS_CREATE);
 }

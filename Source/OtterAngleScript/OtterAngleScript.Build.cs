@@ -63,5 +63,13 @@ public class OtterAngleScript : ModuleRules
         string AsbindSdkPath = Path.GetFullPath(Path.Combine(ModuleDirectory, "../ThirdParty/asbind20/include"));
 		Logger.LogInformation("Linking to asbind20 at " + AsbindSdkPath);
         PublicIncludePaths.Add(AsbindSdkPath);
+
+        // Add the plugin's Intermediate directory so that the .inl file produced by the
+        // OtterAngleScriptUbtPlugin script generator can be found via
+        //   #include "GeneratedAngelScriptBindings.inl"
+        // The file is committed by UHT before the C++ compiler runs, so it is always
+        // present when this module is compiled (after the first UHT pass).
+        string GeneratedIncludePath = Path.GetFullPath(Path.Combine(ModuleDirectory, "../../Intermediate"));
+        PrivateIncludePaths.Add(GeneratedIncludePath);
     }
 }
