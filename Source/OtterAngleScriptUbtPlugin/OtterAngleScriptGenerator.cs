@@ -196,6 +196,10 @@ namespace OtterAngleScriptUbtPlugin
             var wrapperLines = new List<string>();
             foreach (var func in ScriptFunctions(cls))
             {
+                if (func.FunctionFlags.HasAnyFlags(EFunctionFlags.Protected | EFunctionFlags.Private))
+                {
+                    continue; // skip non-public functions since the generated wrapper won't be able to call them.
+                }
                 if (TryBuildWrapper(cls, func, registeredTypeNames, out string? line))
                     wrapperLines.Add(line!);
             }
@@ -555,6 +559,7 @@ namespace OtterAngleScriptUbtPlugin
             bool isReturn = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReturnParm);
             bool isOut = isParam && !isReturn
                 && property.PropertyFlags.HasAnyFlags(EPropertyFlags.OutParm);
+            bool isConst = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ConstParm);
 
             switch (property)
             {
