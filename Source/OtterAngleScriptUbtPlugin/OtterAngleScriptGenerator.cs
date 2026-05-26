@@ -594,45 +594,44 @@ namespace OtterAngleScriptUbtPlugin
         {
             bool isReturn = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReturnParm);
             bool isConst = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ConstParm);
-            bool isOut = !isReturn && !isConst && property.PropertyFlags.HasAnyFlags(EPropertyFlags.OutParm);
-            bool isRef = isOut || property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReferenceParm);
+            bool isRef = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReferenceParm);
 
             switch (property)
             {
                 case UhtBoolProperty:
-                    return isOut ? "bool&" : "bool";
+                    return isRef ? "bool&" : "bool";
 
                 case UhtByteProperty { Enum: null }:
-                    return isOut ? "uint8&" : "uint8";
+                    return isRef ? "uint8&" : "uint8";
 
                 case UhtIntProperty:
-                    return isOut ? "int32&" : "int32";
+                    return isRef ? "int32&" : "int32";
 
                 case UhtInt64Property:
-                    return isOut ? "int64&" : "int64";
+                    return isRef ? "int64&" : "int64";
 
                 case UhtUInt32Property:
-                    return isOut ? "uint32&" : "uint32";
+                    return isRef ? "uint32&" : "uint32";
 
                 case UhtUInt64Property:
-                    return isOut ? "uint64&" : "uint64";
+                    return isRef ? "uint64&" : "uint64";
 
                 case UhtFloatProperty:
-                    return isOut ? "float&" : "float";
+                    return isRef ? "float&" : "float";
 
                 case UhtDoubleProperty:
-                    return isOut ? "double&" : "double";
+                    return isRef ? "double&" : "double";
 
                 case UhtStrProperty:
                     if (!isParam) return "FString";
-                    return isOut ? "FString&" : $"{(isConst ? "const" : "")} FString{(isRef ? "&" : "")}";
+                    return isRef ? "FString&" : $"{(isConst ? "const" : "")} FString{(isRef ? "&" : "")}";
 
                 case UhtNameProperty:
                     if (!isParam) return "FName";
-                    return isOut ? "FName&" : $"{(isConst ? "const" : "")} FName{(isRef ? "&" : "")}";
+                    return isRef ? "FName&" : $"{(isConst ? "const" : "")} FName{(isRef ? "&" : "")}";
                 case UhtTextProperty:
                     if (!isParam) return "FText";
-                    return isOut ? "FText&" : $"{(isConst ? "const" : "")} FText{(isRef ? "&" : "")}";
+                    return isRef ? "FText&" : $"{(isConst ? "const" : "")} FText{(isRef ? "&" : "")}";
 
                 case UhtClassProperty uclass:
                     if (uclass.MetaClass == null)
@@ -645,7 +644,7 @@ namespace OtterAngleScriptUbtPlugin
                 case UhtStructProperty p
                         when registeredTypeNames.Contains(p.ScriptStruct.SourceName):
                     if (!isParam) return p.ScriptStruct.SourceName;
-                    return isOut
+                    return isRef
                         ? $"{p.ScriptStruct.SourceName}&"
                         //: $"const {p.ScriptStruct.SourceName}&";
                           : $"{(isConst ? "const " : "")}{p.ScriptStruct.SourceName}{(isRef ? "&" : "")}";
