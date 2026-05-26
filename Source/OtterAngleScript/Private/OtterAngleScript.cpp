@@ -9,8 +9,8 @@
 #include "HAL/PlatformProcess.h"
 #include "angelscript.h"
 
-#if __has_include("GeneratedAngelScriptBindings.inl")
-#include "GeneratedAngelScriptBindings.inl"
+#if __has_include("OtterAngelScriptBindings.gen.h")
+#include "OtterAngelScriptBindings.gen.h"
 #endif
 
 DEFINE_LOG_CATEGORY(LogOtterAngleScript);
@@ -67,9 +67,10 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_Logging(Engine);
 
 	// Include and invoke the UHT-generated AngelScript bindings if they exist.
-	// The .inl file is produced by OtterAngleScriptUbtPlugin before the C++ compiler
-	// runs, so __has_include guards the first bootstrap build safely.
-#if __has_include("GeneratedAngelScriptBindings.inl")
+	// GeneratedAngelScriptBindings.h is produced by OtterAngleScriptUbtPlugin (one
+	// header per class + a master header/source pair).  The __has_include guard
+	// makes the first bootstrap build safe before any UHT output exists.
+#if __has_include("OtterAngelScriptBindings.gen.h")
 	Bind_Generated(Engine);
 #endif
 

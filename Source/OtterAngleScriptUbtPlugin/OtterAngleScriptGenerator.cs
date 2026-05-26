@@ -13,12 +13,19 @@ using EpicGames.UHT.Utils;
 namespace OtterAngleScriptUbtPlugin
 {
     /// <summary>
-    /// UHT exporter that generates AngelScript binding registration code (.inl) for
+    /// UHT exporter that generates AngelScript binding registration code for
     /// all BlueprintCallable / BlueprintPure UFunctions and BlueprintVisible UProperties
     /// found in Engine and Game runtime modules.
     ///
-    /// Output: <PluginIntermediate>/GeneratedAngelScriptBindings.inl
-    /// Include this file from OtterAngleScript.cpp and call Bind_Generated(Engine).
+    /// Output (per class):
+    ///   <PluginIntermediate>/Bind_<ClassName>.oas.gen.h   – registration function declaration
+    ///   <PluginIntermediate>/Bind_<ClassName>.oas.gen.cpp – wrappers + registration function definition
+    ///
+    /// Output (master):
+    ///   <PluginIntermediate>/OtterAngelScriptBindings.gen.h   – includes all per-class headers
+    ///   <PluginIntermediate>/OtterAngelScriptBindings.gen.cpp – OAS_RegisterGeneratedTypes + Bind_Generated
+    ///
+    /// Include GeneratedAngelScriptBindings.h from OtterAngleScript.cpp and call Bind_Generated(Engine).
     /// </summary>
     [UnrealHeaderTool]
     class OtterAngleScriptGeneratorEntry
@@ -27,9 +34,12 @@ namespace OtterAngleScriptUbtPlugin
             Name = "OtterAngleScript",
             Description = "AngelScript Binding Generator for OtterAngleScript",
             Options = UhtExporterOptions.Default,
-            ModuleName = "OtterAngleScript")]
+            ModuleName = "OtterAngleScript",
+			CppFilters = new string[] { "Bind*.oas.gen.cpp", "OtterAngelScriptBindings.gen.cpp"},
+			HeaderFilters = new string[] { "Bind*.oas.gen.h" , "OtterAngelScriptBindings.gen.h"})]
         private static void GenerateAngelScriptBindings(IUhtExportFactory factory)
         {
+            factory.Session.LogInfo("Starting OtterAngleScript binding generation...");
             new OtterAngleScriptGenerator(factory).Generate();
         }
     }
@@ -51,6 +61,10 @@ namespace OtterAngleScriptUbtPlugin
             "FHitResult", "FTimerHandle", "FLatentActionInfo",
             "FActorInstanceHandle",
         };
+        private static readonly HashSet<string> BuildModules = new(StringComparer.Ordinal)
+        {
+            "NetCore", "CoreUObject", "Engine"
+        };
 
         public OtterAngleScriptGenerator(IUhtExportFactory factory)
         {
@@ -67,22 +81,29 @@ namespace OtterAngleScriptUbtPlugin
             var packages = _factory.Session.Modules
                 .Where(m => m.Module.ModuleType == UHTModuleType.EngineRuntime
                          || m.Module.ModuleType == UHTModuleType.GameRuntime)
+                .Where(m => BuildModules.Contains(m.ShortName))
                 .Select(m => m.ScriptPackage);
 #else
             var packages = _factory.Session.Packages
                 .Where(p => p.Module.ModuleType == UHTModuleType.EngineRuntime
                          || p.Module.ModuleType == UHTModuleType.GameRuntime);
 #endif
-
             // Collect all UClasses excluding manually-bound types and interfaces.
             var allClasses = packages
                 .SelectMany(p => TraverseTree(p))
                 .OfType<UhtClass>()
                 .Where(c => !c.ClassFlags.HasAnyFlags(EClassFlags.Interface))
                 .Where(c => !ManuallyBoundTypes.Contains(c.SourceName))
+                .Where(c => !c.HeaderFile.FilePath.Contains("Tests"))
+                .Where(c => !c.HeaderFile.FilePath.Contains("Internal"))
+                .Where(c => !c.HeaderFile.FilePath.Contains("Private"))
+                .Where(c => !c.Deprecated)
                 .OrderBy(c => c.SourceName)
                 .ToList();
-
+            foreach (var package in packages)
+            {
+                _factory.Session.LogInfo("Package {0}", package.FullName);
+            }
             if (allClasses.Count == 0)
                 return;
 
@@ -97,41 +118,190 @@ namespace OtterAngleScriptUbtPlugin
                 .Where(c => HasScriptExposedContent(c))
                 .ToList();
 
-            var sb = new StringBuilder();
-            WriteFileHeader(sb);
-            WriteTypeRegistrations(sb, allClasses);
-            WriteMethodWrappers(sb, classesWithContent, registeredTypeNames);
-            WriteMethodRegistrations(sb, classesWithContent, registeredTypeNames);
-            WriteMasterFunction(sb, classesWithContent);
+            // Generate one .h / .cpp pair per class.
+            foreach (var cls in classesWithContent)
+            {
+                var hdr = new StringBuilder();
+                WriteAutoGenNotice(hdr);
+                WritePerClassHeader(hdr, cls);
+                _factory.CommitOutput(_factory.MakePath($"Bind_{cls.SourceName}", ".oas.gen.h"), hdr);
 
-            string outputPath = _factory.MakePath("GeneratedAngelScriptBindings", ".inl");
-            _factory.Session.LogInfo("GeneratedAngelScriptBindings executed! {0}", outputPath);
+                var src = new StringBuilder();
+                WriteAutoGenNotice(src);
+                WritePerClassSource(src, cls, registeredTypeNames);
+                _factory.CommitOutput(_factory.MakePath($"Bind_{cls.SourceName}", ".oas.gen.cpp"), src);
+            }
 
-            _factory.CommitOutput(outputPath, sb);
+            // Generate the master header and master source.
+            var masterHdr = new StringBuilder();
+            WriteAutoGenNotice(masterHdr);
+            WriteMasterHeader(masterHdr, classesWithContent);
+            _factory.CommitOutput(_factory.MakePath("OtterAngelScriptBindings", ".gen.h"), masterHdr);
+
+            var masterSrc = new StringBuilder();
+            WriteAutoGenNotice(masterSrc);
+            WriteMasterSource(masterSrc, allClasses, classesWithContent);
+            _factory.CommitOutput(_factory.MakePath("OtterAngelScriptBindings", ".gen.cpp"), masterSrc);
+
+            _factory.Session.LogInfo(
+                "OtterAngleScript: generated {0} per-class file pairs + master header/source.",
+                classesWithContent.Count);
         }
 
         // -------------------------------------------------------------------------
-        // Sections
+        // File-level helpers
         // -------------------------------------------------------------------------
 
-        private static void WriteFileHeader(StringBuilder sb)
+        private static void WriteAutoGenNotice(StringBuilder sb)
         {
-            sb.AppendLine("#pragma once");
             sb.AppendLine("// Auto-generated by OtterAngleScript UHT Plugin.");
-            sb.AppendLine("// DO NOT EDIT MANUALLY – regenerated on every build.");
-            sb.AppendLine("//");
-            sb.AppendLine("// Include this file from OtterAngleScript.cpp and call Bind_Generated(Engine)");
-            sb.AppendLine("// after all manual bindings have been registered.");
+            sb.AppendLine("// DO NOT EDIT MANUALLY - regenerated on every build.");
             sb.AppendLine();
         }
 
-        /// <summary>
-        /// Emits one RegisterObjectType call per class (forward-declares the type so
-        /// parameter/return-type references to any class work regardless of order).
-        /// </summary>
-        private static void WriteTypeRegistrations(StringBuilder sb, List<UhtClass> allClasses)
+        // -------------------------------------------------------------------------
+        // Per-class header: declares the registration function.
+        // -------------------------------------------------------------------------
+
+        private static void WritePerClassHeader(StringBuilder sb, UhtClass cls)
         {
-            sb.AppendLine("static void OAS_RegisterGeneratedTypes(asIScriptEngine* Engine)");
+            sb.AppendLine("#pragma once");
+            sb.AppendLine();
+            sb.AppendLine("#include \"angelscript.h\"");
+            sb.AppendLine();
+            sb.AppendLine($"void OAS_RegisterMethods_{cls.SourceName}(asIScriptEngine* Engine);");
+            sb.AppendLine();
+        }
+
+        // -------------------------------------------------------------------------
+        // Per-class source: wrapper namespace + registration function definition.
+        // -------------------------------------------------------------------------
+
+        private void WritePerClassSource(
+            StringBuilder sb,
+            UhtClass cls,
+            HashSet<string> registeredTypeNames)
+        {
+            if (!cls.Resolve(UhtResolvePhase.Final))
+            {
+                _factory.Session.LogError($"Failed to resolve class {cls.SourceName} - skipping generation.");
+                return;
+            }
+
+            sb.AppendLine($"#include \"Bind_{cls.SourceName}.h\"");
+            sb.AppendLine($"#include \"{cls.HeaderFile.IncludeFilePath}\"");
+            sb.AppendLine();
+
+            // Wrapper namespace – only emitted when at least one function is mappable.
+            var wrapperLines = new List<string>();
+            foreach (var func in ScriptFunctions(cls))
+            {
+                if (TryBuildWrapper(cls, func, registeredTypeNames, out string? line))
+                    wrapperLines.Add(line!);
+            }
+
+            if (wrapperLines.Count > 0)
+            {
+                sb.AppendLine($"namespace OAS_Gen_{cls.SourceName}");
+                sb.AppendLine("{");
+                foreach (var line in wrapperLines)
+                    sb.AppendLine($"    {line}");
+                sb.AppendLine("}");
+                sb.AppendLine();
+            }
+
+            // Registration function definition.
+            sb.AppendLine($"void OAS_RegisterMethods_{cls.SourceName}(asIScriptEngine* Engine)");
+            sb.AppendLine("{");
+            sb.AppendLine("    int Result = 0;");
+            bool anyContent = false;
+
+            foreach (var func in ScriptFunctions(cls))
+            {
+                if (!TryBuildAsSignature(func, registeredTypeNames, out string? asSig))
+                    continue;
+
+                bool isStatic = func.FunctionFlags.HasAnyFlags(EFunctionFlags.Static);
+                string callConv = isStatic ? "asCALL_CDECL" : "asCALL_CDECL_OBJFIRST";
+
+                sb.AppendLine($"    Result = Engine->RegisterObjectMethod(\"{cls.SourceName}\", \"{asSig}\",");
+                sb.AppendLine($"        asFUNCTION(OAS_Gen_{cls.SourceName}::{func.SourceName}), {callConv});");
+                sb.AppendLine("    check(Result >= 0);");
+                anyContent = true;
+            }
+
+            foreach (var prop in ScriptProperties(cls))
+            {
+                if (prop.SourceName == "NetCullDistanceSquared")
+                {
+                    _factory.Session.LogWarning($"Property {prop.Getter}::{prop.Setter} {prop.PropertyExportFlags.HasAnyFlags(UhtPropertyExportFlags.GetterFound | UhtPropertyExportFlags.GetterSpecified)} is skipped due to special handling.");
+                }
+                if (prop.IsBitfield)
+                {
+                    // TODO: support bitfield properties by generating appropriate wrapper functions.
+                }
+                else if (prop.PropertyFlags.HasAnyFlags(EPropertyFlags.NativeAccessSpecifierProtected | EPropertyFlags.NativeAccessSpecifierPrivate))
+                {
+                    // Skip protected properties since they won't be accessible from the generated wrapper functions.
+                }
+                else
+                {
+                    string? asType = MapPropertyAsType(prop, registeredTypeNames);
+                    if (asType == null)
+                        continue;
+
+                    sb.AppendLine($"    Result = Engine->RegisterObjectProperty(\"{cls.SourceName}\", \"{asType} {prop.SourceName}\",");
+                    sb.AppendLine($"        asOFFSET({cls.SourceName}, {prop.SourceName}));");
+                    sb.AppendLine("    check(Result >= 0);");
+                    anyContent = true;
+                }
+            }
+
+            if (!anyContent)
+                sb.AppendLine("    (void)Engine; // nothing to register");
+
+            sb.AppendLine("}");
+            sb.AppendLine();
+        }
+
+        // -------------------------------------------------------------------------
+        // Master header: includes all per-class headers + declares master functions.
+        // -------------------------------------------------------------------------
+
+        private static void WriteMasterHeader(StringBuilder sb, List<UhtClass> classesWithContent)
+        {
+            sb.AppendLine("#pragma once");
+            sb.AppendLine();
+            sb.AppendLine("#include \"angelscript.h\"");
+            sb.AppendLine();
+
+            foreach (var cls in classesWithContent)
+                sb.AppendLine($"#include \"Bind_{cls.SourceName}.h\"");
+
+            sb.AppendLine();
+            sb.AppendLine("// Registers all auto-generated UClass reference types with the AngelScript engine.");
+            sb.AppendLine("void OAS_RegisterGeneratedTypes(asIScriptEngine* Engine);");
+            sb.AppendLine();
+            sb.AppendLine("// Call from StartupModule() AFTER all manual bindings have been registered.");
+            sb.AppendLine("void Bind_Generated(asIScriptEngine* Engine);");
+            sb.AppendLine();
+        }
+
+        // -------------------------------------------------------------------------
+        // Master source: OAS_RegisterGeneratedTypes + Bind_Generated.
+        // -------------------------------------------------------------------------
+
+        private static void WriteMasterSource(
+            StringBuilder sb,
+            List<UhtClass> allClasses,
+            List<UhtClass> classesWithContent)
+        {
+            sb.AppendLine("#include \"GeneratedAngelScriptBindings.h\"");
+            sb.AppendLine();
+
+            // Forward-declare every collected UClass so that parameter / return-type
+            // references work regardless of registration order.
+            sb.AppendLine("void OAS_RegisterGeneratedTypes(asIScriptEngine* Engine)");
             sb.AppendLine("{");
             sb.AppendLine("    int Result = 0;");
             foreach (var cls in allClasses)
@@ -144,101 +314,15 @@ namespace OtterAngleScriptUbtPlugin
             }
             sb.AppendLine("}");
             sb.AppendLine();
-        }
 
-        /// <summary>
-        /// Emits a namespace of static C++ wrapper functions per class.
-        /// Only functions with fully-mappable signatures are included.
-        /// </summary>
-        private void WriteMethodWrappers(
-            StringBuilder sb,
-            List<UhtClass> classes,
-            HashSet<string> registeredTypeNames)
-        {
-            foreach (var cls in classes)
-            {
-                var lines = new List<string>();
-                foreach (var func in ScriptFunctions(cls))
-                {
-                    if (TryBuildWrapper(cls, func, registeredTypeNames, out string? line))
-                        lines.Add(line!);
-                }
-
-                if (lines.Count == 0) continue;
-
-                sb.AppendLine($"namespace OAS_Gen_{cls.SourceName}");
-                sb.AppendLine("{");
-                foreach (var line in lines)
-                    sb.AppendLine($"    {line}");
-                sb.AppendLine("}");
-                sb.AppendLine();
-            }
-        }
-
-        /// <summary>
-        /// Emits per-class registration functions: RegisterObjectMethod + RegisterObjectProperty.
-        /// </summary>
-        private void WriteMethodRegistrations(
-            StringBuilder sb,
-            List<UhtClass> classes,
-            HashSet<string> registeredTypeNames)
-        {
-            foreach (var cls in classes)
-            {
-                sb.AppendLine($"static void OAS_RegisterMethods_{cls.SourceName}(asIScriptEngine* Engine)");
-                sb.AppendLine("{");
-                sb.AppendLine("    int Result = 0;");
-                bool anyContent = false;
-
-                // Methods
-                foreach (var func in ScriptFunctions(cls))
-                {
-                    if (!TryBuildAsSignature(func, registeredTypeNames, out string? asSig))
-                        continue;
-
-                    bool isStatic = func.FunctionFlags.HasAnyFlags(EFunctionFlags.Static);
-                    string callConv = isStatic ? "asCALL_CDECL" : "asCALL_CDECL_OBJFIRST";
-
-                    sb.AppendLine($"    Result = Engine->RegisterObjectMethod(\"{cls.SourceName}\", \"{asSig}\",");
-                    sb.AppendLine($"        asFUNCTION(OAS_Gen_{cls.SourceName}::{func.SourceName}), {callConv});");
-                    sb.AppendLine("    check(Result >= 0);");
-                    anyContent = true;
-                }
-
-                // Properties
-                foreach (var prop in ScriptProperties(cls))
-                {
-                    string? asType = MapPropertyAsType(prop, registeredTypeNames);
-                    if (asType == null) continue;
-
-                    sb.AppendLine($"    Result = Engine->RegisterObjectProperty(\"{cls.SourceName}\", \"{asType} {prop.SourceName}\",");
-                    sb.AppendLine($"        asOFFSET({cls.SourceName}, {prop.SourceName}));");
-                    sb.AppendLine("    check(Result >= 0);");
-                    anyContent = true;
-                }
-
-                if (!anyContent)
-                    sb.AppendLine("    (void)Engine; // nothing to register");
-
-                sb.AppendLine("}");
-                sb.AppendLine();
-            }
-        }
-
-        /// <summary>
-        /// Emits the master Bind_Generated() function that wires everything together.
-        /// </summary>
-        private static void WriteMasterFunction(StringBuilder sb, List<UhtClass> classesWithContent)
-        {
-            sb.AppendLine("// Call Bind_Generated() from StartupModule() to register all auto-generated bindings.");
-            sb.AppendLine("// It must be called AFTER all manual bindings (Bind_FString, Bind_UObject, etc.).");
-            sb.AppendLine("static void Bind_Generated(asIScriptEngine* Engine)");
+            sb.AppendLine("void Bind_Generated(asIScriptEngine* Engine)");
             sb.AppendLine("{");
             sb.AppendLine("    check(Engine != nullptr);");
             sb.AppendLine("    OAS_RegisterGeneratedTypes(Engine);");
             foreach (var cls in classesWithContent)
                 sb.AppendLine($"    OAS_RegisterMethods_{cls.SourceName}(Engine);");
             sb.AppendLine("}");
+            sb.AppendLine();
         }
 
         // -------------------------------------------------------------------------
@@ -261,15 +345,20 @@ namespace OtterAngleScriptUbtPlugin
         private static IEnumerable<UhtFunction> ScriptFunctions(UhtClass cls)
         {
             return cls.Functions.Where(f =>
-                f.FunctionFlags.HasAnyFlags(EFunctionFlags.BlueprintCallable | EFunctionFlags.BlueprintPure));
+                f.FunctionFlags.HasAnyFlags(EFunctionFlags.BlueprintCallable | EFunctionFlags.BlueprintPure)
+                && !f.Deprecated && !f.GetDisplayNameText().Contains("Deprecated"));
         }
 
         private static IEnumerable<UhtProperty> ScriptProperties(UhtClass cls)
         {
             return cls.Children
                 .OfType<UhtProperty>()
-                .Where(p => !p.PropertyFlags.HasAnyFlags(EPropertyFlags.Parm)
-                         && p.PropertyFlags.HasAnyFlags(EPropertyFlags.BlueprintVisible | EPropertyFlags.BlueprintReadOnly));
+                .Where(p => !p.PropertyFlags.HasAnyFlags(EPropertyFlags.Parm | EPropertyFlags.Deprecated)
+                         && p.PropertyFlags.HasAnyFlags(EPropertyFlags.BlueprintVisible | EPropertyFlags.BlueprintReadOnly)
+                         && !p.Deprecated && !p.FullName.Contains("_DEPRECATED"))
+                .Where(p => !p.IsEditorOnlyProperty)
+                .Where(p => !(p.Getter != null && p.Setter != null))
+                .Where(p => !(p.MetaData.ContainsKey(UhtNames.BlueprintGetter) && p.MetaData.ContainsKey(UhtNames.BlueprintSetter)));
         }
 
         // -------------------------------------------------------------------------
@@ -440,7 +529,10 @@ namespace OtterAngleScriptUbtPlugin
                         : $"const {p.ScriptStruct.SourceName} &in";
 
                 case UhtEnumProperty p:
-                    return p.Enum.SourceName;
+                    if (p.Enum.CppForm == UhtEnumCppForm.Namespaced)
+                        return $"{p.Enum.SourceName}::Type";
+                    else
+                        return p.Enum.SourceName;
 
                 default:
                     return null;
@@ -516,7 +608,10 @@ namespace OtterAngleScriptUbtPlugin
                         : $"const {p.ScriptStruct.SourceName}&";
 
                 case UhtEnumProperty p:
-                    return p.Enum.SourceName;
+                    if (p.Enum.CppForm == UhtEnumCppForm.Namespaced)
+                        return $"{p.Enum.SourceName}::Type";
+                    else
+                        return p.Enum.SourceName;
 
                 default:
                     return null;

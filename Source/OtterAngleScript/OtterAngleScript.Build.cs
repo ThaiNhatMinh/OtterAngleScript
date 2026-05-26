@@ -1,16 +1,21 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-using UnrealBuildTool;
-using System.IO;
+using EpicGames.Core;
 using Microsoft.Extensions.Logging;
+using System.IO;
+using UnrealBuildTool;
 
 public class OtterAngleScript : ModuleRules
 {
 	public OtterAngleScript(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		
-		PublicIncludePaths.AddRange(
+
+		//DirectoryReference configDirectory = DirectoryReference.Combine(Unreal.EngineDirectory, "Programs/UnrealBuildTool");
+		ConfigHierarchy ini = ConfigCache.ReadHierarchy(ConfigHierarchyType.Game, DirectoryReference.FromFile(Target.ProjectFile), Target.Platform);
+		Logger.LogInformation("Configuring OtterAngleScript module for target {}", ini.FindSection("OtterAngelScript").KeyNames);
+        //ini.GetArray("Plugins", "ScriptSupportedModules", out List<string>? supportedScriptModules);
+        PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...
 			}
@@ -30,6 +35,9 @@ public class OtterAngleScript : ModuleRules
 				"Core",
 				"CoreUObject",
                 "AngleScriptSDK",
+                "EnhancedInput",
+                "AIModule",
+                "Niagara",
                 "Projects"
 				// ... add other public dependencies that you statically link with here ...
 			}
@@ -64,10 +72,11 @@ public class OtterAngleScript : ModuleRules
 		Logger.LogInformation("Linking to asbind20 at " + AsbindSdkPath);
         PublicIncludePaths.Add(AsbindSdkPath);
 
-        // Add the plugin's Intermediate directory so that the .inl file produced by the
-        // OtterAngleScriptUbtPlugin script generator can be found via
-        //   #include "GeneratedAngelScriptBindings.inl"
-        // The file is committed by UHT before the C++ compiler runs, so it is always
+        // Add the plugin's Intermediate directory so that the per-class headers and master
+        // header produced by the OtterAngleScriptUbtPlugin script generator can be found via
+        //   #include "GeneratedAngelScriptBindings.h"
+        //   #include "Bind_<ClassName>.h"
+        // The files are committed by UHT before the C++ compiler runs, so they are always
         // present when this module is compiled (after the first UHT pass).
         string GeneratedIncludePath = Path.GetFullPath(Path.Combine(ModuleDirectory, "../../Intermediate"));
         PrivateIncludePaths.Add(GeneratedIncludePath);
