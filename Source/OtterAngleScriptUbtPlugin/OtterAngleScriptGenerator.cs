@@ -182,17 +182,12 @@ namespace OtterAngleScriptUbtPlugin
             UhtClass cls,
             HashSet<string> registeredTypeNames)
         {
-            if (!cls.Resolve(UhtResolvePhase.Final))
-            {
-                _factory.Session.LogError($"Failed to resolve class {cls.SourceName} - skipping generation.");
-                return;
-            }
-
-            sb.AppendLine($"#include \"Bind_{cls.SourceName}.h\"");
+            sb.AppendLine($"#include \"Bind_{cls.SourceName}.oas.gen.h\"");
             sb.AppendLine($"#include \"{cls.HeaderFile.IncludeFilePath}\"");
             sb.AppendLine();
 
             // Wrapper namespace – only emitted when at least one function is mappable.
+            /*
             var wrapperLines = new List<string>();
             foreach (var func in ScriptFunctions(cls))
             {
@@ -213,7 +208,7 @@ namespace OtterAngleScriptUbtPlugin
                 sb.AppendLine("}");
                 sb.AppendLine();
             }
-
+            */
             // Registration function definition.
             sb.AppendLine($"void OAS_RegisterMethods_{cls.SourceName}(asIScriptEngine* Engine)");
             sb.AppendLine("{");
@@ -226,12 +221,26 @@ namespace OtterAngleScriptUbtPlugin
                     continue;
 
                 bool isStatic = func.FunctionFlags.HasAnyFlags(EFunctionFlags.Static);
-                string callConv = isStatic ? "asCALL_CDECL" : "asCALL_CDECL_OBJFIRST";
+                if (isStatic)
+                {
+                    sb.AppendLine($"    Result = Engine->SetDefaultNamespace(\"{cls.SourceName}\"); check(Result >= 0);");
+                    sb.AppendLine($"    Result = Engine->RegisterGlobalFunction(\"{asSig}\",");
+                    sb.AppendLine($"        asFUNCTION({cls.SourceName}::{func.SourceName}), asCALL_CDECL);");
+                    sb.AppendLine("    check(Result >= 0);");
+                    anyContent = true;
+                }
+                else
+                {
+                    if (!TryBuildAsMethodSignature(func, registeredTypeNames, out string? asMethodSig))
+                        continue;
+                    string callConv = "asCALL_THISCALL";
 
-                sb.AppendLine($"    Result = Engine->RegisterObjectMethod(\"{cls.SourceName}\", \"{asSig}\",");
-                sb.AppendLine($"        asFUNCTION(OAS_Gen_{cls.SourceName}::{func.SourceName}), {callConv});");
-                sb.AppendLine("    check(Result >= 0);");
-                anyContent = true;
+                    sb.AppendLine($"    Result = Engine->RegisterObjectMethod(\"{cls.SourceName}\", \"{asSig}\",");
+                    //sb.AppendLine($"        asFUNCTION(OAS_Gen_{cls.SourceName}::{func.SourceName}), {callConv});");
+                    sb.AppendLine($"        asMETHODPR({cls.SourceName}, {func.SourceName}, {asMethodSig}), {callConv});");
+                    sb.AppendLine("    check(Result >= 0);");
+                    anyContent = true;
+                }
             }
 
             foreach (var prop in ScriptProperties(cls))
@@ -280,7 +289,7 @@ namespace OtterAngleScriptUbtPlugin
             sb.AppendLine();
 
             foreach (var cls in classesWithContent)
-                sb.AppendLine($"#include \"Bind_{cls.SourceName}.h\"");
+                sb.AppendLine($"#include \"Bind_{cls.SourceName}.oas.gen.h\"");
 
             sb.AppendLine();
             sb.AppendLine("// Registers all auto-generated UClass reference types with the AngelScript engine.");
@@ -300,7 +309,7 @@ namespace OtterAngleScriptUbtPlugin
             List<UhtClass> allClasses,
             List<UhtClass> classesWithContent)
         {
-            sb.AppendLine("#include \"GeneratedAngelScriptBindings.h\"");
+            sb.AppendLine("#include \"OtterAngelScriptBindings.gen.h\"");
             sb.AppendLine();
 
             // Forward-declare every collected UClass so that parameter / return-type
@@ -351,6 +360,7 @@ namespace OtterAngleScriptUbtPlugin
             return cls.Functions.Where(f =>
                 f.FunctionFlags.HasAnyFlags(EFunctionFlags.BlueprintCallable | EFunctionFlags.BlueprintPure)
                 && !f.Deprecated && !f.GetDisplayNameText().Contains("Deprecated"));
+                //.Where(f => !f.FunctionFlags.HasFlag(EFunctionFlags.EditorOnly)); // TODO: consider allowing editor-only functions if the plugin is used in an editor build configuration.
         }
 
         private static IEnumerable<UhtProperty> ScriptProperties(UhtClass cls)
@@ -422,10 +432,7 @@ namespace OtterAngleScriptUbtPlugin
         /// Tries to build an AngelScript method signature string for RegisterObjectMethod.
         /// Returns false if any parameter/return type cannot be mapped.
         /// </summary>
-        private bool TryBuildAsSignature(
-            UhtFunction func,
-            HashSet<string> registeredTypeNames,
-            out string? asSignature)
+        private bool TryBuildAsSignature(UhtFunction func, HashSet<string> registeredTypeNames, out string? asSignature)
         {
             asSignature = null;
 
@@ -446,6 +453,33 @@ namespace OtterAngleScriptUbtPlugin
             bool isConst = func.FunctionFlags.HasAnyFlags(EFunctionFlags.Const);
             string constSuffix = isConst ? " const" : "";
             asSignature = $"{asRet} {func.SourceName}({string.Join(", ", paramParts)}){constSuffix}";
+            return true;
+        }
+
+        private bool TryBuildAsMethodSignature(UhtFunction func, HashSet<string> registeredTypeNames, out string? asSignature)
+        {
+            asSignature = null;
+            bool IsConstFunction = func.FunctionFlags.HasFlag(EFunctionFlags.Const);
+
+            var returnProp = GetReturnProperty(func);
+            string asRet = returnProp != null
+                ? MapPropertyCppType(returnProp, false, registeredTypeNames) ?? ""
+                : "void";
+            if (returnProp != null)
+                _factory.Session.LogInfo($"Function {func.GetDisplayNameText()} has an unmappable parameter {returnProp.SourceName} of type {returnProp.PropertyFlags.ToString()}. Skipping.");
+
+            if (returnProp != null && asRet == "")
+                return false;
+            var paramParts = new List<string>();
+            foreach (var p in GetParamProperties(func))
+            {
+                string? asType = MapPropertyCppType(p, true, registeredTypeNames);
+                if (asType == null)
+                    return false;
+                paramParts.Add($"{asType}");
+            }
+            bool isConst = func.FunctionFlags.HasAnyFlags(EFunctionFlags.Const);
+            asSignature = $"({string.Join(", ", paramParts)}){(IsConstFunction ? " const" : "")}, {asRet}";
             return true;
         }
 
@@ -480,7 +514,8 @@ namespace OtterAngleScriptUbtPlugin
         {
             bool isReturn = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReturnParm);
             bool isOut = !isReturn && property.PropertyFlags.HasAnyFlags(EPropertyFlags.OutParm);
-
+            bool isRef = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReferenceParm);
+            bool isConst = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ConstParm);
             switch (property)
             {
                 case UhtBoolProperty:
@@ -509,21 +544,22 @@ namespace OtterAngleScriptUbtPlugin
 
                 case UhtStrProperty:
                     if (isReturn) return "FString";
-                    return isOut ? "FString &out" : "const FString &in";
+                    return isOut ? "FString&" : $"{(isConst ? "const" : "")} FString{(isRef ? "&in" : "")}";
 
                 case UhtNameProperty:
                     if (isReturn) return "FName";
-                    return isOut ? "FName &out" : "const FName &in";
+                    return isOut ? "FName&" : $"{(isConst ? "const" : "")} FName{(isRef ? "&in" : "")}";
 
                 case UhtTextProperty:
                     if (isReturn) return "FText";
-                    return isOut ? "FText &out" : "const FText &in";
+                    return isOut ? "FText&" : $"{(isConst ? "const" : "")} FText{(isRef ? "&in" : "")}";
+                case UhtClassProperty uclass:
+                    if (uclass.MetaClass == null)
+                        return null; // unsupported: TSubclassOf without a specified base class
+                    return $"TSubclassOf<class {uclass.MetaClass.SourceName}>";
 
                 case UhtObjectProperty p when p.Class != null:
-                    return $"{p.Class.SourceName}@";
-
-                case UhtClassProperty:
-                    return "UClass@";
+                    return $"{p.Class.SourceName}";
 
                 case UhtStructProperty p
                         when registeredTypeNames.Contains(p.ScriptStruct.SourceName):
@@ -557,9 +593,9 @@ namespace OtterAngleScriptUbtPlugin
             HashSet<string> registeredTypeNames)
         {
             bool isReturn = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReturnParm);
-            bool isOut = isParam && !isReturn
-                && property.PropertyFlags.HasAnyFlags(EPropertyFlags.OutParm);
             bool isConst = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ConstParm);
+            bool isOut = !isReturn && !isConst && property.PropertyFlags.HasAnyFlags(EPropertyFlags.OutParm);
+            bool isRef = isOut || property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReferenceParm);
 
             switch (property)
             {
@@ -589,29 +625,30 @@ namespace OtterAngleScriptUbtPlugin
 
                 case UhtStrProperty:
                     if (!isParam) return "FString";
-                    return isOut ? "FString&" : "const FString&";
+                    return isOut ? "FString&" : $"{(isConst ? "const" : "")} FString{(isRef ? "&" : "")}";
 
                 case UhtNameProperty:
                     if (!isParam) return "FName";
-                    return isOut ? "FName&" : "const FName&";
-
+                    return isOut ? "FName&" : $"{(isConst ? "const" : "")} FName{(isRef ? "&" : "")}";
                 case UhtTextProperty:
                     if (!isParam) return "FText";
-                    return isOut ? "FText&" : "const FText&";
+                    return isOut ? "FText&" : $"{(isConst ? "const" : "")} FText{(isRef ? "&" : "")}";
+
+                case UhtClassProperty uclass:
+                    if (uclass.MetaClass == null)
+                        return null; // unsupported: TSubclassOf without a specified base class
+                    return $"TSubclassOf<class {uclass.MetaClass.SourceName}>";
 
                 case UhtObjectProperty p when p.Class != null:
                     return $"{p.Class.SourceName}*";
-
-                case UhtClassProperty:
-                    return "UClass*";
 
                 case UhtStructProperty p
                         when registeredTypeNames.Contains(p.ScriptStruct.SourceName):
                     if (!isParam) return p.ScriptStruct.SourceName;
                     return isOut
                         ? $"{p.ScriptStruct.SourceName}&"
-                        : $"const {p.ScriptStruct.SourceName}&";
-
+                        //: $"const {p.ScriptStruct.SourceName}&";
+                          : $"{(isConst ? "const " : "")}{p.ScriptStruct.SourceName}{(isRef ? "&" : "")}";
                 case UhtEnumProperty p:
                     if (p.Enum.CppForm == UhtEnumCppForm.Namespaced)
                         return $"{p.Enum.SourceName}::Type";
