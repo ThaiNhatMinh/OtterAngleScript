@@ -10,7 +10,7 @@ public class OtterAngleScript : ModuleRules
 	public OtterAngleScript(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-
+		
 		//DirectoryReference configDirectory = DirectoryReference.Combine(Unreal.EngineDirectory, "Programs/UnrealBuildTool");
 		ConfigHierarchy ini = ConfigCache.ReadHierarchy(ConfigHierarchyType.Game, DirectoryReference.FromFile(Target.ProjectFile), Target.Platform);
 		Logger.LogInformation("Configuring OtterAngleScript module for target {}", ini.FindSection("OtterAngelScript").KeyNames);
@@ -33,11 +33,9 @@ public class OtterAngleScript : ModuleRules
 			new string[]
 			{
 				"Core",
-				"CoreUObject",
+                "CoreUObject",
                 "AngleScriptSDK",
-                "EnhancedInput",
                 "AIModule",
-                "Niagara",
                 "Projects"
 				// ... add other public dependencies that you statically link with here ...
 			}

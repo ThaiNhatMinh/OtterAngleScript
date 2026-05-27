@@ -9,6 +9,7 @@ using EpicGames.Core;
 using EpicGames.UHT.Tables;
 using EpicGames.UHT.Types;
 using EpicGames.UHT.Utils;
+using EpicGames.UHT.Exporters.CodeGen;
 
 namespace OtterAngleScriptUbtPlugin
 {
@@ -66,6 +67,16 @@ namespace OtterAngleScriptUbtPlugin
             "NetCore", "CoreUObject", "Engine"
         };
 
+        Dictionary<string, Dictionary<string, string>> CustomCppSignature = new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal)
+        {
+            { "UGameplayStatics" , new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                { "DeprojectScreenToWorld", "const APlayerController* , const FVector2D& , FVector& , FVector&" },
+                { "DeprojectSceneCaptureToWorld", "const ASceneCapture2D* , const FVector2D& , FVector& , FVector&" },
+                { "ProjectWorldToScreen", "const APlayerController* , const FVector& , FVector2D& , bool" }
+            }}
+        };
+
         public OtterAngleScriptGenerator(IUhtExportFactory factory)
         {
             _factory = factory;
@@ -100,10 +111,7 @@ namespace OtterAngleScriptUbtPlugin
                 .Where(c => !c.Deprecated)
                 .OrderBy(c => c.SourceName)
                 .ToList();
-            foreach (var package in packages)
-            {
-                _factory.Session.LogInfo("Package {0}", package.FullName);
-            }
+
             if (allClasses.Count == 0)
                 return;
 
@@ -185,6 +193,8 @@ namespace OtterAngleScriptUbtPlugin
             sb.AppendLine($"#include \"Bind_{cls.SourceName}.oas.gen.h\"");
             sb.AppendLine($"#include \"{cls.HeaderFile.IncludeFilePath}\"");
             sb.AppendLine();
+            sb.AppendLine("\r\n#ifdef _MSC_VER\r\n#pragma warning(disable:4191 4996)\r\n#endif");
+            sb.AppendLine();
 
             // Wrapper namespace – only emitted when at least one function is mappable.
             /*
@@ -215,47 +225,68 @@ namespace OtterAngleScriptUbtPlugin
             sb.AppendLine("    int Result = 0;");
             bool anyContent = false;
 
-            foreach (var func in ScriptFunctions(cls))
+            var staticFuncs = ScriptFunctions(cls).Where(f => f.FunctionFlags.HasFlag(EFunctionFlags.Static)).ToList();
+            if (staticFuncs.Count > 0)
             {
-                if (!TryBuildAsSignature(func, registeredTypeNames, out string? asSig))
-                    continue;
-
-                bool isStatic = func.FunctionFlags.HasAnyFlags(EFunctionFlags.Static);
-                if (isStatic)
+                sb.AppendLine("    // --------------STATIC FUNCTIONS--------------");
+                sb.AppendLine($"    Result = Engine->SetDefaultNamespace(\"{cls.SourceName}\"); check(Result >= 0);");
+                foreach (var func in staticFuncs)
                 {
-                    sb.AppendLine($"    Result = Engine->SetDefaultNamespace(\"{cls.SourceName}\"); check(Result >= 0);");
+                    if (!TryBuildAsSignature(func, registeredTypeNames, out string? asSig))
+                    {
+                        _factory.Session.LogInfo($"OAS: skipping static function {cls.SourceName}::{func.SourceName} {func.FunctionFlags} since its signature contains unsupported types.");
+                        continue;
+                    }
+
+                    if (!TryBuildAsMethodSignature(cls, func, registeredTypeNames, out string? asMethodSig))
+                        continue;
                     sb.AppendLine($"    Result = Engine->RegisterGlobalFunction(\"{asSig}\",");
-                    sb.AppendLine($"        asFUNCTION({cls.SourceName}::{func.SourceName}), asCALL_CDECL);");
+                    sb.AppendLine($"        asFUNCTIONPR({cls.SourceName}::{func.SourceName}, {asMethodSig}), asCALL_CDECL);");
                     sb.AppendLine("    check(Result >= 0);");
+                    sb.AppendLine();
                     anyContent = true;
                 }
-                else
-                {
-                    if (!TryBuildAsMethodSignature(func, registeredTypeNames, out string? asMethodSig))
-                        continue;
-                    string callConv = "asCALL_THISCALL";
+                sb.AppendLine($"    Result = Engine->SetDefaultNamespace(\"\"); check(Result >= 0);");
+                sb.AppendLine();
+                sb.AppendLine();
+            }
 
-                    sb.AppendLine($"    Result = Engine->RegisterObjectMethod(\"{cls.SourceName}\", \"{asSig}\",");
-                    //sb.AppendLine($"        asFUNCTION(OAS_Gen_{cls.SourceName}::{func.SourceName}), {callConv});");
-                    sb.AppendLine($"        asMETHODPR({cls.SourceName}, {func.SourceName}, {asMethodSig}), {callConv});");
-                    sb.AppendLine("    check(Result >= 0);");
-                    anyContent = true;
+            var nonStaticFuncs = ScriptFunctions(cls).Where(f => !f.FunctionFlags.HasFlag(EFunctionFlags.Static)).ToList();
+            if (nonStaticFuncs.Count > 0)
+            {
+                sb.AppendLine("    // --------------NON-STATIC FUNCTIONS--------------");
+                string callConv = "asCALL_THISCALL";
+                foreach (var func in nonStaticFuncs)
+                {
+                    if (!TryBuildAsSignature(func, registeredTypeNames, out string? asSig))
+                        continue;
+                    if (func.FunctionFlags.HasAnyFlags(EFunctionFlags.Protected | EFunctionFlags.Private))
+                    {
+                        // TODO: support non-public functions by generating appropriate wrapper functions.  For now we skip them since the generated code won't be able to access them directly.
+                    }
+                    else
+                    {
+                        if (!TryBuildAsMethodSignature(cls, func, registeredTypeNames, out string? asMethodSig))
+                            continue;
+
+                        sb.AppendLine($"    Result = Engine->RegisterObjectMethod(\"{cls.SourceName}\", \"{asSig}\",");
+                        sb.AppendLine($"        asMETHODPR({cls.SourceName}, {func.SourceName}, {asMethodSig}), {callConv});");
+                        sb.AppendLine("    check(Result >= 0);");
+                        sb.AppendLine();
+                        anyContent = true;
+                    }
                 }
             }
 
             foreach (var prop in ScriptProperties(cls))
             {
-                if (prop.SourceName == "NetCullDistanceSquared")
-                {
-                    _factory.Session.LogWarning($"Property {prop.Getter}::{prop.Setter} {prop.PropertyExportFlags.HasAnyFlags(UhtPropertyExportFlags.GetterFound | UhtPropertyExportFlags.GetterSpecified)} is skipped due to special handling.");
-                }
                 if (prop.IsBitfield)
                 {
                     // TODO: support bitfield properties by generating appropriate wrapper functions.
                 }
                 else if (prop.PropertyFlags.HasAnyFlags(EPropertyFlags.NativeAccessSpecifierProtected | EPropertyFlags.NativeAccessSpecifierPrivate))
                 {
-                    // Skip protected properties since they won't be accessible from the generated wrapper functions.
+                    // TODO: support non-public properties by generating appropriate wrapper functions.  For now we skip them since the generated code won't be able to access them directly.
                 }
                 else
                 {
@@ -359,8 +390,11 @@ namespace OtterAngleScriptUbtPlugin
         {
             return cls.Functions.Where(f =>
                 f.FunctionFlags.HasAnyFlags(EFunctionFlags.BlueprintCallable | EFunctionFlags.BlueprintPure)
-                && !f.Deprecated && !f.GetDisplayNameText().Contains("Deprecated"));
+                && !f.Deprecated && !f.GetDisplayNameText().Contains("Deprecated"))
                 //.Where(f => !f.FunctionFlags.HasFlag(EFunctionFlags.EditorOnly)); // TODO: consider allowing editor-only functions if the plugin is used in an editor build configuration.
+                .Where(f => f.FunctionExportFlags.HasFlag(UhtFunctionExportFlags.RequiredAPI)) // Can not bind function that are not exported.
+                .Where(f => !f.FunctionExportFlags.HasFlag(UhtFunctionExportFlags.CustomThunk))
+                ;
         }
 
         private static IEnumerable<UhtProperty> ScriptProperties(UhtClass cls)
@@ -440,13 +474,18 @@ namespace OtterAngleScriptUbtPlugin
             string asRet = returnProp != null
                 ? MapPropertyAsType(returnProp, registeredTypeNames) ?? ""
                 : "void";
-            if (returnProp != null && asRet == "") return false;
+            if (returnProp != null && asRet == "")
+                return false;
 
             var paramParts = new List<string>();
             foreach (var p in GetParamProperties(func))
             {
                 string? asType = MapPropertyAsType(p, registeredTypeNames);
-                if (asType == null) return false;
+                if (asType == null)
+                {
+                    _factory.Session.LogInfo($"skipping function {func.SourceName} since parameter {p.SourceName} has unsupported type.");
+                    return false;
+                }
                 paramParts.Add($"{asType} {p.SourceName}");
             }
 
@@ -456,7 +495,7 @@ namespace OtterAngleScriptUbtPlugin
             return true;
         }
 
-        private bool TryBuildAsMethodSignature(UhtFunction func, HashSet<string> registeredTypeNames, out string? asSignature)
+        private bool TryBuildAsMethodSignature(UhtClass uclass, UhtFunction func, HashSet<string> registeredTypeNames, out string? asSignature)
         {
             asSignature = null;
             bool IsConstFunction = func.FunctionFlags.HasFlag(EFunctionFlags.Const);
@@ -465,21 +504,27 @@ namespace OtterAngleScriptUbtPlugin
             string asRet = returnProp != null
                 ? MapPropertyCppType(returnProp, false, registeredTypeNames) ?? ""
                 : "void";
-            if (returnProp != null)
-                _factory.Session.LogInfo($"Function {func.GetDisplayNameText()} has an unmappable parameter {returnProp.SourceName} of type {returnProp.PropertyFlags.ToString()}. Skipping.");
-
             if (returnProp != null && asRet == "")
                 return false;
-            var paramParts = new List<string>();
-            foreach (var p in GetParamProperties(func))
+            string cppMethodSignature;
+            if (GetCustomCppSignature(uclass, func) is string customSig)
             {
-                string? asType = MapPropertyCppType(p, true, registeredTypeNames);
-                if (asType == null)
-                    return false;
-                paramParts.Add($"{asType}");
+                cppMethodSignature = customSig;
+            }
+            else
+            {
+                var paramParts = new List<string>();
+                foreach (var p in GetParamProperties(func))
+                {
+                    string? asType = MapPropertyCppType(p, true, registeredTypeNames);
+                    if (asType == null)
+                        return false;
+                    paramParts.Add($"{asType}");
+                }
+                cppMethodSignature = string.Join(", ", paramParts);
             }
             bool isConst = func.FunctionFlags.HasAnyFlags(EFunctionFlags.Const);
-            asSignature = $"({string.Join(", ", paramParts)}){(IsConstFunction ? " const" : "")}, {asRet}";
+            asSignature = $"({cppMethodSignature}){(IsConstFunction ? " const" : "")}, {asRet}";
             return true;
         }
 
@@ -587,76 +632,136 @@ namespace OtterAngleScriptUbtPlugin
         /// Maps a UHT property to a C++ type declaration string.
         /// Returns null if the type is not supported.
         /// </summary>
-        private static string? MapPropertyCppType(
+        private string? MapPropertyCppType(
             UhtProperty property,
             bool isParam,
             HashSet<string> registeredTypeNames)
         {
-            bool isReturn = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReturnParm);
-            bool isConst = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ConstParm);
-            bool isRef = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReferenceParm);
+            StringBuilder stringBuilder = new StringBuilder();
+            AppendFullDecl(property, stringBuilder, true);
+            property.Resolve(UhtResolvePhase.Final);
 
-            switch (property)
+            var Result = stringBuilder.ToString();
+            return Result;
+
+            //bool isReturn = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReturnParm);
+            //bool isConst = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ConstParm);
+            //bool isRef = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReferenceParm);
+
+            //switch (property)
+            //{
+            //    case UhtBoolProperty:
+            //        return isRef ? "bool&" : "bool";
+
+            //    case UhtByteProperty { Enum: null }:
+            //        return isRef ? "uint8&" : "uint8";
+
+            //    case UhtIntProperty:
+            //        return isRef ? "int32&" : "int32";
+
+            //    case UhtInt64Property:
+            //        return isRef ? "int64&" : "int64";
+
+            //    case UhtUInt32Property:
+            //        return isRef ? "uint32&" : "uint32";
+
+            //    case UhtUInt64Property:
+            //        return isRef ? "uint64&" : "uint64";
+
+            //    case UhtFloatProperty:
+            //        return isRef ? "float&" : "float";
+
+            //    case UhtDoubleProperty:
+            //        return isRef ? "double&" : "double";
+
+            //    case UhtStrProperty:
+            //        if (!isParam) return "FString";
+            //        return isRef ? "FString&" : $"{(isConst ? "const" : "")} FString{(isRef ? "&" : "")}";
+
+            //    case UhtNameProperty:
+            //        if (!isParam) return "FName";
+            //        return isRef ? "FName&" : $"{(isConst ? "const" : "")} FName{(isRef ? "&" : "")}";
+            //    case UhtTextProperty:
+            //        if (!isParam) return "FText";
+            //        return isRef ? "FText&" : $"{(isConst ? "const" : "")} FText{(isRef ? "&" : "")}";
+
+            //    case UhtClassProperty uclass:
+            //        if (uclass.MetaClass == null)
+            //            return null; // unsupported: TSubclassOf without a specified base class
+            //        return $"TSubclassOf<class {uclass.MetaClass.SourceName}>";
+
+            //    case UhtObjectProperty p when p.Class != null:
+            //        return $"{p.Class.SourceName}*";
+
+            //    case UhtStructProperty p
+            //            when registeredTypeNames.Contains(p.ScriptStruct.SourceName):
+            //        if (!isParam) return p.ScriptStruct.SourceName;
+            //        return isRef
+            //            ? $"{p.ScriptStruct.SourceName}&"
+            //            //: $"const {p.ScriptStruct.SourceName}&";
+            //              : $"{(isConst ? "const " : "")}{p.ScriptStruct.SourceName}{(isRef ? "&" : "")}";
+            //    case UhtEnumProperty p:
+            //        if (p.Enum.CppForm == UhtEnumCppForm.Namespaced)
+            //            return $"{p.Enum.SourceName}::Type";
+            //        else
+            //            return p.Enum.SourceName;
+
+            //    default:
+            //        return null;
+            //}
+        }
+        public StringBuilder AppendFullDecl(UhtProperty property, StringBuilder builder, bool skipParameterName = false)
+        {
+            UhtPropertyCaps caps = property.PropertyCaps;
+
+            bool isInterfaceProp = property is UhtInterfaceProperty;
+                
+            bool passCppArgsByRef = caps.HasAnyFlags(UhtPropertyCaps.PassCppArgsByRef);
+            bool isConstParam = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ConstParm) || property.RefQualifier.HasFlag(UhtPropertyRefQualifier.ConstRef);
+            bool isReturnParm = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReturnParm);
+
+            bool shouldHaveRef = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReferenceParm | EPropertyFlags.OutParm) && !isReturnParm || property.RefQualifier.HasFlag(UhtPropertyRefQualifier.ConstRef);
+
+            if (isConstParam)
             {
-                case UhtBoolProperty:
-                    return isRef ? "bool&" : "bool";
-
-                case UhtByteProperty { Enum: null }:
-                    return isRef ? "uint8&" : "uint8";
-
-                case UhtIntProperty:
-                    return isRef ? "int32&" : "int32";
-
-                case UhtInt64Property:
-                    return isRef ? "int64&" : "int64";
-
-                case UhtUInt32Property:
-                    return isRef ? "uint32&" : "uint32";
-
-                case UhtUInt64Property:
-                    return isRef ? "uint64&" : "uint64";
-
-                case UhtFloatProperty:
-                    return isRef ? "float&" : "float";
-
-                case UhtDoubleProperty:
-                    return isRef ? "double&" : "double";
-
-                case UhtStrProperty:
-                    if (!isParam) return "FString";
-                    return isRef ? "FString&" : $"{(isConst ? "const" : "")} FString{(isRef ? "&" : "")}";
-
-                case UhtNameProperty:
-                    if (!isParam) return "FName";
-                    return isRef ? "FName&" : $"{(isConst ? "const" : "")} FName{(isRef ? "&" : "")}";
-                case UhtTextProperty:
-                    if (!isParam) return "FText";
-                    return isRef ? "FText&" : $"{(isConst ? "const" : "")} FText{(isRef ? "&" : "")}";
-
-                case UhtClassProperty uclass:
-                    if (uclass.MetaClass == null)
-                        return null; // unsupported: TSubclassOf without a specified base class
-                    return $"TSubclassOf<class {uclass.MetaClass.SourceName}>";
-
-                case UhtObjectProperty p when p.Class != null:
-                    return $"{p.Class.SourceName}*";
-
-                case UhtStructProperty p
-                        when registeredTypeNames.Contains(p.ScriptStruct.SourceName):
-                    if (!isParam) return p.ScriptStruct.SourceName;
-                    return isRef
-                        ? $"{p.ScriptStruct.SourceName}&"
-                        //: $"const {p.ScriptStruct.SourceName}&";
-                          : $"{(isConst ? "const " : "")}{p.ScriptStruct.SourceName}{(isRef ? "&" : "")}";
-                case UhtEnumProperty p:
-                    if (p.Enum.CppForm == UhtEnumCppForm.Namespaced)
-                        return $"{p.Enum.SourceName}::Type";
-                    else
-                        return p.Enum.SourceName;
-
-                default:
-                    return null;
+                builder.Append("const ");
             }
+
+            property.AppendText(builder, UhtPropertyTextType.GenericFunctionArgOrRetVal);
+
+            //bool fromConstClass = false;
+            //bool constAtTheEnd = fromConstClass || (isConstParam && shouldHaveRef);
+            //if (constAtTheEnd)
+            //{
+            //    builder.Append(" const");
+            //}
+
+            if (shouldHaveRef)
+            {
+                builder.Append('&');
+            }
+
+            builder.Append(' ');
+            if (!skipParameterName)
+            {
+                builder.Append(property.SourceName);
+            }
+
+            if (property.ArrayDimensions != null)
+            {
+                builder.Append('[').Append(property.ArrayDimensions).Append(']');
+            }
+            return builder;
+        }
+
+        string? GetCustomCppSignature(UhtClass cls, UhtFunction func)
+        {
+            if (CustomCppSignature.TryGetValue(cls.SourceName, out var funcSigs) &&
+                funcSigs.TryGetValue(func.SourceName, out var sig))
+            {
+                return sig;
+            }
+            return null;
         }
     }
 }
