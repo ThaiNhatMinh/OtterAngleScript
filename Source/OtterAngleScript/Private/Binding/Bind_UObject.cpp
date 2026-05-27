@@ -6,6 +6,11 @@
 #include "UObject/Class.h"
 #include "UObject/Object.h"
 #include "UObject/Package.h"
+
+#ifdef _MSC_VER
+#pragma warning(disable:4191 4996)
+#endif
+
 #include "angelscript.h"
 
 namespace
@@ -163,6 +168,7 @@ void Bind_UObject(asIScriptEngine* Engine)
 	REGISTER_METHOD(UObject, "bool IsTemplate() const", asFUNCTION(UObject_IsTemplate), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UObject, "bool IsDefaultSubobject() const", asFUNCTION(UObject_IsDefaultSubobject), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UObject, "bool IsAsset() const", asFUNCTION(UObject_IsAsset), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(UObject, "bool IsAsset() const", asMETHOD(UObject, IsAsset), asCALL_THISCALL);
 
 #if WITH_ENGINE
 	REGISTER_METHOD(UObject, "UObject@ GetWorld() const", asFUNCTION(UObject_GetWorld), asCALL_CDECL_OBJFIRST);

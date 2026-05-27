@@ -55,12 +55,16 @@ namespace OtterAngleScriptUbtPlugin
         /// </summary>
         private static readonly HashSet<string> ManuallyBoundTypes = new(StringComparer.Ordinal)
         {
-            "UObject", "UClass",
+            "UObject", "UClass", "FLinearColor", "FColor",
             "FString", "FName", "FText",
             "FVector", "FVector2D", "FRotator", "FQuat",
             "FTransform", "FPlane", "FBox",
             "FHitResult", "FTimerHandle", "FLatentActionInfo",
-            "FActorInstanceHandle",
+            "FActorInstanceHandle", "FMatrix"
+        };
+        private static readonly HashSet<string> SkipStructs = new(StringComparer.Ordinal)
+        {
+            "FAudioBasedVibrationData", "FSoundClassProperties", "FSpecularProfileStruct", "FActorDesc"
         };
         private static readonly HashSet<string> BuildModules = new(StringComparer.Ordinal)
         {
@@ -122,9 +126,11 @@ namespace OtterAngleScriptUbtPlugin
                 .Where(s => !s.HeaderFile.FilePath.Contains("Tests"))
                 .Where(s => !s.HeaderFile.FilePath.Contains("Internal"))
                 .Where(s => !s.HeaderFile.FilePath.Contains("Private"))
+                .Where(s => !s.HeaderFile.FilePath.Contains("NoExportTypes.h"))
                 .Where(s => !s.SourceName.Contains("Deprecated"))
+                .Where(s => !SkipStructs.Contains(s.SourceName))
+                .Where(s => !s.Deprecated)
                 .ToList();
-
             if (allClasses.Count == 0 && allStructs.Count == 0)
                 return;
 
@@ -201,7 +207,7 @@ namespace OtterAngleScriptUbtPlugin
         {
             sb.AppendLine("#pragma once");
             sb.AppendLine();
-            sb.AppendLine("#include \"angelscript.h\"");
+            sb.AppendLine("class asIScriptEngine;");
             sb.AppendLine();
             foreach (var cls in group.Classes)
                 sb.AppendLine($"void OAS_RegisterMethods_{cls.SourceName}(asIScriptEngine* Engine);");
@@ -228,6 +234,7 @@ namespace OtterAngleScriptUbtPlugin
             sb.AppendLine("#ifdef _MSC_VER");
             sb.AppendLine("#pragma warning(disable:4191 4996)");
             sb.AppendLine("#endif");
+            sb.AppendLine("#include \"angelscript.h\"");
             sb.AppendLine();
 
             foreach (var cls in group.Classes)
@@ -326,9 +333,9 @@ namespace OtterAngleScriptUbtPlugin
         private static void WriteStructHelpers(StringBuilder sb, UhtScriptStruct s)
         {
             string name = s.SourceName;
-            sb.AppendLine($"static void {name}_DefaultConstruct({name}* Memory) {{ new (Memory) {name}(); }}");
-            sb.AppendLine($"static void {name}_CopyConstruct(const {name}& Other, {name}* Memory) {{ new (Memory) {name}(Other); }}");
-            sb.AppendLine($"static void {name}_Destruct({name}* Memory) {{ Memory->~{name}(); }}");
+            sb.AppendLine($"static void {name}_DefaultConstruct({name}* InMemory) {{ new (InMemory) {name}(); }}");
+            sb.AppendLine($"static void {name}_CopyConstruct(const {name}& Other, {name}* InMemory) {{ new (InMemory) {name}(Other); }}");
+            sb.AppendLine($"static void {name}_Destruct({name}* InMemory) {{ InMemory->~{name}(); }}");
             sb.AppendLine($"static {name}& {name}_Assign({name}& Value, const {name}& Other) {{ Value = Other; return Value; }}");
             sb.AppendLine();
         }
@@ -363,7 +370,12 @@ namespace OtterAngleScriptUbtPlugin
             foreach (var prop in ScriptStructProperties(s))
             {
                 if (prop.IsBitfield)
+                    // TODO: support bitfield properties via wrapper functions.
                     continue;
+                if (prop.SourceName == "Category")
+                {
+                    _factory.Session.LogInfo($"OAS: skipping struct property {name}::{prop.SourceName} {prop.PropertyFlags}");
+                }
                 if (prop.PropertyFlags.HasAnyFlags(EPropertyFlags.NativeAccessSpecifierProtected | EPropertyFlags.NativeAccessSpecifierPrivate))
                     continue;
 
@@ -388,11 +400,8 @@ namespace OtterAngleScriptUbtPlugin
         {
             sb.AppendLine("#pragma once");
             sb.AppendLine();
-            sb.AppendLine("#include \"angelscript.h\"");
-            sb.AppendLine();
 
-            foreach (var group in groups)
-                sb.AppendLine($"#include \"Bind_{group.FileStem}.oas.gen.h\"");
+            sb.AppendLine("class asIScriptEngine;");
 
             sb.AppendLine();
             sb.AppendLine("// Registers all auto-generated UClass reference types and USTRUCT value types.");
@@ -414,6 +423,10 @@ namespace OtterAngleScriptUbtPlugin
             List<HeaderFileGroup> groups)
         {
             sb.AppendLine("#include \"OtterAngelScriptBindings.gen.h\"");
+            sb.AppendLine();
+
+            foreach (var group in groups)
+                sb.AppendLine($"#include \"Bind_{group.FileStem}.oas.gen.h\"");
             sb.AppendLine();
 
             sb.AppendLine("void OAS_RegisterGeneratedTypes(asIScriptEngine* Engine)");
@@ -507,7 +520,8 @@ namespace OtterAngleScriptUbtPlugin
                 .Where(p => !p.PropertyFlags.HasAnyFlags(EPropertyFlags.Parm | EPropertyFlags.Deprecated)
                          && p.PropertyFlags.HasAnyFlags(EPropertyFlags.BlueprintVisible | EPropertyFlags.BlueprintReadOnly)
                          && !p.Deprecated && !p.FullName.Contains("_DEPRECATED"))
-                .Where(p => !p.IsEditorOnlyProperty);
+                .Where(p => !p.IsEditorOnlyProperty)
+                .Where(p => !p.PropertyFlags.HasAnyFlags(EPropertyFlags.Protected | EPropertyFlags.NativeAccessSpecifierPrivate));
         }
 
         private record HeaderFileGroup(

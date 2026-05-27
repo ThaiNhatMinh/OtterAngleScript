@@ -7,11 +7,17 @@
 #include "Interfaces/IPluginManager.h"
 #include "Misc/Paths.h"
 #include "HAL/PlatformProcess.h"
+
+#ifdef _MSC_VER
+#pragma warning(disable:4191 4996)
+#endif
+
 #include "angelscript.h"
 
-#if __has_include("OtterAngelScriptBindings.gen.h")
+#if __has_include("OtterAngelScriptBindings.gen.h1")
 #include "OtterAngelScriptBindings.gen.h"
 #endif
+#include "AudioDevice.h"
 
 DEFINE_LOG_CATEGORY(LogOtterAngleScript);
 
@@ -70,7 +76,7 @@ void FOtterAngleScriptModule::StartupModule()
 	// GeneratedAngelScriptBindings.h is produced by OtterAngleScriptUbtPlugin (one
 	// header per class + a master header/source pair).  The __has_include guard
 	// makes the first bootstrap build safe before any UHT output exists.
-#if __has_include("OtterAngelScriptBindings.gen.h")
+#if __has_include("OtterAngelScriptBindings.gen.h1")
 	Bind_Generated(Engine);
 #endif
 
