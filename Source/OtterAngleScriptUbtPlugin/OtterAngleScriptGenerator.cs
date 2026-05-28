@@ -131,7 +131,22 @@ namespace OtterAngleScriptUbtPlugin
                 .Where(s => !SkipStructs.Contains(s.SourceName))
                 .Where(s => !s.Deprecated)
                 .ToList();
-            if (allClasses.Count == 0 && allStructs.Count == 0)
+
+            // Collect all BlueprintType UENUMs excluding manually-bound types.
+            var allEnums = packageList
+                .SelectMany(p => TraverseTree(p))
+                .OfType<UhtEnum>()
+                .Where(e => e.MetaData.ContainsKey("BlueprintType"))
+                .Where(e => !ManuallyBoundTypes.Contains(e.SourceName))
+                .Where(e => !e.HeaderFile.FilePath.Contains("Tests"))
+                .Where(e => !e.HeaderFile.FilePath.Contains("Internal"))
+                .Where(e => !e.HeaderFile.FilePath.Contains("Private"))
+                .Where(e => !e.HeaderFile.FilePath.Contains("NoExportTypes.h"))
+                .Where(e => !e.SourceName.Contains("Deprecated"))
+                .Where(e => !e.Deprecated)
+                .ToList();
+
+            if (allClasses.Count == 0 && allStructs.Count == 0 && allEnums.Count == 0)
                 return;
 
             // Only structs that have at least one script-exposed property get registered.
@@ -144,17 +159,21 @@ namespace OtterAngleScriptUbtPlugin
                 registeredTypeNames.Add(cls.SourceName);
             foreach (var s in allStructsWithContent)
                 registeredTypeNames.Add(s.SourceName);
+            foreach (var e in allEnums)
+                registeredTypeNames.Add(e.SourceName);
 
-            // Group classes (with content) and structs (with content) by their source header
+            // Group classes (with content), structs (with content), and enums by their source header
             // file so that everything declared in the same header shares one generated file pair.
             var allGroups = allClasses.Where(HasScriptExposedContent).Cast<UhtType>()
                 .Concat(allStructsWithContent.Cast<UhtType>())
+                .Concat(allEnums.Cast<UhtType>())
                 .GroupBy(t => t.HeaderFile.FilePath)
                 .Select(g => new HeaderFileGroup(
                     FileStem: Path.GetFileNameWithoutExtension(g.Key),
                     IncludePath: g.First().HeaderFile.IncludeFilePath,
                     Classes: g.OfType<UhtClass>().OrderBy(c => c.SourceName).ToList(),
-                    Structs: g.OfType<UhtScriptStruct>().OrderBy(s => s.SourceName).ToList()))
+                    Structs: g.OfType<UhtScriptStruct>().OrderBy(s => s.SourceName).ToList(),
+                    Enums: g.OfType<UhtEnum>().OrderBy(e => e.SourceName).ToList()))
                 .OrderBy(g => g.FileStem)
                 .ToList();
 
@@ -180,11 +199,11 @@ namespace OtterAngleScriptUbtPlugin
 
             var masterSrc = new StringBuilder();
             WriteAutoGenNotice(masterSrc);
-            WriteMasterSource(masterSrc, allClasses, allStructsWithContent, allGroups);
+            WriteMasterSource(masterSrc, allClasses, allStructsWithContent, allEnums, allGroups);
             _factory.CommitOutput(_factory.MakePath("OtterAngelScriptBindings", ".gen.cpp"), masterSrc);
 
             _factory.Session.LogInfo(
-                $"OtterAngleScript: generated {allGroups.Count} file pairs ({allStructsWithContent.Count} structs, {allGroups.Sum(g => g.Classes.Count)} classes) + master header/source.");
+                $"OtterAngleScript: generated {allGroups.Count} file pairs ({allStructsWithContent.Count} structs, {allEnums.Count} enums, {allGroups.Sum(g => g.Classes.Count)} classes) + master header/source.");
         }
 
         // -------------------------------------------------------------------------
@@ -213,6 +232,8 @@ namespace OtterAngleScriptUbtPlugin
                 sb.AppendLine($"void OAS_RegisterMethods_{cls.SourceName}(asIScriptEngine* Engine);");
             foreach (var s in group.Structs)
                 sb.AppendLine($"void OAS_Register_{s.SourceName}(asIScriptEngine* Engine);");
+            foreach (var e in group.Enums)
+                sb.AppendLine($"void OAS_Register_{e.SourceName}(asIScriptEngine* Engine);");
             sb.AppendLine();
         }
 
@@ -245,6 +266,9 @@ namespace OtterAngleScriptUbtPlugin
                 WriteStructHelpers(sb, s);
                 WriteStructRegistrationFunction(sb, s, registeredTypeNames);
             }
+
+            foreach (var e in group.Enums)
+                WriteEnumRegistrationFunction(sb, e);
         }
 
         private void WriteClassRegistrationFunction(
@@ -392,6 +416,37 @@ namespace OtterAngleScriptUbtPlugin
             sb.AppendLine();
         }
 
+        private static void WriteEnumRegistrationFunction(StringBuilder sb, UhtEnum e)
+        {
+            string name = e.SourceName;
+            bool isNamespaced = e.CppForm == UhtEnumCppForm.Namespaced;
+            string asTypeName = isNamespaced ? "Type" : name;
+
+            sb.AppendLine($"void OAS_Register_{name}(asIScriptEngine* Engine)");
+            sb.AppendLine("{");
+            sb.AppendLine("    int Result = 0;");
+            if (isNamespaced)
+            {
+                sb.AppendLine($"    Result = Engine->SetDefaultNamespace(\"{name}\"); check(Result >= 0);");
+            }
+            sb.AppendLine($"    Result = Engine->RegisterEnum(\"{asTypeName}\"); check(Result >= 0);");
+            foreach (var value in e.EnumValues)
+            {
+                string shortName = value.Name.Contains("::")
+                    ? value.Name.Substring(value.Name.LastIndexOf("::") + 2)
+                    : value.Name;
+                if (shortName.EndsWith("_MAX") || shortName == "MAX" || shortName == "COUNT")
+                    continue;
+                sb.AppendLine($"    Result = Engine->RegisterEnumValue(\"{asTypeName}\", \"{shortName}\", (int32){value.Name}); check(Result >= 0);");
+            }
+            if (isNamespaced)
+            {
+                sb.AppendLine($"    Result = Engine->SetDefaultNamespace(\"\"); check(Result >= 0);");
+            }
+            sb.AppendLine("}");
+            sb.AppendLine();
+        }
+
         // -------------------------------------------------------------------------
         // Master header: includes all per-file headers + declares master functions.
         // -------------------------------------------------------------------------
@@ -420,6 +475,7 @@ namespace OtterAngleScriptUbtPlugin
             StringBuilder sb,
             List<UhtClass> allClasses,
             List<UhtScriptStruct> allStructsWithContent,
+            List<UhtEnum> allEnums,
             List<HeaderFileGroup> groups)
         {
             sb.AppendLine("#include \"OtterAngelScriptBindings.gen.h\"");
@@ -428,10 +484,21 @@ namespace OtterAngleScriptUbtPlugin
             foreach (var group in groups)
                 sb.AppendLine($"#include \"Bind_{group.FileStem}.oas.gen.h\"");
             sb.AppendLine();
+            sb.AppendLine("#ifdef _MSC_VER");
+            sb.AppendLine("#pragma warning(disable:4191 4996)");
+            sb.AppendLine("#endif");
+            sb.AppendLine("#include \"angelscript.h\"");
 
             sb.AppendLine("void OAS_RegisterGeneratedTypes(asIScriptEngine* Engine)");
             sb.AppendLine("{");
             sb.AppendLine("    int Result = 0;");
+
+            // Register all UENUM types first (no dependencies on other types).
+            foreach (var e in allEnums)
+            {
+                sb.AppendLine($"    OAS_Register_{e.SourceName}(Engine);");
+            }
+            sb.AppendLine();
 
             // Stub-register every UClass so that parameter/return-type references resolve
             // regardless of registration order.
@@ -528,7 +595,8 @@ namespace OtterAngleScriptUbtPlugin
             string FileStem,
             string IncludePath,
             List<UhtClass> Classes,
-            List<UhtScriptStruct> Structs);
+            List<UhtScriptStruct> Structs,
+            List<UhtEnum> Enums);
 
         // -------------------------------------------------------------------------
         // Helpers – code generation
@@ -734,7 +802,7 @@ namespace OtterAngleScriptUbtPlugin
                         ? $"{p.ScriptStruct.SourceName} &out"
                         : $"const {p.ScriptStruct.SourceName} &in";
 
-                case UhtEnumProperty p:
+                case UhtEnumProperty p when registeredTypeNames.Contains(p.Enum.SourceName):
                     if (p.Enum.CppForm == UhtEnumCppForm.Namespaced)
                         return $"{p.Enum.SourceName}::Type";
                     else
