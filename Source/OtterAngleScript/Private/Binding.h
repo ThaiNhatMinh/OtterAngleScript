@@ -133,3 +133,9 @@ void Bind_FLinearColor(asIScriptEngine* Engine);
  * Messages are routed through LogOtterAngleScript.
  */
 void Bind_Logging(asIScriptEngine* Engine);
+
+/**
+ * Registers TArray<T> as a GC-managed template reference type in the AngelScript engine.
+ * The type is exposed as "TArray<T>" in scripts.
+ */
+void Bind_TArray(asIScriptEngine* Engine);

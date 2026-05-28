@@ -71,6 +71,7 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_FMath(Engine);
 	Bind_UKismetSystemLibrary(Engine);
 	Bind_Logging(Engine);
+	Bind_TArray(Engine);
 
 	// Include and invoke the UHT-generated AngelScript bindings if they exist.
 	// GeneratedAngelScriptBindings.h is produced by OtterAngleScriptUbtPlugin (one
