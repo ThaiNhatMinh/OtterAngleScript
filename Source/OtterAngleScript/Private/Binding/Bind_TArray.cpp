@@ -48,14 +48,17 @@ namespace
 		{
 			asITypeInfo* SubType = TypeInfo->GetEngine()->GetTypeInfoById(TypeId);
 			asQWORD Flags = SubType->GetFlags();
+			// If the subtype is a value type without the POD flag, then it must have a default constructor so that the array can initialize new elements.
 			if ((Flags & asOBJ_VALUE) && !(Flags & asOBJ_POD))
 			{
 				bool bFound = false;
+				// Verify that there is a default constructor
 				for (asUINT n = 0; n < SubType->GetBehaviourCount(); n++)
 				{
 					asEBehaviours Beh;
 					asIScriptFunction* Func = SubType->GetBehaviourByIndex(n, &Beh);
-					if (Beh != asBEHAVE_CONSTRUCT) continue;
+					if (Beh != asBEHAVE_CONSTRUCT)
+						continue;
 					if (Func->GetParamCount() == 0)
 					{
 						bFound = true;
@@ -64,6 +67,8 @@ namespace
 				}
 				if (!bFound)
 				{
+					// There is no default constructor
+					// TODO: Should format the message to give the name of the subtype for better understanding
 					TypeInfo->GetEngine()->WriteMessage("TArray", 0, 0, asMSGTYPE_ERROR, "The subtype has no default constructor");
 					return false;
 				}
@@ -71,6 +76,9 @@ namespace
 			else if (Flags & asOBJ_REF)
 			{
 				bool bFound = false;
+
+				// If value assignment for ref type has been disabled then the array
+				// can be created if the type has a default factory function
 				if (!TypeInfo->GetEngine()->GetEngineProperty(asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE))
 				{
 					for (asUINT n = 0; n < SubType->GetFactoryCount(); n++)
@@ -89,11 +97,14 @@ namespace
 					return false;
 				}
 			}
+			// If the object type is not garbage collected then the array also doesn't need to be
 			if (!(Flags & asOBJ_GC))
 				bDontGarbageCollect = true;
 		}
 		else if (!(TypeId & asTYPEID_OBJHANDLE))
 		{
+			// Arrays with primitives cannot form circular references,
+			// thus there is no need to garbage collect them
 			bDontGarbageCollect = true;
 		}
 		else
@@ -137,7 +148,8 @@ namespace
 				? (int)sizeof(asPWORD)
 				: ObjType->GetEngine()->GetSizeOfPrimitiveType(SubTypeId);
 
-			if (!CheckMaxSize(Length)) return;
+			if (!CheckMaxSize(Length))
+				return;
 			CreateBuffer(&Buffer, Length);
 		}
 
@@ -1134,7 +1146,7 @@ void Bind_TArray(asIScriptEngine* Engine)
 		asOBJ_APP_CLASS_COPY_CONSTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT |
 		asOBJ_APP_CLASS_MORE_CONSTRUCTORS;
 
-	int Result = Engine->RegisterObjectType("TArray<class T>", sizeof(FScriptTArray), TypeFlags);
+	int Result = Engine->RegisterObjectType("TArray<class T>", 0, TypeFlags);
 	check(Result >= 0);
 
 	Result = Engine->RegisterObjectBehaviour("TArray<T>", asBEHAVE_TEMPLATE_CALLBACK,

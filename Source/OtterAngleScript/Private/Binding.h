@@ -118,11 +118,6 @@ void Bind_FLatentActionInfo(asIScriptEngine* Engine);
 void Bind_FMath(asIScriptEngine* Engine);
 
 /**
- * Registers the initial script-safe UKismetSystemLibrary helpers.
- */
-void Bind_UKismetSystemLibrary(asIScriptEngine* Engine);
-
-/**
  * Registers FLinearColor as a value type in the AngelScript engine.
  * The type is exposed as "FLinearColor" in scripts.
  */
