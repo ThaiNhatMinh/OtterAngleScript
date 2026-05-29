@@ -91,6 +91,9 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_FLatentActionInfo(Engine);
 	Bind_FLinearColor(Engine);
 	Bind_FColor(Engine);
+	Bind_FSoftObjectPath(Engine);
+	Bind_FSoftClassPath(Engine);
+	Bind_TSoftObjectPtr(Engine);
 	Bind_FMath(Engine);
 	Bind_Logging(Engine);
 	Bind_TArray(Engine);

@@ -131,13 +131,15 @@ namespace OtterAngleScriptUbtPlugin
                 .Where(s => !s.SourceName.Contains("Deprecated"))
                 .Where(s => !SkipStructs.Contains(s.SourceName))
                 .Where(s => !s.Deprecated)
+                .Where(s => s.Super != null ? s.Super.SourceName != "FAnimNode_Base" : true)
                 .ToList();
 
             // Collect all BlueprintType UENUMs excluding manually-bound types.
             var allEnums = packageList
                 .SelectMany(p => TraverseTree(p))
                 .OfType<UhtEnum>()
-                .Where(e => e.MetaData.ContainsKey("BlueprintType"))
+                //.Where(e => e.MetaData.ContainsKey("BlueprintType"))
+                .Where(e => e.UnderlyingType != UhtEnumUnderlyingType.Int64 && e.UnderlyingType != UhtEnumUnderlyingType.Uint64 && e.UnderlyingType != UhtEnumUnderlyingType.Uint32)
                 .Where(e => !ManuallyBoundTypes.Contains(e.SourceName))
                 .Where(e => !e.HeaderFile.FilePath.Contains("Tests"))
                 .Where(e => !e.HeaderFile.FilePath.Contains("Internal"))
@@ -146,6 +148,11 @@ namespace OtterAngleScriptUbtPlugin
                 .Where(e => !e.SourceName.Contains("Deprecated"))
                 .Where(e => !e.Deprecated)
                 .ToList();
+
+            foreach (var uneum in allEnums)
+            {
+                _factory.Session.LogInfo($"OAS: will generate bindings for enum {uneum.SourceName}");
+            }
 
             if (allClasses.Count == 0 && allStructs.Count == 0 && allEnums.Count == 0)
                 return;
@@ -232,7 +239,10 @@ namespace OtterAngleScriptUbtPlugin
             foreach (var cls in group.Classes)
                 sb.AppendLine($"void OAS_RegisterMethods_{cls.SourceName}(asIScriptEngine* Engine);");
             foreach (var s in group.Structs)
+            {
+                sb.AppendLine($"void OAS_Register_Declare{s.SourceName}(asIScriptEngine* Engine);");
                 sb.AppendLine($"void OAS_Register_{s.SourceName}(asIScriptEngine* Engine);");
+            }
             foreach (var e in group.Enums)
                 sb.AppendLine($"void OAS_Register_{e.SourceName}(asIScriptEngine* Engine);");
             sb.AppendLine();
@@ -371,12 +381,16 @@ namespace OtterAngleScriptUbtPlugin
             HashSet<string> registeredTypeNames)
         {
             string name = s.SourceName;
+
+            sb.AppendLine($"void OAS_Register_Declare{name}(asIScriptEngine* Engine)");
+            sb.AppendLine("{");
+            sb.AppendLine($"    int Result = Engine->RegisterObjectType(\"{name}\", sizeof({name}), asOBJ_VALUE | asGetTypeTraits<{s.SourceName}>()); check(Result >= 0);");
+            sb.AppendLine("}");
+            sb.AppendLine();
+
             sb.AppendLine($"void OAS_Register_{name}(asIScriptEngine* Engine)");
             sb.AppendLine("{");
             sb.AppendLine("    int Result = 0;");
-            sb.AppendLine($"    Result = Engine->RegisterObjectType(\"{name}\", sizeof({name}),");
-            sb.AppendLine($"        asOBJ_VALUE | asGetTypeTraits<{name}>());");
-            sb.AppendLine("    check(Result >= 0);");
             sb.AppendLine();
             sb.AppendLine($"    Result = Engine->RegisterObjectBehaviour(\"{name}\", asBEHAVE_CONSTRUCT,");
             sb.AppendLine($"        \"void f()\", asFUNCTION({name}_DefaultConstruct), asCALL_CDECL_OBJLAST);");
@@ -397,7 +411,7 @@ namespace OtterAngleScriptUbtPlugin
                 if (prop.IsBitfield)
                     // TODO: support bitfield properties via wrapper functions.
                     continue;
-                if (prop.SourceName == "Category")
+                if (prop.SourceName == "Sequence")
                 {
                     _factory.Session.LogInfo($"OAS: skipping struct property {name}::{prop.SourceName} {prop.PropertyFlags}");
                 }
@@ -434,7 +448,7 @@ namespace OtterAngleScriptUbtPlugin
                     : value.Name;
                 if (shortName.EndsWith("_MAX") || shortName == "MAX" || shortName == "COUNT")
                     continue;
-                sb.AppendLine($"    Result = Engine->RegisterEnumValue(\"{asTypeName}\", \"{shortName}\", (int32){value.Name}); check(Result >= 0);");
+                sb.AppendLine($"    Result = Engine->RegisterEnumValue(\"{asTypeName}\", \"{shortName}\", ({(e.UnderlyingType == UhtEnumUnderlyingType.Unspecified ? "uint8" : e.UnderlyingType.ToString().ToLower())}){value.Name}); check(Result >= 0);");
             }
             sb.AppendLine("}");
             sb.AppendLine();
@@ -499,6 +513,13 @@ namespace OtterAngleScriptUbtPlugin
             {
                 sb.AppendLine($"    Result = Engine->RegisterObjectType(\"{cls.SourceName}\", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE); check(Result >= 0);");
             }
+
+            sb.AppendLine();
+            foreach (var s in allStructsWithContent)
+            {
+                sb.AppendLine($"    OAS_Register_Declare{s.SourceName}(Engine);");
+            }
+            sb.AppendLine();
 
             // Register all USTRUCT value types (full registration, must come after UClass stubs
             // so struct property types that reference UClasses are already known).
@@ -731,19 +752,25 @@ namespace OtterAngleScriptUbtPlugin
             {
                 if (PropObj.CppForm == UhtObjectCppForm.TObjectPtrObject)
                 {
-                    return Prop.SourceName;
+                    return PropObj.Class.SourceName;
                 }
             }
             else if (Prop is UhtEnumProperty PropEnum)
             {
                 if (PropEnum.Enum.CppForm == UhtEnumCppForm.Namespaced)
                 {
-                    return $"{PropEnum.Enum.SourceName}::Type";
+                    return PropEnum.Enum.SourceName;
+                }
+            }
+            else if (Prop is UhtByteProperty ByteProp)
+            {
+                if (ByteProp.Enum != null && ByteProp.Enum.CppForm == UhtEnumCppForm.Namespaced)
+                {
+                    return ByteProp.Enum.SourceName;
                 }
             }
             StringBuilder propertySB = new StringBuilder();
             Prop.AppendText(propertySB, UhtPropertyTextType.Sparse);
-            _factory.Session.LogInfo($"UhtPropertyTextType.Sparse {Prop.SourceName} {propertySB}");
             return propertySB.ToString();
         }
 

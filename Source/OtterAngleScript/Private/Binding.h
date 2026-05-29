@@ -131,6 +131,24 @@ void Bind_FLinearColor(asIScriptEngine* Engine);
 void Bind_FColor(asIScriptEngine* Engine);
 
 /**
+ * Registers FSoftObjectPath as a value type in the AngelScript engine.
+ * The type is exposed as "FSoftObjectPath" in scripts.
+ */
+void Bind_FSoftObjectPath(asIScriptEngine* Engine);
+
+/**
+ * Registers FSoftClassPath as a value type in the AngelScript engine.
+ * The type is exposed as "FSoftClassPath" in scripts.
+ */
+void Bind_FSoftClassPath(asIScriptEngine* Engine);
+
+/**
+ * Registers TSoftObjectPtr concrete specializations in the AngelScript engine.
+ * The type is exposed as "TSoftObjectPtr_UObject" in scripts.
+ */
+void Bind_TSoftObjectPtr(asIScriptEngine* Engine);
+
+/**
  * Registers global logging helpers for scripts.
  * Messages are routed through LogOtterAngleScript.
  */
@@ -140,4 +158,6 @@ void Bind_Logging(asIScriptEngine* Engine);
  * Registers TArray<T> as a GC-managed template reference type in the AngelScript engine.
  * The type is exposed as "TArray<T>" in scripts.
  */
+void Declare_TArray(asIScriptEngine* Engine);
+void Declare_TSoftObjectPtr(asIScriptEngine* Engine);
 void Bind_TArray(asIScriptEngine* Engine);

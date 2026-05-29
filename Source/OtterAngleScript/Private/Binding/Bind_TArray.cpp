@@ -1132,11 +1132,8 @@ namespace
 	static asUINT TArray_opForValue1(asUINT Iter, const FScriptTArray*) { return Iter; }
 }
 
-void Bind_TArray(asIScriptEngine* Engine)
+void Declare_TArray(asIScriptEngine* Engine)
 {
-	check(Engine != nullptr);
-
-	Engine->SetTypeInfoUserDataCleanupCallback(CleanupTypeInfoTArrayCache, TARRAY_CACHE);
 
 	// Value type: size is fixed (heap buffer is held by pointer inside the struct).
 	// asOBJ_GC is kept so elements that are GC objects are enumerated correctly.
@@ -1148,6 +1145,15 @@ void Bind_TArray(asIScriptEngine* Engine)
 
 	int Result = Engine->RegisterObjectType("TArray<class T>", sizeof(FScriptTArray), TypeFlags);
 	check(Result >= 0);
+}
+
+void Bind_TArray(asIScriptEngine* Engine)
+{
+	check(Engine != nullptr);
+
+	Engine->SetTypeInfoUserDataCleanupCallback(CleanupTypeInfoTArrayCache, TARRAY_CACHE);
+
+	int Result = 0;
 
 	Result = Engine->RegisterObjectBehaviour("TArray<T>", asBEHAVE_TEMPLATE_CALLBACK,
 		"bool f(int&in, bool&out)", asFUNCTION(TArrayTemplateCallback), asCALL_CDECL);

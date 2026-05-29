@@ -176,11 +176,7 @@ void Bind_FTransform(asIScriptEngine* Engine)
 {
 	check(Engine != nullptr);
 
-	int Result = Engine->RegisterObjectType(
-		"FTransform",
-		sizeof(FTransform),
-		asOBJ_VALUE | asGetTypeTraits<FTransform>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
-	check(Result >= 0);
+	int Result = 0;
 
 	REGISTER_BEHAVIOUR(FTransform, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FTransform_DefaultConstruct), asCALL_CDECL_OBJLAST);
 	REGISTER_BEHAVIOUR(FTransform, asBEHAVE_CONSTRUCT, "void f(const FVector &in InTranslation)", asFUNCTION(FTransform_ConstructTranslation), asCALL_CDECL_OBJLAST);
