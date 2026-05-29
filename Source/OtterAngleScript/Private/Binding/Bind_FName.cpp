@@ -55,11 +55,7 @@ void Bind_FName(asIScriptEngine* Engine)
 {
 	check(Engine != nullptr);
 
-	int Result = Engine->RegisterObjectType(
-		"FName",
-		sizeof(FName),
-		asOBJ_VALUE | asGetTypeTraits<FName>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
-	check(Result >= 0);
+	int Result;
 
 	REGISTER_BEHAVIOUR(FName, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FName_DefaultConstruct), asCALL_CDECL_OBJLAST);
 	REGISTER_BEHAVIOUR(FName, asBEHAVE_CONSTRUCT, "void f(const FName &in Other)", asFUNCTION(FName_CopyConstruct), asCALL_CDECL_OBJLAST);

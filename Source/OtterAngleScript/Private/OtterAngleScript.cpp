@@ -14,7 +14,7 @@
 
 #include "angelscript.h"
 
-#if __has_include("OtterAngelScriptBindings.gen.h1")
+#if __has_include("OtterAngelScriptBindings.gen.h")
 #include "OtterAngelScriptBindings.gen.h"
 #endif
 #include "AudioDevice.h"
@@ -22,6 +22,8 @@
 DEFINE_LOG_CATEGORY(LogOtterAngleScript);
 
 #define LOCTEXT_NAMESPACE "FOtterAngleScriptModule"
+
+LLM_DEFINE_TAG(OtterAngleScript);
 
 void MessageCallback(const asSMessageInfo* msg, void* param)
 {
@@ -39,16 +41,36 @@ void MessageCallback(const asSMessageInfo* msg, void* param)
 	}
 }
 
+void* asCustomMalloc(size_t size)
+{
+	LLM_SCOPE_BYTAG(OtterAngleScript);
+	void* Ptr = FMemory::Malloc(size);
+	return Ptr;
+}
+
+void asCustomFree(void* ptr)
+{
+	LLM_SCOPE_BYTAG(OtterAngleScript);
+	FMemory::Free(ptr);
+}
+
 void FOtterAngleScriptModule::StartupModule()
 {
 	// Create the script engine
 	Engine = asCreateScriptEngine();
+	Engine->SetEngineProperty(asEP_ALLOW_IMPLICIT_HANDLE_TYPES, 1);
+	//asSetGlobalMemoryFunctions(asCustomMalloc, asCustomFree);
+
 	int Result = Engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 	if (Result < 0)
 	{
 		UE_LOG(LogOtterAngleScript, Error, TEXT("Failed to set message callback for AngelScript engine"));
 	}
 
+	Declare_Types(Engine);
+#if __has_include("OtterAngelScriptBindings.gen.h")
+	OAS_RegisterGeneratedTypes(Engine);
+#endif
 	Bind_FString(Engine);
 	Bind_FName(Engine);
 	Bind_UClass(Engine);
@@ -68,6 +90,7 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_FTimerHandle(Engine);
 	Bind_FLatentActionInfo(Engine);
 	Bind_FLinearColor(Engine);
+	Bind_FColor(Engine);
 	Bind_FMath(Engine);
 	Bind_Logging(Engine);
 	Bind_TArray(Engine);
@@ -76,7 +99,7 @@ void FOtterAngleScriptModule::StartupModule()
 	// GeneratedAngelScriptBindings.h is produced by OtterAngleScriptUbtPlugin (one
 	// header per class + a master header/source pair).  The __has_include guard
 	// makes the first bootstrap build safe before any UHT output exists.
-#if __has_include("OtterAngelScriptBindings.gen.h1")
+#if __has_include("OtterAngelScriptBindings.gen.h")
 	Bind_Generated(Engine);
 #endif
 

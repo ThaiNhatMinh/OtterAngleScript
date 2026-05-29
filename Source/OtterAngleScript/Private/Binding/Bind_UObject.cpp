@@ -141,14 +141,12 @@ namespace
 void Bind_UObject(asIScriptEngine* Engine)
 {
 	check(Engine != nullptr);
+	int Result;
 
-	int Result = Engine->RegisterObjectType("UObject", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
-	check(Result >= 0);
-
-	REGISTER_METHOD(UObject, "UClass@ GetClass() const", asFUNCTION(UObject_GetClass), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UObject, "UObject@ GetOuter() const", asFUNCTION(UObject_GetOuter), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UObject, "UObject@ GetPackage() const", asFUNCTION(UObject_GetPackage), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UObject, "UObject@ GetOutermost() const", asFUNCTION(UObject_GetOutermost), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(UObject, "UClass GetClass() const", asFUNCTION(UObject_GetClass), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(UObject, "UObject GetOuter() const", asFUNCTION(UObject_GetOuter), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(UObject, "UObject GetPackage() const", asFUNCTION(UObject_GetPackage), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(UObject, "UObject GetOutermost() const", asFUNCTION(UObject_GetOutermost), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UObject, "FName GetFName() const", asFUNCTION(UObject_GetFName), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UObject, "FString GetName() const", asFUNCTION(UObject_GetName), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UObject, "FString GetPathName() const", asFUNCTION(UObject_GetPathName), asCALL_CDECL_OBJFIRST);
@@ -156,10 +154,10 @@ void Bind_UObject(asIScriptEngine* Engine)
 	REGISTER_METHOD(UObject, "FString GetFullName() const", asFUNCTION(UObject_GetFullName), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UObject, "FString GetFullName(UObject@ StopOuter) const", asFUNCTION(UObject_GetFullNameFromOuter), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UObject, "FString GetDesc()", asFUNCTION(UObject_GetDesc), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UObject, "bool IsA(UClass@ Class) const", asFUNCTION(UObject_IsA), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UObject, "UObject@ GetTypedOuter(UClass@ Class) const", asFUNCTION(UObject_GetTypedOuter), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UObject, "bool IsIn(UObject@ SomeOuter) const", asFUNCTION(UObject_IsIn), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UObject, "bool IsInA(UClass@ SomeBaseClass) const", asFUNCTION(UObject_IsInA), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(UObject, "bool IsA(UClass Class) const", asFUNCTION(UObject_IsA), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(UObject, "UObject GetTypedOuter(UClass Class) const", asFUNCTION(UObject_GetTypedOuter), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(UObject, "bool IsIn(UObject SomeOuter) const", asFUNCTION(UObject_IsIn), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(UObject, "bool IsInA(UClass SomeBaseClass) const", asFUNCTION(UObject_IsInA), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UObject, "int GetUniqueID() const", asFUNCTION(UObject_GetUniqueID), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UObject, "bool IsValidLowLevel() const", asFUNCTION(UObject_IsValidLowLevel), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UObject, "bool IsValidLowLevelFast() const", asFUNCTION(UObject_IsValidLowLevelFast), asCALL_CDECL_OBJFIRST);
@@ -167,7 +165,6 @@ void Bind_UObject(asIScriptEngine* Engine)
 	REGISTER_METHOD(UObject, "bool IsNative() const", asFUNCTION(UObject_IsNative), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UObject, "bool IsTemplate() const", asFUNCTION(UObject_IsTemplate), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UObject, "bool IsDefaultSubobject() const", asFUNCTION(UObject_IsDefaultSubobject), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UObject, "bool IsAsset() const", asFUNCTION(UObject_IsAsset), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UObject, "bool IsAsset() const", asMETHOD(UObject, IsAsset), asCALL_THISCALL);
 
 #if WITH_ENGINE

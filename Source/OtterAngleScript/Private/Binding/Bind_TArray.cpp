@@ -1146,7 +1146,7 @@ void Bind_TArray(asIScriptEngine* Engine)
 		asOBJ_APP_CLASS_COPY_CONSTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT |
 		asOBJ_APP_CLASS_MORE_CONSTRUCTORS;
 
-	int Result = Engine->RegisterObjectType("TArray<class T>", 0, TypeFlags);
+	int Result = Engine->RegisterObjectType("TArray<class T>", sizeof(FScriptTArray), TypeFlags);
 	check(Result >= 0);
 
 	Result = Engine->RegisterObjectBehaviour("TArray<T>", asBEHAVE_TEMPLATE_CALLBACK,
@@ -1228,7 +1228,7 @@ void Bind_TArray(asIScriptEngine* Engine)
 	check(Result >= 0);
 
 	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"void insertAt(uint index, const TArray<T>& arr)",
+		"void insertAt(uint index, const TArray<T>&in arr)",
 		asMETHODPR(FScriptTArray, InsertAt, (asUINT, const FScriptTArray&), void), asCALL_THISCALL);
 	check(Result >= 0);
 

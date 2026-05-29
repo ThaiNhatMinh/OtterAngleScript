@@ -4,6 +4,7 @@
 
 class asIScriptEngine;
 
+void Declare_Types(asIScriptEngine* Engine);
 
 #define REGISTER_BEHAVIOUR(ClassType, Behaviour, Declaration, Function, CallConv) \
 	Result = Engine->RegisterObjectBehaviour(#ClassType, Behaviour, Declaration, Function, CallConv); \
@@ -122,6 +123,12 @@ void Bind_FMath(asIScriptEngine* Engine);
  * The type is exposed as "FLinearColor" in scripts.
  */
 void Bind_FLinearColor(asIScriptEngine* Engine);
+
+/**
+ * Registers FColor as a value type in the AngelScript engine.
+ * The type is exposed as "FColor" in scripts.
+ */
+void Bind_FColor(asIScriptEngine* Engine);
 
 /**
  * Registers global logging helpers for scripts.

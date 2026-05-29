@@ -61,18 +61,15 @@ namespace
 void Bind_UClass(asIScriptEngine* Engine)
 {
 	check(Engine != nullptr);
-
-	int Result = Engine->RegisterObjectType("UClass", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
-	check(Result >= 0);
-
+	int Result;
 	REGISTER_METHOD(UClass, "FName GetFName() const", asFUNCTION(UClass_GetFName), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UClass, "FString GetName() const", asFUNCTION(UClass_GetName), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UClass, "FString GetPathName() const", asFUNCTION(UClass_GetPathName), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UClass, "FString GetFullName() const", asFUNCTION(UClass_GetFullName), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UClass, "UObject@ GetOuter() const", asFUNCTION(UClass_GetOuter), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UClass, "UClass@ GetSuperClass() const", asFUNCTION(UClass_GetSuperClass), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UClass, "bool IsChildOf(UClass@ SomeBase) const", asFUNCTION(UClass_IsChildOf), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UClass, "UObject@ GetDefaultObject() const", asFUNCTION(UClass_GetDefaultObject), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(UClass, "UObject GetOuter() const", asFUNCTION(UClass_GetOuter), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(UClass, "UClass GetSuperClass() const", asFUNCTION(UClass_GetSuperClass), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(UClass, "bool IsChildOf(UClass SomeBase) const", asFUNCTION(UClass_IsChildOf), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(UClass, "UObject GetDefaultObject() const", asFUNCTION(UClass_GetDefaultObject), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UClass, "int GetPropertiesSize() const", asFUNCTION(UClass_GetPropertiesSize), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UClass, "bool IsNative() const", asFUNCTION(UClass_IsNative), asCALL_CDECL_OBJFIRST);
 }

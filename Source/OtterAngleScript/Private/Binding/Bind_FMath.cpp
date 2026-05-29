@@ -629,8 +629,8 @@ void Bind_FMath(asIScriptEngine* Engine)
 	REGISTER_FMATH_FUNCTION("double UnwindRadians(double Value)", FMath_UnwindRadiansDouble);
 	REGISTER_FMATH_FUNCTION("float UnwindDegrees(float Value)", FMath_UnwindDegreesFloat);
 	REGISTER_FMATH_FUNCTION("double UnwindDegrees(double Value)", FMath_UnwindDegreesDouble);
-	REGISTER_FMATH_FUNCTION("void WindRelativeAnglesDegrees(float InAngle0, float &inout InOutAngle1)", FMath_WindRelativeAnglesDegreesFloat);
-	REGISTER_FMATH_FUNCTION("void WindRelativeAnglesDegrees(double InAngle0, double &inout InOutAngle1)", FMath_WindRelativeAnglesDegreesDouble);
+	REGISTER_FMATH_FUNCTION("void WindRelativeAnglesDegrees(float InAngle0, float &out InOutAngle1)", FMath_WindRelativeAnglesDegreesFloat);
+	REGISTER_FMATH_FUNCTION("void WindRelativeAnglesDegrees(double InAngle0, double &out InOutAngle1)", FMath_WindRelativeAnglesDegreesDouble);
 	REGISTER_FMATH_FUNCTION("float FixedTurn(float InCurrent, float InDesired, float InDeltaRate)", FMath_FixedTurn);
 	REGISTER_FMATH_FUNCTION("void CartesianToPolar(float X, float Y, float &out OutRadius, float &out OutAngle)", FMath_CartesianToPolarFloat);
 	REGISTER_FMATH_FUNCTION("void CartesianToPolar(double X, double Y, double &out OutRadius, double &out OutAngle)", FMath_CartesianToPolarDouble);

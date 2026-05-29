@@ -29,16 +29,6 @@ namespace
 		Memory->~FPlane();
 	}
 
-	FPlane& FPlane_Assign(FPlane& Value, const FPlane& Other)
-	{
-		Value = Other;
-		return Value;
-	}
-
-	bool FPlane_Equals(const FPlane& Value, const FPlane& Other)
-	{
-		return Value == Other;
-	}
 }
 
 void Bind_FPlane(asIScriptEngine* Engine)
@@ -56,8 +46,8 @@ void Bind_FPlane(asIScriptEngine* Engine)
 	REGISTER_BEHAVIOUR(FPlane, asBEHAVE_CONSTRUCT, "void f(double X, double Y, double Z, double W)", asFUNCTION(FPlane_ConstructXYZW), asCALL_CDECL_OBJLAST);
 	REGISTER_BEHAVIOUR(FPlane, asBEHAVE_DESTRUCT, "void f()", asFUNCTION(FPlane_Destruct), asCALL_CDECL_OBJLAST);
 
-	REGISTER_METHOD(FPlane, "FPlane &opAssign(const FPlane &in Other)", asFUNCTION(FPlane_Assign), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FPlane, "bool opEquals(const FPlane &in Other) const", asFUNCTION(FPlane_Equals), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FPlane, "FPlane &opAssign(const FPlane &in Other)", asMETHODPR(FPlane, operator=, (const FPlane&), FPlane&), asCALL_THISCALL);
+	REGISTER_METHOD(FPlane, "bool opEquals(const FPlane &in Other) const", asMETHODPR(FPlane, operator==, (const FPlane&) const, bool), asCALL_THISCALL);
 	REGISTER_PROPERTY(FPlane, "double X", X);
 	REGISTER_PROPERTY(FPlane, "double Y", Y);
 	REGISTER_PROPERTY(FPlane, "double Z", Z);

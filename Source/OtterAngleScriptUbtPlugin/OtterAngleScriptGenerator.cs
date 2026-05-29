@@ -1,15 +1,16 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+using EpicGames.Core;
+using EpicGames.UHT.Exporters.CodeGen;
+using EpicGames.UHT.Tables;
+using EpicGames.UHT.Types;
+using EpicGames.UHT.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using EpicGames.Core;
-using EpicGames.UHT.Tables;
-using EpicGames.UHT.Types;
-using EpicGames.UHT.Utils;
-using EpicGames.UHT.Exporters.CodeGen;
+using System.Xml.Linq;
 
 namespace OtterAngleScriptUbtPlugin
 {
@@ -403,7 +404,7 @@ namespace OtterAngleScriptUbtPlugin
                 if (prop.PropertyFlags.HasAnyFlags(EPropertyFlags.NativeAccessSpecifierProtected | EPropertyFlags.NativeAccessSpecifierPrivate))
                     continue;
 
-                string? asType = MapPropertyAsType(prop, registeredTypeNames);
+                string? asType = GetAsPropertyDeclare(prop);
                 if (asType == null)
                     continue;
 
@@ -420,15 +421,11 @@ namespace OtterAngleScriptUbtPlugin
         {
             string name = e.SourceName;
             bool isNamespaced = e.CppForm == UhtEnumCppForm.Namespaced;
-            string asTypeName = isNamespaced ? "Type" : name;
+            string asTypeName = name;
 
             sb.AppendLine($"void OAS_Register_{name}(asIScriptEngine* Engine)");
             sb.AppendLine("{");
             sb.AppendLine("    int Result = 0;");
-            if (isNamespaced)
-            {
-                sb.AppendLine($"    Result = Engine->SetDefaultNamespace(\"{name}\"); check(Result >= 0);");
-            }
             sb.AppendLine($"    Result = Engine->RegisterEnum(\"{asTypeName}\"); check(Result >= 0);");
             foreach (var value in e.EnumValues)
             {
@@ -438,10 +435,6 @@ namespace OtterAngleScriptUbtPlugin
                 if (shortName.EndsWith("_MAX") || shortName == "MAX" || shortName == "COUNT")
                     continue;
                 sb.AppendLine($"    Result = Engine->RegisterEnumValue(\"{asTypeName}\", \"{shortName}\", (int32){value.Name}); check(Result >= 0);");
-            }
-            if (isNamespaced)
-            {
-                sb.AppendLine($"    Result = Engine->SetDefaultNamespace(\"\"); check(Result >= 0);");
             }
             sb.AppendLine("}");
             sb.AppendLine();
@@ -504,21 +497,14 @@ namespace OtterAngleScriptUbtPlugin
             // regardless of registration order.
             foreach (var cls in allClasses)
             {
-                sb.AppendLine($"    if (Engine->GetTypeInfoByName(\"{cls.SourceName}\") == nullptr)");
-                sb.AppendLine("    {");
-                sb.AppendLine($"        Result = Engine->RegisterObjectType(\"{cls.SourceName}\", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);");
-                sb.AppendLine("        check(Result >= 0);");
-                sb.AppendLine("    }");
+                sb.AppendLine($"    Result = Engine->RegisterObjectType(\"{cls.SourceName}\", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE); check(Result >= 0);");
             }
 
             // Register all USTRUCT value types (full registration, must come after UClass stubs
             // so struct property types that reference UClasses are already known).
             foreach (var s in allStructsWithContent)
             {
-                sb.AppendLine($"    if (Engine->GetTypeInfoByName(\"{s.SourceName}\") == nullptr)");
-                sb.AppendLine("    {");
-                sb.AppendLine($"        OAS_Register_{s.SourceName}(Engine);");
-                sb.AppendLine("    }");
+                sb.AppendLine($"    OAS_Register_{s.SourceName}(Engine);");
             }
 
             sb.AppendLine("}");
@@ -527,7 +513,6 @@ namespace OtterAngleScriptUbtPlugin
             sb.AppendLine("void Bind_Generated(asIScriptEngine* Engine)");
             sb.AppendLine("{");
             sb.AppendLine("    check(Engine != nullptr);");
-            sb.AppendLine("    OAS_RegisterGeneratedTypes(Engine);");
             foreach (var group in groups)
                 foreach (var cls in group.Classes)
                     sb.AppendLine($"    OAS_RegisterMethods_{cls.SourceName}(Engine);");
@@ -739,6 +724,28 @@ namespace OtterAngleScriptUbtPlugin
         // -------------------------------------------------------------------------
         // Type mapping – AngelScript (for method signatures)
         // -------------------------------------------------------------------------
+
+        private string? GetAsPropertyDeclare(UhtProperty Prop)
+        {
+            if (Prop is UhtObjectProperty PropObj)
+            {
+                if (PropObj.CppForm == UhtObjectCppForm.TObjectPtrObject)
+                {
+                    return Prop.SourceName;
+                }
+            }
+            else if (Prop is UhtEnumProperty PropEnum)
+            {
+                if (PropEnum.Enum.CppForm == UhtEnumCppForm.Namespaced)
+                {
+                    return $"{PropEnum.Enum.SourceName}::Type";
+                }
+            }
+            StringBuilder propertySB = new StringBuilder();
+            Prop.AppendText(propertySB, UhtPropertyTextType.Sparse);
+            _factory.Session.LogInfo($"UhtPropertyTextType.Sparse {Prop.SourceName} {propertySB}");
+            return propertySB.ToString();
+        }
 
         /// <summary>
         /// Maps a UHT property to an AngelScript type declaration string.

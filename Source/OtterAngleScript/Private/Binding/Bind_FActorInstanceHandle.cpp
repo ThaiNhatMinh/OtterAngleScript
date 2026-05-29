@@ -12,17 +12,6 @@
 
 namespace
 {
-	static void RegisterReferenceTypeIfNeeded(asIScriptEngine* Engine, const char* Declaration)
-	{
-		if (Engine->GetTypeInfoByDecl(Declaration) != nullptr)
-		{
-			return;
-		}
-
-		const int Result = Engine->RegisterObjectType(Declaration, 0, asOBJ_REF | asOBJ_NOCOUNT);
-		check(Result >= 0);
-	}
-
 	static void FActorInstanceHandle_DefaultConstruct(FActorInstanceHandle* Memory)
 	{
 		new (Memory) FActorInstanceHandle();
@@ -69,10 +58,6 @@ void Bind_FActorInstanceHandle(asIScriptEngine* Engine)
 {
 	check(Engine != nullptr);
 
-	RegisterReferenceTypeIfNeeded(Engine, "AActor");
-	RegisterReferenceTypeIfNeeded(Engine, "UPrimitiveComponent");
-	RegisterReferenceTypeIfNeeded(Engine, "UPhysicalMaterial");
-
 	int Result = Engine->RegisterObjectType(
 		"FActorInstanceHandle",
 		sizeof(FActorInstanceHandle),
@@ -81,11 +66,11 @@ void Bind_FActorInstanceHandle(asIScriptEngine* Engine)
 
 	REGISTER_BEHAVIOUR(FActorInstanceHandle, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FActorInstanceHandle_DefaultConstruct), asCALL_CDECL_OBJLAST);
 	REGISTER_BEHAVIOUR(FActorInstanceHandle, asBEHAVE_CONSTRUCT, "void f(const FActorInstanceHandle &in Other)", asFUNCTION(FActorInstanceHandle_CopyConstruct), asCALL_CDECL_OBJLAST);
-	REGISTER_BEHAVIOUR(FActorInstanceHandle, asBEHAVE_CONSTRUCT, "void f(AActor@ Actor)", asFUNCTION(FActorInstanceHandle_ConstructActor), asCALL_CDECL_OBJLAST);
+	REGISTER_BEHAVIOUR(FActorInstanceHandle, asBEHAVE_CONSTRUCT, "void f(AActor Actor)", asFUNCTION(FActorInstanceHandle_ConstructActor), asCALL_CDECL_OBJLAST);
 	REGISTER_BEHAVIOUR(FActorInstanceHandle, asBEHAVE_DESTRUCT, "void f()", asFUNCTION(FActorInstanceHandle_Destruct), asCALL_CDECL_OBJLAST);
 
 	REGISTER_METHOD(FActorInstanceHandle, "FActorInstanceHandle &opAssign(const FActorInstanceHandle &in Other)", asFUNCTION(FActorInstanceHandle_Assign), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FActorInstanceHandle, "bool opEquals(const FActorInstanceHandle &in Other) const", asFUNCTION(FActorInstanceHandle_OpEquals), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FActorInstanceHandle, "bool IsValid() const", asFUNCTION(FActorInstanceHandle_IsValid), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FActorInstanceHandle, "AActor@ FetchActor() const", asFUNCTION(FActorInstanceHandle_FetchActor), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FActorInstanceHandle, "AActor FetchActor() const", asFUNCTION(FActorInstanceHandle_FetchActor), asCALL_CDECL_OBJFIRST);
 }
