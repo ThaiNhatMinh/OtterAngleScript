@@ -353,11 +353,7 @@ void Bind_FString(asIScriptEngine* Engine)
 {
 	check(Engine != nullptr);
 
-	int Result = Engine->RegisterObjectType(
-		"FString",
-		sizeof(FString),
-		asOBJ_VALUE | asGetTypeTraits<FString>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
-	check(Result >= 0);
+	int Result = 0;
 
 	REGISTER_BEHAVIOUR(FString, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FString_DefaultConstruct), asCALL_CDECL_OBJLAST);
 	REGISTER_BEHAVIOUR(FString, asBEHAVE_CONSTRUCT, "void f(const FString &in Other)", asFUNCTION(FString_CopyConstruct), asCALL_CDECL_OBJLAST);

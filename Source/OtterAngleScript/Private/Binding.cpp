@@ -35,6 +35,10 @@ void Declare_Types(asIScriptEngine* Engine)
 	Result = Engine->RegisterObjectType("FTransform", sizeof(FTransform), asOBJ_VALUE | asGetTypeTraits<FTransform>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
 	check(Result >= 0);
 
+
+	Result = Engine->RegisterObjectType("FString", sizeof(FString), asOBJ_VALUE | asGetTypeTraits<FString>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	check(Result >= 0);
+
 	Declare_TArray(Engine);
 	Declare_TSoftObjectPtr(Engine);
 }
