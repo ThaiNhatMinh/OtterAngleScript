@@ -107,9 +107,9 @@ void Bind_FHitResult(asIScriptEngine* Engine)
 	REGISTER_PROPERTY(FHitResult, "int MyItem", MyItem);
 	REGISTER_PROPERTY(FHitResult, "int Item", Item);
 	REGISTER_PROPERTY(FHitResult, "uint8 ElementIndex", ElementIndex);
-	REGISTER_PROPERTY(FHitResult, "TWeakObjectPtr_UPhysicalMaterial PhysMaterial", PhysMaterial);
+	REGISTER_PROPERTY(FHitResult, "TWeakObjectPtr<UPhysicalMaterial> PhysMaterial", PhysMaterial);
 	REGISTER_PROPERTY(FHitResult, "FActorInstanceHandle HitObjectHandle", HitObjectHandle);
-	REGISTER_PROPERTY(FHitResult, "TWeakObjectPtr_UPrimitiveComponent Component", Component);
+	REGISTER_PROPERTY(FHitResult, "TWeakObjectPtr<UPrimitiveComponent> Component", Component);
 	REGISTER_PROPERTY(FHitResult, "FName BoneName", BoneName);
 	REGISTER_PROPERTY(FHitResult, "FName MyBoneName", MyBoneName);
 }

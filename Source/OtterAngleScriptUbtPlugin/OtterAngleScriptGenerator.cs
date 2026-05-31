@@ -61,11 +61,16 @@ namespace OtterAngleScriptUbtPlugin
             "FVector", "FVector2D", "FRotator", "FQuat",
             "FTransform", "FPlane", "FBox",
             "FHitResult", "FTimerHandle", "FLatentActionInfo",
-            "FActorInstanceHandle", "FMatrix"
+            "FActorInstanceHandle", "FMatrix", "FAlphaBlendArgs"
         };
         private static readonly HashSet<string> SkipStructs = new(StringComparer.Ordinal)
         {
-            "FAudioBasedVibrationData", "FSoundClassProperties", "FSpecularProfileStruct", "FActorDesc"
+            "FAudioBasedVibrationData", "FSoundClassProperties", "FSpecularProfileStruct", "FActorDesc", "FImportanceTexture", "FAnimationActiveTransitionEntry", "FFieldCookedMetaDataKey", "FEscalationState",
+            "FInstancedSkinnedMeshComponentInstanceData", "FOverriddenPropertyNodeID",
+            // No copy constructor but there is no way to tell UHT that, so we skip it to avoid generation errors.
+            "FTickFunction", "FNetworkPhysicsRewindDataProxy", "FStaticMeshSourceModel", "FSpatialHashStreamingGrid", "FSpatialHashStreamingGridLayerCell", "FSpatialHashStreamingGridLevel",
+            // Cooked data structs
+            "FAudioCookOutputs"
         };
         private static readonly HashSet<string> BuildModules = new(StringComparer.Ordinal)
         {
@@ -117,11 +122,30 @@ namespace OtterAngleScriptUbtPlugin
                 .Where(c => !c.HeaderFile.FilePath.Contains("Private"))
                 .Where(c => !c.Deprecated)
                 .ToList();
+            foreach (var ustruct in packageList
+                .SelectMany(p => TraverseTree(p))
+                .OfType<UhtScriptStruct>())
+            {
+                var result = ustruct.MetaData.ContainsKey("BlueprintType");
+                var result1 = !ManuallyBoundTypes.Contains(ustruct.SourceName);
+                var result2 = !ustruct.HeaderFile.FilePath.Contains("Tests");
+                var result3 = !ustruct.HeaderFile.FilePath.Contains("Internal");
+                var result4 = !ustruct.HeaderFile.FilePath.Contains("Private");
+                var result5 = !ustruct.HeaderFile.FilePath.Contains("NoExportTypes.h");
+                var result6 = !ustruct.SourceName.Contains("Deprecated");
+                var result7 = !SkipStructs.Contains(ustruct.SourceName);
+                var result8 = !ustruct.Deprecated;
+                var result9 = ustruct.Super != null ? ustruct.Super.SourceName != "FAnimNode_Base" : true;
+                var result10 = !ustruct.ScriptStructFlags.HasFlag(EStructFlags.NoExport);
+                //_factory.Session.LogInfo($"OAS: found struct {ustruct.SourceName} with {ustruct.ScriptStructExportFlags} {ustruct.FieldExportFlags}");
+                _factory.Session.LogInfo($"OAS: found struct {ustruct.SourceName} with {result} {result1}, {result2}, {result3}, {result4}, {result5}, {result6}, {result7}, {result8}, {result9}, {result10} {HasScriptExposedStructContent(ustruct)}");
+            }
 
             // Collect all BlueprintType USTRUCTs excluding manually-bound types.
             var allStructs = packageList
                 .SelectMany(p => TraverseTree(p))
                 .OfType<UhtScriptStruct>()
+                .Where(s => !s.ScriptStructFlags.HasFlag(EStructFlags.NoExport))
                 .Where(s => s.MetaData.ContainsKey("BlueprintType"))
                 .Where(s => !ManuallyBoundTypes.Contains(s.SourceName))
                 .Where(s => !s.HeaderFile.FilePath.Contains("Tests"))
@@ -132,6 +156,7 @@ namespace OtterAngleScriptUbtPlugin
                 .Where(s => !SkipStructs.Contains(s.SourceName))
                 .Where(s => !s.Deprecated)
                 .Where(s => s.Super != null ? s.Super.SourceName != "FAnimNode_Base" : true)
+                .Where(s => !s.SourceName.StartsWith("FAnimNode_"))
                 .ToList();
 
             // Collect all BlueprintType UENUMs excluding manually-bound types.
@@ -149,17 +174,16 @@ namespace OtterAngleScriptUbtPlugin
                 .Where(e => !e.Deprecated)
                 .ToList();
 
-            foreach (var uneum in allEnums)
-            {
-                _factory.Session.LogInfo($"OAS: will generate bindings for enum {uneum.SourceName}");
-            }
-
             if (allClasses.Count == 0 && allStructs.Count == 0 && allEnums.Count == 0)
                 return;
 
             // Only structs that have at least one script-exposed property get registered.
-            var allStructsWithContent = allStructs.Where(HasScriptExposedStructContent).ToList();
-
+            var allStructsWithContent = allStructs.Where(s => IsStructCanGenerate(s, allStructs)).ToList();
+            //foreach (var s in allStructs)
+            //{
+            //    var result = HasScriptExposedStructContent(s);
+            //    //_factory.Session.LogInfo($"OAS: struct {s.SourceName} has script-exposed content: {result}");
+            //}
             // Build the set of all type names that will be registered (used to validate
             // parameter types later).
             var registeredTypeNames = new HashSet<string>(ManuallyBoundTypes, StringComparer.Ordinal);
@@ -274,6 +298,7 @@ namespace OtterAngleScriptUbtPlugin
 
             foreach (var s in group.Structs)
             {
+
                 WriteStructHelpers(sb, s);
                 WriteStructRegistrationFunction(sb, s, registeredTypeNames);
             }
@@ -384,13 +409,14 @@ namespace OtterAngleScriptUbtPlugin
 
             sb.AppendLine($"void OAS_Register_Declare{name}(asIScriptEngine* Engine)");
             sb.AppendLine("{");
-            sb.AppendLine($"    int Result = Engine->RegisterObjectType(\"{name}\", sizeof({name}), asOBJ_VALUE | asGetTypeTraits<{s.SourceName}>()); check(Result >= 0);");
+            sb.AppendLine($"    int Result = Engine->RegisterObjectType(\"{name}\", sizeof({name}), asOBJ_VALUE | asGetTypeTraits<{name}>()); check(Result >= 0);");
             sb.AppendLine("}");
             sb.AppendLine();
 
             sb.AppendLine($"void OAS_Register_{name}(asIScriptEngine* Engine)");
             sb.AppendLine("{");
             sb.AppendLine("    int Result = 0;");
+            sb.AppendLine($"    auto TypeTrait = asGetTypeTraits<{name}>();");
             sb.AppendLine();
             sb.AppendLine($"    Result = Engine->RegisterObjectBehaviour(\"{name}\", asBEHAVE_CONSTRUCT,");
             sb.AppendLine($"        \"void f()\", asFUNCTION({name}_DefaultConstruct), asCALL_CDECL_OBJLAST);");
@@ -411,15 +437,15 @@ namespace OtterAngleScriptUbtPlugin
                 if (prop.IsBitfield)
                     // TODO: support bitfield properties via wrapper functions.
                     continue;
-                if (prop.SourceName == "Sequence")
-                {
-                    _factory.Session.LogInfo($"OAS: skipping struct property {name}::{prop.SourceName} {prop.PropertyFlags}");
-                }
+
                 if (prop.PropertyFlags.HasAnyFlags(EPropertyFlags.NativeAccessSpecifierProtected | EPropertyFlags.NativeAccessSpecifierPrivate))
                     continue;
 
                 string? asType = GetAsPropertyDeclare(prop);
                 if (asType == null)
+                    continue;
+
+                if (asType.ToLower().Contains("fdeprecate")) // FDeprecate
                     continue;
 
                 sb.AppendLine($"    Result = Engine->RegisterObjectProperty(\"{name}\", \"{asType} {prop.SourceName}\",");
@@ -581,6 +607,22 @@ namespace OtterAngleScriptUbtPlugin
                 .Where(p => !(p.MetaData.ContainsKey(UhtNames.BlueprintGetter) && p.MetaData.ContainsKey(UhtNames.BlueprintSetter)));
         }
 
+        private static bool IsStructCanGenerate(UhtScriptStruct s, List<UhtScriptStruct> allStruct)
+        {
+            foreach (var child in s.Children)
+            {
+                if (child is UhtScriptStruct childstruct)
+                {
+                    if (!allStruct.Contains(childstruct))
+                    {
+                        return false;
+                    }
+                }
+            }
+            return false;
+            //return HasScriptExposedStructContent(s);
+        }
+
         private static bool HasScriptExposedStructContent(UhtScriptStruct s)
         {
             return ScriptStructProperties(s).Any();
@@ -591,7 +633,7 @@ namespace OtterAngleScriptUbtPlugin
             return s.Children
                 .OfType<UhtProperty>()
                 .Where(p => !p.PropertyFlags.HasAnyFlags(EPropertyFlags.Parm | EPropertyFlags.Deprecated)
-                         && p.PropertyFlags.HasAnyFlags(EPropertyFlags.BlueprintVisible | EPropertyFlags.BlueprintReadOnly)
+                         //&& p.PropertyFlags.HasAnyFlags(EPropertyFlags.BlueprintVisible | EPropertyFlags.BlueprintReadOnly)
                          && !p.Deprecated && !p.FullName.Contains("_DEPRECATED"))
                 .Where(p => !p.IsEditorOnlyProperty)
                 .Where(p => !p.PropertyFlags.HasAnyFlags(EPropertyFlags.Protected | EPropertyFlags.NativeAccessSpecifierPrivate));

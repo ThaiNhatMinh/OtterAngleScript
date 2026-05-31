@@ -729,11 +729,7 @@ void Bind_FVector(asIScriptEngine* Engine)
 {
 	check(Engine != nullptr);
 
-	int Result = Engine->RegisterObjectType(
-		"FVector",
-		sizeof(FVector),
-		asOBJ_VALUE | asGetTypeTraits<FVector>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
-	check(Result >= 0);
+	int Result;
 
 	REGISTER_BEHAVIOUR(FVector, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FVector_DefaultConstruct), asCALL_CDECL_OBJLAST);
 	REGISTER_BEHAVIOUR(FVector, asBEHAVE_CONSTRUCT, "void f(const FVector &in Other)", asFUNCTION(FVector_CopyConstruct), asCALL_CDECL_OBJLAST);
@@ -852,7 +848,7 @@ void Bind_FVector(asIScriptEngine* Engine)
 	check(Result >= 0);
 	Result = Engine->RegisterGlobalFunction("FVector SlerpNormals(const FVector &in NormalA, const FVector &in NormalB, double Alpha)", asFUNCTION(FVector_SlerpNormals), asCALL_CDECL);
 	check(Result >= 0);
-	Result = Engine->RegisterGlobalFunction("void CreateOrthonormalBasis(FVector &inout XAxis, FVector &inout YAxis, FVector &inout ZAxis)", asFUNCTION(FVector_CreateOrthonormalBasis), asCALL_CDECL);
+	Result = Engine->RegisterGlobalFunction("void CreateOrthonormalBasis(FVector &out XAxis, FVector &out YAxis, FVector &out ZAxis)", asFUNCTION(FVector_CreateOrthonormalBasis), asCALL_CDECL);
 	check(Result >= 0);
 	Result = Engine->RegisterGlobalFunction("bool PointsAreSame(const FVector &in A, const FVector &in B)", asFUNCTION(FVector_PointsAreSame), asCALL_CDECL);
 	check(Result >= 0);

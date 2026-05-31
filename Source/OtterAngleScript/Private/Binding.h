@@ -40,8 +40,11 @@ void Bind_UClass(asIScriptEngine* Engine);
 void Bind_FActorInstanceHandle(asIScriptEngine* Engine);
 
 /**
- * Registers the concrete TWeakObjectPtr specializations used by script-exposed engine types.
+ * Registers TWeakObjectPtr<T> as a value-type AngelScript template.
+ * Declare_TWeakObjectPtr registers the template type declaration; Bind_TWeakObjectPtr registers
+ * the template callback, constructors, and all methods.
  */
+void Declare_TWeakObjectPtr(asIScriptEngine* Engine);
 void Bind_TWeakObjectPtr(asIScriptEngine* Engine);
 
 /**
@@ -155,9 +158,39 @@ void Bind_TSoftObjectPtr(asIScriptEngine* Engine);
 void Bind_Logging(asIScriptEngine* Engine);
 
 /**
+ * Registers FFrameNumber as a value type in the AngelScript engine.
+ * The type is exposed as "FFrameNumber" in scripts.
+ */
+void Bind_FFrameNumber(asIScriptEngine* Engine);
+
+/**
+ * Registers FFrameTime as a value type in the AngelScript engine.
+ * The type is exposed as "FFrameTime" in scripts.
+ */
+void Bind_FFrameTime(asIScriptEngine* Engine);
+
+/**
+ * Registers FFrameRate as a value type in the AngelScript engine.
+ * The type is exposed as "FFrameRate" in scripts.
+ */
+void Bind_FFrameRate(asIScriptEngine* Engine);
+
+/**
+ * Registers FNavAgentSelector as a value type in the AngelScript engine.
+ * The type is exposed as "FNavAgentSelector" in scripts.
+ */
+void Bind_FNavAgentSelector(asIScriptEngine* Engine);
+
+/**
  * Registers TArray<T> as a GC-managed template reference type in the AngelScript engine.
  * The type is exposed as "TArray<T>" in scripts.
  */
 void Declare_TArray(asIScriptEngine* Engine);
 void Declare_TSoftObjectPtr(asIScriptEngine* Engine);
 void Bind_TArray(asIScriptEngine* Engine);
+
+/**
+ * Registers EAlphaBlendOption enum, FAlphaBlendArgs, and FAlphaBlend as value types
+ * in the AngelScript engine. Also registers the global FAlphaBlend_AlphaToBlendOption helper.
+ */
+void Bind_FAlphaBlend(asIScriptEngine* Engine);

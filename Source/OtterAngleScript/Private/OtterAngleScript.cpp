@@ -89,6 +89,10 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_FHitResult(Engine);
 	Bind_FTimerHandle(Engine);
 	Bind_FLatentActionInfo(Engine);
+	Bind_FFrameNumber(Engine);
+	Bind_FFrameTime(Engine);
+	Bind_FFrameRate(Engine);
+	Bind_FNavAgentSelector(Engine);
 	Bind_FLinearColor(Engine);
 	Bind_FColor(Engine);
 	Bind_FSoftObjectPath(Engine);
@@ -97,6 +101,7 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_FMath(Engine);
 	Bind_Logging(Engine);
 	Bind_TArray(Engine);
+	Bind_FAlphaBlend(Engine);
 
 	// Include and invoke the UHT-generated AngelScript bindings if they exist.
 	// GeneratedAngelScriptBindings.h is produced by OtterAngleScriptUbtPlugin (one

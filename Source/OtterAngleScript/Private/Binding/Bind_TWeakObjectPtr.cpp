@@ -1,148 +1,216 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Binding.h"
-#include "Components/PrimitiveComponent.h"
 #include "Misc/AssertionMacros.h"
-#include "PhysicalMaterials/PhysicalMaterial.h"
+#include "UObject/Object.h"
+#include "UObject/WeakObjectPtr.h"
 #include "angelscript.h"
 
 #include <new>
 
 namespace
 {
-	using FWeakPrimitiveComponentPtr = TWeakObjectPtr<UPrimitiveComponent>;
-	using FWeakPhysicalMaterialPtr = TWeakObjectPtr<UPhysicalMaterial>;
+	using FTWeakObjectPtrBase = TWeakObjectPtr<UObject>;
 
-	static void WeakPrimitiveComponent_DefaultConstruct(FWeakPrimitiveComponentPtr* Memory)
+	// Template callback: only allow ref types (UObject-derived handles) as T.
+	static bool TWeakObjectPtrTemplateCallback(asITypeInfo* TypeInfo, bool& bDontGarbageCollect)
 	{
-		new (Memory) FWeakPrimitiveComponentPtr();
+		int SubTypeId = TypeInfo->GetSubTypeId();
+
+		if (SubTypeId == asTYPEID_VOID)
+		{
+			return false;
+		}
+
+		if (SubTypeId & asTYPEID_MASK_OBJECT)
+		{
+			asITypeInfo* SubType = TypeInfo->GetEngine()->GetTypeInfoById(SubTypeId);
+			if (SubType && (SubType->GetFlags() & asOBJ_REF))
+			{
+				bDontGarbageCollect = true;
+				return true;
+			}
+		}
+
+		TypeInfo->GetEngine()->WriteMessage("TWeakObjectPtr", 0, 0, asMSGTYPE_ERROR,
+			"TWeakObjectPtr<T> requires T to be a reference type (UObject-derived)");
+		return false;
 	}
 
-	static void WeakPrimitiveComponent_CopyConstruct(const FWeakPrimitiveComponentPtr& Other, FWeakPrimitiveComponentPtr* Memory)
+	// --- Constructors / destructor ---
+	// Template constructors receive asITypeInfo* as first C++ argument (from "int&in" in declaration).
+
+	static void TWeakObjectPtr_DefaultConstruct(asITypeInfo* /*TypeInfo*/, FTWeakObjectPtrBase* Memory)
 	{
-		new (Memory) FWeakPrimitiveComponentPtr(Other);
+		new (Memory) FTWeakObjectPtrBase();
 	}
 
-	static void WeakPrimitiveComponent_ConstructObject(UPrimitiveComponent* Object, FWeakPrimitiveComponentPtr* Memory)
+	static void TWeakObjectPtr_CopyConstruct(asITypeInfo* /*TypeInfo*/, const FTWeakObjectPtrBase& Other, FTWeakObjectPtrBase* Memory)
 	{
-		new (Memory) FWeakPrimitiveComponentPtr(Object);
+		new (Memory) FTWeakObjectPtrBase(Other);
 	}
 
-	static void WeakPrimitiveComponent_Destruct(FWeakPrimitiveComponentPtr* Memory)
+	static void TWeakObjectPtr_ConstructFromObject(asITypeInfo* /*TypeInfo*/, UObject* Object, FTWeakObjectPtrBase* Memory)
 	{
-		Memory->~FWeakPrimitiveComponentPtr();
+		new (Memory) FTWeakObjectPtrBase(Object);
 	}
 
-	static FWeakPrimitiveComponentPtr& WeakPrimitiveComponent_Assign(FWeakPrimitiveComponentPtr& Value, const FWeakPrimitiveComponentPtr& Other)
+	static void TWeakObjectPtr_Destruct(FTWeakObjectPtrBase* Memory)
 	{
-		Value = Other;
-		return Value;
+		Memory->~FTWeakObjectPtrBase();
 	}
 
-	static FWeakPrimitiveComponentPtr& WeakPrimitiveComponent_AssignObject(FWeakPrimitiveComponentPtr& Value, UPrimitiveComponent* Object)
+	// --- Assignment ---
+
+	static FTWeakObjectPtrBase& TWeakObjectPtr_CopyAssign(FTWeakObjectPtrBase& Self, const FTWeakObjectPtrBase& Other)
 	{
-		Value = Object;
-		return Value;
+		Self = Other;
+		return Self;
 	}
 
-	static bool WeakPrimitiveComponent_Equals(const FWeakPrimitiveComponentPtr& Value, const FWeakPrimitiveComponentPtr& Other)
+	static FTWeakObjectPtrBase& TWeakObjectPtr_AssignObject(FTWeakObjectPtrBase& Self, UObject* Object)
 	{
-		return Value == Other;
+		Self = Object;
+		return Self;
 	}
 
-	static bool WeakPrimitiveComponent_IsValid(const FWeakPrimitiveComponentPtr& Value)
+	// --- Equality ---
+
+	static bool TWeakObjectPtr_Equals(const FTWeakObjectPtrBase& Self, const FTWeakObjectPtrBase& Other)
 	{
-		return Value.IsValid();
+		return Self == Other;
 	}
 
-	static UPrimitiveComponent* WeakPrimitiveComponent_Get(const FWeakPrimitiveComponentPtr& Value)
+	static bool TWeakObjectPtr_EqualsObject(const FTWeakObjectPtrBase& Self, UObject* Object)
 	{
-		return Value.Get();
+		return Self == Object;
 	}
 
-	static void WeakPhysicalMaterial_DefaultConstruct(FWeakPhysicalMaterialPtr* Memory)
+	// --- State queries ---
+
+	static bool TWeakObjectPtr_IsStale(const FTWeakObjectPtrBase& Self)
 	{
-		new (Memory) FWeakPhysicalMaterialPtr();
+		return Self.IsStale();
 	}
 
-	static void WeakPhysicalMaterial_CopyConstruct(const FWeakPhysicalMaterialPtr& Other, FWeakPhysicalMaterialPtr* Memory)
+	// --- Object access ---
+
+	static UObject* TWeakObjectPtr_Get(const FTWeakObjectPtrBase& Self)
 	{
-		new (Memory) FWeakPhysicalMaterialPtr(Other);
+		return Self.Get();
 	}
 
-	static void WeakPhysicalMaterial_ConstructObject(UPhysicalMaterial* Object, FWeakPhysicalMaterialPtr* Memory)
+	static UObject* TWeakObjectPtr_GetEvenIfUnreachable(const FTWeakObjectPtrBase& Self)
 	{
-		new (Memory) FWeakPhysicalMaterialPtr(Object);
+		return Self.GetEvenIfUnreachable();
 	}
 
-	static void WeakPhysicalMaterial_Destruct(FWeakPhysicalMaterialPtr* Memory)
-	{
-		Memory->~FWeakPhysicalMaterialPtr();
-	}
+	// --- HasSameIndexAndSerialNumber ---
 
-	static FWeakPhysicalMaterialPtr& WeakPhysicalMaterial_Assign(FWeakPhysicalMaterialPtr& Value, const FWeakPhysicalMaterialPtr& Other)
+	static bool TWeakObjectPtr_HasSameIndexAndSerialNumber(const FTWeakObjectPtrBase& Self, const FTWeakObjectPtrBase& Other)
 	{
-		Value = Other;
-		return Value;
+		return Self.HasSameIndexAndSerialNumber(Other);
 	}
+}
 
-	static FWeakPhysicalMaterialPtr& WeakPhysicalMaterial_AssignObject(FWeakPhysicalMaterialPtr& Value, UPhysicalMaterial* Object)
-	{
-		Value = Object;
-		return Value;
-	}
+void Declare_TWeakObjectPtr(asIScriptEngine* Engine)
+{
+	const asDWORD TypeFlags =
+		asOBJ_VALUE | asOBJ_TEMPLATE |
+		asOBJ_APP_CLASS | asOBJ_APP_CLASS_CONSTRUCTOR | asOBJ_APP_CLASS_DESTRUCTOR |
+		asOBJ_APP_CLASS_COPY_CONSTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT |
+		asOBJ_APP_CLASS_MORE_CONSTRUCTORS;
 
-	static bool WeakPhysicalMaterial_Equals(const FWeakPhysicalMaterialPtr& Value, const FWeakPhysicalMaterialPtr& Other)
-	{
-		return Value == Other;
-	}
-
-	static bool WeakPhysicalMaterial_IsValid(const FWeakPhysicalMaterialPtr& Value)
-	{
-		return Value.IsValid();
-	}
-
-	static UPhysicalMaterial* WeakPhysicalMaterial_Get(const FWeakPhysicalMaterialPtr& Value)
-	{
-		return Value.Get();
-	}
+	int Result = Engine->RegisterObjectType("TWeakObjectPtr<class T>", sizeof(FTWeakObjectPtrBase), TypeFlags);
+	check(Result >= 0);
 }
 
 void Bind_TWeakObjectPtr(asIScriptEngine* Engine)
 {
 	check(Engine != nullptr);
 
-	int Result = Engine->RegisterObjectType(
-		"TWeakObjectPtr_UPrimitiveComponent",
-		sizeof(FWeakPrimitiveComponentPtr),
-		asOBJ_VALUE | asGetTypeTraits<FWeakPrimitiveComponentPtr>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	int Result = 0;
+
+	Result = Engine->RegisterObjectBehaviour("TWeakObjectPtr<T>", asBEHAVE_TEMPLATE_CALLBACK,
+		"bool f(int&in, bool&out)", asFUNCTION(TWeakObjectPtrTemplateCallback), asCALL_CDECL);
 	check(Result >= 0);
 
-	REGISTER_BEHAVIOUR(TWeakObjectPtr_UPrimitiveComponent, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(WeakPrimitiveComponent_DefaultConstruct), asCALL_CDECL_OBJLAST);
-	REGISTER_BEHAVIOUR(TWeakObjectPtr_UPrimitiveComponent, asBEHAVE_CONSTRUCT, "void f(const TWeakObjectPtr_UPrimitiveComponent &in Other)", asFUNCTION(WeakPrimitiveComponent_CopyConstruct), asCALL_CDECL_OBJLAST);
-	REGISTER_BEHAVIOUR(TWeakObjectPtr_UPrimitiveComponent, asBEHAVE_CONSTRUCT, "void f(UPrimitiveComponent@ Object)", asFUNCTION(WeakPrimitiveComponent_ConstructObject), asCALL_CDECL_OBJLAST);
-	REGISTER_BEHAVIOUR(TWeakObjectPtr_UPrimitiveComponent, asBEHAVE_DESTRUCT, "void f()", asFUNCTION(WeakPrimitiveComponent_Destruct), asCALL_CDECL_OBJLAST);
-
-	REGISTER_METHOD(TWeakObjectPtr_UPrimitiveComponent, "TWeakObjectPtr_UPrimitiveComponent &opAssign(const TWeakObjectPtr_UPrimitiveComponent &in Other)", asFUNCTION(WeakPrimitiveComponent_Assign), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(TWeakObjectPtr_UPrimitiveComponent, "TWeakObjectPtr_UPrimitiveComponent &opAssign(UPrimitiveComponent@ Object)", asFUNCTION(WeakPrimitiveComponent_AssignObject), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(TWeakObjectPtr_UPrimitiveComponent, "bool opEquals(const TWeakObjectPtr_UPrimitiveComponent &in Other) const", asFUNCTION(WeakPrimitiveComponent_Equals), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(TWeakObjectPtr_UPrimitiveComponent, "bool IsValid() const", asFUNCTION(WeakPrimitiveComponent_IsValid), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(TWeakObjectPtr_UPrimitiveComponent, "UPrimitiveComponent@ Get() const", asFUNCTION(WeakPrimitiveComponent_Get), asCALL_CDECL_OBJFIRST);
-
-	Result = Engine->RegisterObjectType(
-		"TWeakObjectPtr_UPhysicalMaterial",
-		sizeof(FWeakPhysicalMaterialPtr),
-		asOBJ_VALUE | asGetTypeTraits<FWeakPhysicalMaterialPtr>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	// Constructors / destructor
+	// Template constructors must declare "int&in" as first parameter (receives asITypeInfo*).
+	Result = Engine->RegisterObjectBehaviour("TWeakObjectPtr<T>", asBEHAVE_CONSTRUCT,
+		"void f(int&in)", asFUNCTION(TWeakObjectPtr_DefaultConstruct), asCALL_CDECL_OBJLAST);
 	check(Result >= 0);
 
-	REGISTER_BEHAVIOUR(TWeakObjectPtr_UPhysicalMaterial, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(WeakPhysicalMaterial_DefaultConstruct), asCALL_CDECL_OBJLAST);
-	REGISTER_BEHAVIOUR(TWeakObjectPtr_UPhysicalMaterial, asBEHAVE_CONSTRUCT, "void f(const TWeakObjectPtr_UPhysicalMaterial &in Other)", asFUNCTION(WeakPhysicalMaterial_CopyConstruct), asCALL_CDECL_OBJLAST);
-	REGISTER_BEHAVIOUR(TWeakObjectPtr_UPhysicalMaterial, asBEHAVE_CONSTRUCT, "void f(UPhysicalMaterial@ Object)", asFUNCTION(WeakPhysicalMaterial_ConstructObject), asCALL_CDECL_OBJLAST);
-	REGISTER_BEHAVIOUR(TWeakObjectPtr_UPhysicalMaterial, asBEHAVE_DESTRUCT, "void f()", asFUNCTION(WeakPhysicalMaterial_Destruct), asCALL_CDECL_OBJLAST);
+	Result = Engine->RegisterObjectBehaviour("TWeakObjectPtr<T>", asBEHAVE_CONSTRUCT,
+		"void f(int&in, const TWeakObjectPtr<T> &in Other)", asFUNCTION(TWeakObjectPtr_CopyConstruct), asCALL_CDECL_OBJLAST);
+	check(Result >= 0);
 
-	REGISTER_METHOD(TWeakObjectPtr_UPhysicalMaterial, "TWeakObjectPtr_UPhysicalMaterial &opAssign(const TWeakObjectPtr_UPhysicalMaterial &in Other)", asFUNCTION(WeakPhysicalMaterial_Assign), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(TWeakObjectPtr_UPhysicalMaterial, "TWeakObjectPtr_UPhysicalMaterial &opAssign(UPhysicalMaterial@ Object)", asFUNCTION(WeakPhysicalMaterial_AssignObject), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(TWeakObjectPtr_UPhysicalMaterial, "bool opEquals(const TWeakObjectPtr_UPhysicalMaterial &in Other) const", asFUNCTION(WeakPhysicalMaterial_Equals), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(TWeakObjectPtr_UPhysicalMaterial, "bool IsValid() const", asFUNCTION(WeakPhysicalMaterial_IsValid), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(TWeakObjectPtr_UPhysicalMaterial, "UPhysicalMaterial@ Get() const", asFUNCTION(WeakPhysicalMaterial_Get), asCALL_CDECL_OBJFIRST);
+	Result = Engine->RegisterObjectBehaviour("TWeakObjectPtr<T>", asBEHAVE_CONSTRUCT,
+		"void f(int&in, T@ Object)", asFUNCTION(TWeakObjectPtr_ConstructFromObject), asCALL_CDECL_OBJLAST);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectBehaviour("TWeakObjectPtr<T>", asBEHAVE_DESTRUCT,
+		"void f()", asFUNCTION(TWeakObjectPtr_Destruct), asCALL_CDECL_OBJLAST);
+	check(Result >= 0);
+
+	// Assignment
+	Result = Engine->RegisterObjectMethod("TWeakObjectPtr<T>",
+		"TWeakObjectPtr<T> &opAssign(const TWeakObjectPtr<T> &in Other)",
+		asFUNCTION(TWeakObjectPtr_CopyAssign), asCALL_CDECL_OBJFIRST);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectMethod("TWeakObjectPtr<T>",
+		"TWeakObjectPtr<T> &opAssign(T@ Object)",
+		asFUNCTION(TWeakObjectPtr_AssignObject), asCALL_CDECL_OBJFIRST);
+	check(Result >= 0);
+
+	// Equality
+	Result = Engine->RegisterObjectMethod("TWeakObjectPtr<T>",
+		"bool opEquals(const TWeakObjectPtr<T> &in Other) const",
+		asFUNCTION(TWeakObjectPtr_Equals), asCALL_CDECL_OBJFIRST);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectMethod("TWeakObjectPtr<T>",
+		"bool opEquals(T@ Object) const",
+		asFUNCTION(TWeakObjectPtr_EqualsObject), asCALL_CDECL_OBJFIRST);
+	check(Result >= 0);
+
+	// State queries
+	Result = Engine->RegisterObjectMethod("TWeakObjectPtr<T>",
+		"bool IsValid() const",
+		asMETHODPR(FTWeakObjectPtrBase, IsValid, () const, bool), asCALL_THISCALL);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectMethod("TWeakObjectPtr<T>",
+		"bool IsStale() const",
+		asFUNCTION(TWeakObjectPtr_IsStale), asCALL_CDECL_OBJFIRST);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectMethod("TWeakObjectPtr<T>",
+		"bool IsExplicitlyNull() const",
+		asMETHODPR(FTWeakObjectPtrBase, IsExplicitlyNull, () const, bool), asCALL_THISCALL);
+	check(Result >= 0);
+
+	// Reset
+	Result = Engine->RegisterObjectMethod("TWeakObjectPtr<T>",
+		"void Reset()",
+		asMETHODPR(FTWeakObjectPtrBase, Reset, (), void), asCALL_THISCALL);
+	check(Result >= 0);
+
+	// Object access — return T@ so the handle type matches the instantiation.
+	Result = Engine->RegisterObjectMethod("TWeakObjectPtr<T>",
+		"T@ Get() const",
+		asFUNCTION(TWeakObjectPtr_Get), asCALL_CDECL_OBJFIRST);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectMethod("TWeakObjectPtr<T>",
+		"T@ GetEvenIfUnreachable() const",
+		asFUNCTION(TWeakObjectPtr_GetEvenIfUnreachable), asCALL_CDECL_OBJFIRST);
+	check(Result >= 0);
+
+	// Index/serial comparison
+	Result = Engine->RegisterObjectMethod("TWeakObjectPtr<T>",
+		"bool HasSameIndexAndSerialNumber(const TWeakObjectPtr<T> &in Other) const",
+		asFUNCTION(TWeakObjectPtr_HasSameIndexAndSerialNumber), asCALL_CDECL_OBJFIRST);
+	check(Result >= 0);
 }

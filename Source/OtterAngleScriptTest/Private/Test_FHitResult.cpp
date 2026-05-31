@@ -227,8 +227,8 @@ int RunFVectorTest()
 		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("FHitResult")));
 		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("FName")));
 		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("FActorInstanceHandle")));
-		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("TWeakObjectPtr_UPrimitiveComponent")));
-		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("TWeakObjectPtr_UPhysicalMaterial")));
+		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("TWeakObjectPtr<UPrimitiveComponent>")));
+		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("TWeakObjectPtr<UPhysicalMaterial>")));
 		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("AActor")));
 		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("UPrimitiveComponent")));
 		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("UPhysicalMaterial")));
@@ -277,8 +277,8 @@ int RunFHitResultTest()
     Hit.ImpactPoint = FVector(4.0, 5.0, 6.0);
     Hit.Normal = FVector(0.0, 0.0, 1.0);
     Hit.ImpactNormal = FVector(0.0, 1.0, 0.0);
-    Hit.Component = TWeakObjectPtr_UPrimitiveComponent(GetFixtureComponent());
-    Hit.PhysMaterial = TWeakObjectPtr_UPhysicalMaterial(GetFixturePhysMaterial());
+    Hit.Component = TWeakObjectPtr<UPrimitiveComponent>(GetFixtureComponent());
+    Hit.PhysMaterial = TWeakObjectPtr<UPhysicalMaterial>(GetFixturePhysMaterial());
     Hit.HitObjectHandle = MakeFixtureActorHandle();
     Hit.BoneName = FName("Head");
     Hit.MyBoneName = FName("Spine_02");
@@ -511,31 +511,31 @@ int RunFActorInstanceHandleTest()
 
 	TEST_METHOD(TWeakObjectPtrBindingWorks)
 	{
-		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("TWeakObjectPtr_UPrimitiveComponent")));
-		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("TWeakObjectPtr_UPhysicalMaterial")));
+		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("TWeakObjectPtr<UPrimitiveComponent>")));
+		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("TWeakObjectPtr<UPhysicalMaterial>")));
 
 		static const char Script[] = R"(
 int RunTWeakObjectPtrTest()
 {
-    TWeakObjectPtr_UPrimitiveComponent WeakComponent(GetFixtureComponent());
+    TWeakObjectPtr<UPrimitiveComponent> WeakComponent(GetFixtureComponent());
     if (!WeakComponent.IsValid() || WeakComponent.Get() is null)
     {
         return -1;
     }
 
-    TWeakObjectPtr_UPrimitiveComponent WeakComponentCopy(WeakComponent);
+    TWeakObjectPtr<UPrimitiveComponent> WeakComponentCopy(WeakComponent);
     if (!WeakComponentCopy.opEquals(WeakComponent))
     {
         return -2;
     }
 
-    TWeakObjectPtr_UPhysicalMaterial WeakMaterial(GetFixturePhysMaterial());
+    TWeakObjectPtr<UPhysicalMaterial> WeakMaterial(GetFixturePhysMaterial());
     if (!WeakMaterial.IsValid() || WeakMaterial.Get() is null)
     {
         return -3;
     }
 
-    TWeakObjectPtr_UPhysicalMaterial WeakMaterialAssigned;
+    TWeakObjectPtr<UPhysicalMaterial> WeakMaterialAssigned;
     WeakMaterialAssigned = GetFixturePhysMaterial();
     if (!WeakMaterialAssigned.IsValid() || WeakMaterialAssigned.Get() is null)
     {
