@@ -54,11 +54,7 @@ void Bind_FSoftObjectPath(asIScriptEngine* Engine)
 {
 	check(Engine != nullptr);
 
-	int Result = Engine->RegisterObjectType(
-		"FSoftObjectPath",
-		sizeof(FSoftObjectPath),
-		asOBJ_VALUE | asGetTypeTraits<FSoftObjectPath>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
-	check(Result >= 0);
+	int Result;
 
 	// Constructors / destructor
 	REGISTER_BEHAVIOUR(FSoftObjectPath, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FSoftObjectPath_DefaultConstruct), asCALL_CDECL_OBJLAST);

@@ -14,8 +14,9 @@ public class OtterAngleScriptTest : ModuleRules
 				"PhysicsCore",
 				"CoreUObject",
                 "Engine",
-				"OtterAngleScript"
-			}
+				"OtterAngleScript",
+				"AudioExtensions"
+				}
 		);
 	}
 }

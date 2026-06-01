@@ -91,6 +91,12 @@ void Bind_FPlane(asIScriptEngine* Engine);
 
 /**
  * Registers FText as a value type in the AngelScript engine.
+ * Exposes constructors, assignment, comparison (CompareTo, EqualTo, IdenticalTo, case-ignored variants),
+ * conversion helpers (ToString, BuildSourceString, ToLower, ToUpper), state queries
+ * (IsEmpty, IsEmptyOrWhitespace, IsNumeric, IsTransient, IsCultureInvariant,
+ * IsInitializedFromString, IsFromStringTable), and static factory/formatting methods
+ * (GetEmpty, FromString, FromName, AsCultureInvariant, TrimPreceding/Trailing, AsNumber,
+ * AsPercent, Format with 1-3 ordered FText args or a single int/float arg) under the FText namespace.
  */
 void Bind_FText(asIScriptEngine* Engine);
 
@@ -190,7 +196,60 @@ void Declare_TSoftObjectPtr(asIScriptEngine* Engine);
 void Bind_TArray(asIScriptEngine* Engine);
 
 /**
- * Registers EAlphaBlendOption enum, FAlphaBlendArgs, and FAlphaBlend as value types
- * in the AngelScript engine. Also registers the global FAlphaBlend_AlphaToBlendOption helper.
+ * Registers TSet<T> as a GC-managed template value type in the AngelScript engine.
+ * The type is exposed as "TSet<T>" in scripts. Elements are stored unordered and
+ * uniqueness is enforced using the subtype's opEquals method.
  */
-void Bind_FAlphaBlend(asIScriptEngine* Engine);
+void Declare_TSet(asIScriptEngine* Engine);
+void Bind_TSet(asIScriptEngine* Engine);
+
+/**
+ * Registers TMap<K,V> as a GC-managed template value type in the AngelScript engine.
+ * The type is exposed as "TMap<K,V>" in scripts. Key uniqueness is enforced using the
+ * key type's opEquals method.
+ */
+void Declare_TMap(asIScriptEngine* Engine);
+void Bind_TMap(asIScriptEngine* Engine);
+
+/**
+ * Registers TSubclassOf<T> as a value-type AngelScript template.
+ * Declare_TSubclassOf registers the template type declaration; Bind_TSubclassOf registers
+ * the template callback, constructors, and all methods.
+ */
+void Declare_TSubclassOf(asIScriptEngine* Engine);
+void Bind_TSubclassOf(asIScriptEngine* Engine);
+
+/**
+ * Registers UPhysicalMaterial as a reference type, FPhysicalMaterialStrength and
+ * FPhysicalMaterialDamageModifier as value types, and the EFrictionCombineMode,
+ * EPhysicalSurface, and EPhysicalMaterialSoftCollisionMode enums.
+ */
+void Bind_UPhysicalMaterial(asIScriptEngine* Engine);
+
+/**
+ * Registers EAudioParameterType enum and FAudioParameter value type, including
+ * constructors, scalar properties, virtual properties for ParamType and ObjectParam,
+ * the Merge instance method, and FAudioParameter::CreateDefaultArray static factory.
+ */
+void Bind_FAudioParameter(asIScriptEngine* Engine);
+
+/**
+ * Registers FVector4f (TVector4<float>) as a value type in the AngelScript engine.
+ * Exposes X/Y/Z/W float components, arithmetic operators, index operators,
+ * geometric methods, and FVector4f::Zero/One static helpers.
+ */
+void Bind_FVector4f(asIScriptEngine* Engine);
+
+/**
+ * Registers FBox2D (TBox2<double>) as a value type in the AngelScript engine.
+ * Exposes Min/Max/bIsValid properties, extend operators (+ and +=), index operator,
+ * geometric query methods, and a FBox2D::BuildAABB static helper.
+ */
+void Bind_FBox2D(asIScriptEngine* Engine);
+
+/**
+ * Registers ERichCurveInterpMode, ERichCurveTangentMode, ERichCurveTangentWeightMode, and
+ * ERichCurveExtrapolation enums, plus FKeyHandle, FRichCurveKey, and FRichCurve value types.
+ * Exposes all key management, evaluation, tangent, extrapolation, and curve-transform methods.
+ */
+void Bind_FRichCurve(asIScriptEngine* Engine);

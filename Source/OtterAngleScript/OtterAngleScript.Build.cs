@@ -37,6 +37,8 @@ public class OtterAngleScript : ModuleRules
                 "AngleScriptSDK",
                 "AIModule",
                 "InputCore",
+                "PhysicsCore",
+                "AudioExtensions",
                 "Projects"
 				// ... add other public dependencies that you statically link with here ...
 			}

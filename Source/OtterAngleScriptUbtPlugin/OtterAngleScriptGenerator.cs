@@ -66,15 +66,21 @@ namespace OtterAngleScriptUbtPlugin
         private static readonly HashSet<string> SkipStructs = new(StringComparer.Ordinal)
         {
             "FAudioBasedVibrationData", "FSoundClassProperties", "FSpecularProfileStruct", "FActorDesc", "FImportanceTexture", "FAnimationActiveTransitionEntry", "FFieldCookedMetaDataKey", "FEscalationState",
-            "FInstancedSkinnedMeshComponentInstanceData", "FOverriddenPropertyNodeID",
+            "FInstancedSkinnedMeshComponentInstanceData", "FOverriddenPropertyNodeID", "FAttenuationSubmixSendSettings",
             // No copy constructor but there is no way to tell UHT that, so we skip it to avoid generation errors.
             "FTickFunction", "FNetworkPhysicsRewindDataProxy", "FStaticMeshSourceModel", "FSpatialHashStreamingGrid", "FSpatialHashStreamingGridLayerCell", "FSpatialHashStreamingGridLevel",
             // Cooked data structs
             "FAudioCookOutputs"
         };
+
+        private static readonly HashSet<string> SkipHeaderPath = new(StringComparer.Ordinal)
+        {
+            "Tests", "Internal", "Private", "NoExportTypes.h", "EdGraph"
+        };
+
         private static readonly HashSet<string> BuildModules = new(StringComparer.Ordinal)
         {
-            "NetCore", "CoreUObject", "Engine"
+            "NetCore", "CoreUObject", "Engine", "AudioExtensions"
         };
 
         Dictionary<string, Dictionary<string, string>> CustomCppSignature = new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal)
@@ -117,28 +123,31 @@ namespace OtterAngleScriptUbtPlugin
                 .OfType<UhtClass>()
                 .Where(c => !c.ClassFlags.HasAnyFlags(EClassFlags.Interface))
                 .Where(c => !ManuallyBoundTypes.Contains(c.SourceName))
-                .Where(c => !c.HeaderFile.FilePath.Contains("Tests"))
-                .Where(c => !c.HeaderFile.FilePath.Contains("Internal"))
-                .Where(c => !c.HeaderFile.FilePath.Contains("Private"))
+                .Where(c => !SkipHeaderPath.Any(skip => c.HeaderFile.FilePath.Contains(skip)))
                 .Where(c => !c.Deprecated)
                 .ToList();
+            foreach (var c in packageList
+                .SelectMany(p => TraverseTree(p))
+                .OfType<UhtClass>())
+            {
+                _factory.Session.LogInfo($"OAS: found class {c.SourceName} with {c.ClassFlags} {c.ClassExportFlags}");
+            }
+
             foreach (var ustruct in packageList
                 .SelectMany(p => TraverseTree(p))
                 .OfType<UhtScriptStruct>())
             {
                 var result = ustruct.MetaData.ContainsKey("BlueprintType");
                 var result1 = !ManuallyBoundTypes.Contains(ustruct.SourceName);
-                var result2 = !ustruct.HeaderFile.FilePath.Contains("Tests");
-                var result3 = !ustruct.HeaderFile.FilePath.Contains("Internal");
-                var result4 = !ustruct.HeaderFile.FilePath.Contains("Private");
-                var result5 = !ustruct.HeaderFile.FilePath.Contains("NoExportTypes.h");
+                var result2 = !SkipHeaderPath.Any(skip => ustruct.HeaderFile.FilePath.Contains(skip));
                 var result6 = !ustruct.SourceName.Contains("Deprecated");
                 var result7 = !SkipStructs.Contains(ustruct.SourceName);
                 var result8 = !ustruct.Deprecated;
                 var result9 = ustruct.Super != null ? ustruct.Super.SourceName != "FAnimNode_Base" : true;
                 var result10 = !ustruct.ScriptStructFlags.HasFlag(EStructFlags.NoExport);
                 //_factory.Session.LogInfo($"OAS: found struct {ustruct.SourceName} with {ustruct.ScriptStructExportFlags} {ustruct.FieldExportFlags}");
-                _factory.Session.LogInfo($"OAS: found struct {ustruct.SourceName} with {result} {result1}, {result2}, {result3}, {result4}, {result5}, {result6}, {result7}, {result8}, {result9}, {result10} {HasScriptExposedStructContent(ustruct)}");
+
+                _factory.Session.LogInfo($"OAS: found struct {ustruct.SourceName} with {result} {result1}, {result2}, {result6}, {result7}, {result8}, {result9}, {result10} {HasScriptExposedStructContent(ustruct)}");
             }
 
             // Collect all BlueprintType USTRUCTs excluding manually-bound types.
@@ -149,9 +158,7 @@ namespace OtterAngleScriptUbtPlugin
                 .Where(s => s.MetaData.ContainsKey("BlueprintType"))
                 .Where(s => !ManuallyBoundTypes.Contains(s.SourceName))
                 .Where(s => !s.HeaderFile.FilePath.Contains("Tests"))
-                .Where(s => !s.HeaderFile.FilePath.Contains("Internal"))
-                .Where(s => !s.HeaderFile.FilePath.Contains("Private"))
-                .Where(s => !s.HeaderFile.FilePath.Contains("NoExportTypes.h"))
+                .Where(s => !SkipHeaderPath.Any(skip => s.HeaderFile.FilePath.Contains(skip)))
                 .Where(s => !s.SourceName.Contains("Deprecated"))
                 .Where(s => !SkipStructs.Contains(s.SourceName))
                 .Where(s => !s.Deprecated)
@@ -166,10 +173,7 @@ namespace OtterAngleScriptUbtPlugin
                 //.Where(e => e.MetaData.ContainsKey("BlueprintType"))
                 .Where(e => e.UnderlyingType != UhtEnumUnderlyingType.Int64 && e.UnderlyingType != UhtEnumUnderlyingType.Uint64 && e.UnderlyingType != UhtEnumUnderlyingType.Uint32)
                 .Where(e => !ManuallyBoundTypes.Contains(e.SourceName))
-                .Where(e => !e.HeaderFile.FilePath.Contains("Tests"))
-                .Where(e => !e.HeaderFile.FilePath.Contains("Internal"))
-                .Where(e => !e.HeaderFile.FilePath.Contains("Private"))
-                .Where(e => !e.HeaderFile.FilePath.Contains("NoExportTypes.h"))
+                .Where(e => !SkipHeaderPath.Any(skip => e.HeaderFile.FilePath.Contains(skip)))
                 .Where(e => !e.SourceName.Contains("Deprecated"))
                 .Where(e => !e.Deprecated)
                 .ToList();
@@ -294,13 +298,13 @@ namespace OtterAngleScriptUbtPlugin
             sb.AppendLine();
 
             foreach (var cls in group.Classes)
-                WriteClassRegistrationFunction(sb, cls, registeredTypeNames);
+                WriteClassRegistrationFunction(sb, cls, registeredTypeNames, group);
 
             foreach (var s in group.Structs)
             {
 
                 WriteStructHelpers(sb, s);
-                WriteStructRegistrationFunction(sb, s, registeredTypeNames);
+                WriteStructRegistrationFunction(sb, s, registeredTypeNames, group);
             }
 
             foreach (var e in group.Enums)
@@ -310,7 +314,8 @@ namespace OtterAngleScriptUbtPlugin
         private void WriteClassRegistrationFunction(
             StringBuilder sb,
             UhtClass cls,
-            HashSet<string> registeredTypeNames)
+            HashSet<string> registeredTypeNames,
+            HeaderFileGroup group)
         {
             sb.AppendLine($"void OAS_RegisterMethods_{cls.SourceName}(asIScriptEngine* Engine)");
             sb.AppendLine("{");
@@ -365,13 +370,19 @@ namespace OtterAngleScriptUbtPlugin
 
             foreach (var prop in ScriptProperties(cls))
             {
+                if (!IsPropertySupport(prop, group))
+                    continue;
+
                 if (prop.IsBitfield)
                     continue; // TODO: support bitfield properties via wrapper functions.
                 if (prop.PropertyFlags.HasAnyFlags(EPropertyFlags.NativeAccessSpecifierProtected | EPropertyFlags.NativeAccessSpecifierPrivate))
                     continue; // TODO: support non-public properties via wrapper functions.
 
-                string? asType = MapPropertyAsType(prop, registeredTypeNames);
+                string? asType = GetAsPropertyDeclare(prop);
                 if (asType == null)
+                    continue;
+
+                if (asType.ToLower().Contains("fdeprecate")) // FDeprecate
                     continue;
 
                 sb.AppendLine($"    Result = Engine->RegisterObjectProperty(\"{cls.SourceName}\", \"{asType} {prop.SourceName}\",");
@@ -403,7 +414,8 @@ namespace OtterAngleScriptUbtPlugin
         private void WriteStructRegistrationFunction(
             StringBuilder sb,
             UhtScriptStruct s,
-            HashSet<string> registeredTypeNames)
+            HashSet<string> registeredTypeNames,
+            HeaderFileGroup group)
         {
             string name = s.SourceName;
 
@@ -434,6 +446,9 @@ namespace OtterAngleScriptUbtPlugin
 
             foreach (var prop in ScriptStructProperties(s))
             {
+                if (!IsPropertySupport(prop, group))
+                    continue;
+
                 if (prop.IsBitfield)
                     // TODO: support bitfield properties via wrapper functions.
                     continue;
@@ -579,9 +594,33 @@ namespace OtterAngleScriptUbtPlugin
                     yield return child;
         }
 
+        private bool IsPropertySupport(UhtProperty prop, HeaderFileGroup group)
+        {
+            if (prop is UhtStructProperty structProp && !group.Structs.Contains(structProp.ScriptStruct))
+            {
+                return false; // skip properties of struct types that aren't being registered (since we won't be able to map the type in the signature).
+            }
+            else if (prop is UhtEnumProperty enumProperty && !group.Enums.Contains(enumProperty.Enum))
+            {
+                return false; // skip properties of enum types that aren't being registered (since we won't be able to map the type in the signature).
+            }
+            else if (prop is UhtByteProperty byteProperty && byteProperty.Enum != null && !group.Enums.Contains(byteProperty.Enum))
+            {
+                return false; // skip enum properties where the enum type isn't being registered (since we won't be able to map the type in the signature).
+            }
+            else if (prop is UhtObjectProperty objectProperty && !group.Classes.Contains(objectProperty.Class))
+            {
+                return false; // skip properties of class types that aren't being registered (since we won't be able to map the type in the signature).
+            }
+            else if (prop is UhtArrayProperty arrayProperty)
+            {
+                return IsPropertySupport(arrayProperty.ValueProperty, group);
+            }
+            return true;
+        }
         private static bool HasScriptExposedContent(UhtClass cls)
         {
-            return ScriptFunctions(cls).Any() || ScriptProperties(cls).Any();
+            return true;
         }
 
         private static IEnumerable<UhtFunction> ScriptFunctions(UhtClass cls)
@@ -607,7 +646,7 @@ namespace OtterAngleScriptUbtPlugin
                 .Where(p => !(p.MetaData.ContainsKey(UhtNames.BlueprintGetter) && p.MetaData.ContainsKey(UhtNames.BlueprintSetter)));
         }
 
-        private static bool IsStructCanGenerate(UhtScriptStruct s, List<UhtScriptStruct> allStruct)
+        private bool IsStructCanGenerate(UhtScriptStruct s, List<UhtScriptStruct> allStruct)
         {
             foreach (var child in s.Children)
             {
@@ -615,11 +654,12 @@ namespace OtterAngleScriptUbtPlugin
                 {
                     if (!allStruct.Contains(childstruct))
                     {
+                        _factory.Session.LogInfo($"OAS: skipping struct {s.SourceName} since it contains field {childstruct.SourceName} which is not being registered.");
                         return false;
                     }
                 }
             }
-            return false;
+            return true;
             //return HasScriptExposedStructContent(s);
         }
 
@@ -790,7 +830,18 @@ namespace OtterAngleScriptUbtPlugin
 
         private string? GetAsPropertyDeclare(UhtProperty Prop)
         {
-            if (Prop is UhtObjectProperty PropObj)
+            if (Prop.SourceName == "AssetBaseClass")
+            {
+                //_factory.Session.LogInfo($"OAS: skipping property {Prop.FullName} {Prop.GetType()}");
+            }
+            if (Prop is UhtClassProperty classProperty)
+            {
+                if (classProperty.CppForm == UhtObjectCppForm.TObjectPtrClass)
+                {
+                    return "UClass";
+                }
+            }
+            else if (Prop is UhtObjectProperty PropObj)
             {
                 if (PropObj.CppForm == UhtObjectCppForm.TObjectPtrObject)
                 {
@@ -806,11 +857,46 @@ namespace OtterAngleScriptUbtPlugin
             }
             else if (Prop is UhtByteProperty ByteProp)
             {
-                if (ByteProp.Enum != null && ByteProp.Enum.CppForm == UhtEnumCppForm.Namespaced)
+                if (ByteProp.Enum != null)
                 {
                     return ByteProp.Enum.SourceName;
                 }
             }
+            else if (Prop is UhtArrayProperty ArrayProp)
+            {
+                if (ArrayProp.ValueProperty is UhtObjectProperty PropObjArr)
+                {
+                    if (PropObjArr.CppForm == UhtObjectCppForm.TObjectPtrObject)
+                    {
+                        return $"TArray<{PropObjArr.Class.SourceName}>";
+                    }
+                }
+                else if (ArrayProp.ValueProperty is UhtByteProperty ArrayByteProp)
+                {
+                    if (ArrayByteProp.Enum != null)
+                    {
+                        return $"TArray<{ArrayByteProp.Enum.SourceName}>";
+                    }
+                }
+            }
+            else if (Prop is UhtSetProperty setProperty)
+            {
+                if (setProperty.ValueProperty is UhtObjectProperty PropObjSet)
+                {
+                    if (PropObjSet.CppForm == UhtObjectCppForm.TObjectPtrObject)
+                    {
+                        return $"TSet<{PropObjSet.Class.SourceName}>";
+                    }
+                }
+                else if (setProperty.ValueProperty is UhtByteProperty SetByteProp)
+                {
+                    if (SetByteProp.Enum != null)
+                    {
+                        return $"TSet<{SetByteProp.Enum.SourceName}>";
+                    }
+                }
+            }
+
             StringBuilder propertySB = new StringBuilder();
             Prop.AppendText(propertySB, UhtPropertyTextType.Sparse);
             return propertySB.ToString();
@@ -820,12 +906,12 @@ namespace OtterAngleScriptUbtPlugin
         /// Maps a UHT property to an AngelScript type declaration string.
         /// Returns null if the type is not supported (the function will be skipped).
         /// </summary>
-        private static string? MapPropertyAsType(UhtProperty property, HashSet<string> registeredTypeNames)
+        private string? MapPropertyAsType(UhtProperty property, HashSet<string> registeredTypeNames)
         {
             bool isReturn = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReturnParm);
-            bool isOut = !isReturn && property.PropertyFlags.HasAnyFlags(EPropertyFlags.OutParm);
-            bool isRef = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReferenceParm);
             bool isConst = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ConstParm);
+            bool isOut = !isConst && !isReturn && property.PropertyFlags.HasAnyFlags(EPropertyFlags.OutParm);
+            bool isRef = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReferenceParm);
             switch (property)
             {
                 case UhtBoolProperty:
@@ -866,7 +952,7 @@ namespace OtterAngleScriptUbtPlugin
                 case UhtClassProperty uclass:
                     if (uclass.MetaClass == null)
                         return null; // unsupported: TSubclassOf without a specified base class
-                    return $"TSubclassOf<class {uclass.MetaClass.SourceName}>";
+                    return $"TSubclassOf<{uclass.MetaClass.SourceName}>";
 
                 case UhtObjectProperty p when p.Class != null:
                     return $"{p.Class.SourceName}";

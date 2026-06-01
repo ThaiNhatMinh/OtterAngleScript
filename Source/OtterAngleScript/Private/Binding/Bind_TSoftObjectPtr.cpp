@@ -116,17 +116,6 @@ void Declare_TSoftObjectPtr(asIScriptEngine* Engine)
 
 	int Result = Engine->RegisterObjectType("TSoftObjectPtr<class T>", sizeof(FSoftObjectPtrBase), TypeFlags);
 	check(Result >= 0);
-}
-
-void Bind_TSoftObjectPtr(asIScriptEngine* Engine)
-{
-	check(Engine != nullptr);
-
-	int Result = 0;
-
-	Result = Engine->RegisterObjectBehaviour("TSoftObjectPtr<T>", asBEHAVE_TEMPLATE_CALLBACK,
-		"bool f(int&in, bool&out)", asFUNCTION(TSoftObjectPtrTemplateCallback), asCALL_CDECL);
-	check(Result >= 0);
 
 	// Constructors / destructor
 	// Template constructors must declare "int&in" as first parameter (receives asITypeInfo*).
@@ -149,6 +138,17 @@ void Bind_TSoftObjectPtr(asIScriptEngine* Engine)
 	Result = Engine->RegisterObjectBehaviour("TSoftObjectPtr<T>", asBEHAVE_DESTRUCT,
 		"void f()", asFUNCTION(TSoftObjectPtr_Destruct), asCALL_CDECL_OBJLAST);
 	check(Result >= 0);
+
+	Result = Engine->RegisterObjectBehaviour("TSoftObjectPtr<T>", asBEHAVE_TEMPLATE_CALLBACK,
+		"bool f(int&in, bool&out)", asFUNCTION(TSoftObjectPtrTemplateCallback), asCALL_CDECL);
+	check(Result >= 0);
+}
+
+void Bind_TSoftObjectPtr(asIScriptEngine* Engine)
+{
+	check(Engine != nullptr);
+
+	int Result = 0;
 
 	// Assignment
 	Result = Engine->RegisterObjectMethod("TSoftObjectPtr<T>",

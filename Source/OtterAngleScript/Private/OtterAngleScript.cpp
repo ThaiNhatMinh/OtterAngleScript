@@ -68,6 +68,9 @@ void FOtterAngleScriptModule::StartupModule()
 	}
 
 	Declare_Types(Engine);
+	Bind_TWeakObjectPtr(Engine);
+	Bind_TSoftObjectPtr(Engine);
+	Bind_TArray(Engine);
 #if __has_include("OtterAngelScriptBindings.gen.h")
 	OAS_RegisterGeneratedTypes(Engine);
 #endif
@@ -84,8 +87,8 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_FVector(Engine);
 	Bind_FTransform(Engine);
 	Bind_FBox(Engine);
+	Bind_FBox2D(Engine);
 	Bind_FActorInstanceHandle(Engine);
-	Bind_TWeakObjectPtr(Engine);
 	Bind_FHitResult(Engine);
 	Bind_FTimerHandle(Engine);
 	Bind_FLatentActionInfo(Engine);
@@ -95,13 +98,17 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_FNavAgentSelector(Engine);
 	Bind_FLinearColor(Engine);
 	Bind_FColor(Engine);
+	Bind_FVector4f(Engine);
 	Bind_FSoftObjectPath(Engine);
 	Bind_FSoftClassPath(Engine);
-	Bind_TSoftObjectPtr(Engine);
 	Bind_FMath(Engine);
 	Bind_Logging(Engine);
-	Bind_TArray(Engine);
-	Bind_FAlphaBlend(Engine);
+	Bind_TSet(Engine);
+	Bind_TMap(Engine);
+	Bind_UPhysicalMaterial(Engine);
+	Bind_TSubclassOf(Engine);
+	Bind_FAudioParameter(Engine);
+	Bind_FRichCurve(Engine);
 
 	// Include and invoke the UHT-generated AngelScript bindings if they exist.
 	// GeneratedAngelScriptBindings.h is produced by OtterAngleScriptUbtPlugin (one

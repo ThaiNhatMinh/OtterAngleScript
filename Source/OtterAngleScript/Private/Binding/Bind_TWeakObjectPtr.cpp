@@ -123,13 +123,6 @@ void Declare_TWeakObjectPtr(asIScriptEngine* Engine)
 
 	int Result = Engine->RegisterObjectType("TWeakObjectPtr<class T>", sizeof(FTWeakObjectPtrBase), TypeFlags);
 	check(Result >= 0);
-}
-
-void Bind_TWeakObjectPtr(asIScriptEngine* Engine)
-{
-	check(Engine != nullptr);
-
-	int Result = 0;
 
 	Result = Engine->RegisterObjectBehaviour("TWeakObjectPtr<T>", asBEHAVE_TEMPLATE_CALLBACK,
 		"bool f(int&in, bool&out)", asFUNCTION(TWeakObjectPtrTemplateCallback), asCALL_CDECL);
@@ -152,6 +145,13 @@ void Bind_TWeakObjectPtr(asIScriptEngine* Engine)
 	Result = Engine->RegisterObjectBehaviour("TWeakObjectPtr<T>", asBEHAVE_DESTRUCT,
 		"void f()", asFUNCTION(TWeakObjectPtr_Destruct), asCALL_CDECL_OBJLAST);
 	check(Result >= 0);
+}
+
+void Bind_TWeakObjectPtr(asIScriptEngine* Engine)
+{
+	check(Engine != nullptr);
+
+	int Result = 0;
 
 	// Assignment
 	Result = Engine->RegisterObjectMethod("TWeakObjectPtr<T>",
