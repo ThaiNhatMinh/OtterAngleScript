@@ -108,6 +108,7 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_UPhysicalMaterial(Engine);
 	Bind_TSubclassOf(Engine);
 	Bind_FRichCurve(Engine);
+	Bind_FMatrix(Engine);
 
 	// Include and invoke the UHT-generated AngelScript bindings if they exist.
 	// GeneratedAngelScriptBindings.h is produced by OtterAngleScriptUbtPlugin (one

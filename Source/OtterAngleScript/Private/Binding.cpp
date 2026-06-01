@@ -9,6 +9,7 @@
 #include "Math/Box2D.h"
 #include "Math/Vector2D.h"
 #include "Math/Vector4.h"
+#include "Math/Matrix.h"
 #include "Misc/FrameTime.h"
 #include "Misc/FrameRate.h"
 #include "AI/Navigation/NavAgentSelector.h"
@@ -101,6 +102,12 @@ void Declare_Types(asIScriptEngine* Engine)
 		"FText",
 		sizeof(FText),
 		asOBJ_VALUE | asGetTypeTraits<FText>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectType(
+		"FMatrix",
+		sizeof(FMatrix),
+		asOBJ_VALUE | asGetTypeTraits<FMatrix>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
 	check(Result >= 0);
 
 	Declare_TArray(Engine);

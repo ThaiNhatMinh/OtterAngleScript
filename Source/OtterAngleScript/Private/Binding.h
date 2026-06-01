@@ -247,3 +247,11 @@ void Bind_FBox2D(asIScriptEngine* Engine);
  * Exposes all key management, evaluation, tangent, extrapolation, and curve-transform methods.
  */
 void Bind_FRichCurve(asIScriptEngine* Engine);
+
+/**
+ * Registers FMatrix (FMatrix44d) as a value type in the AngelScript engine.
+ * Exposes constructors, arithmetic/compound operators, transform methods,
+ * axis/column accessors, rotation conversion, scaling helpers, and the
+ * Identity static property.
+ */
+void Bind_FMatrix(asIScriptEngine* Engine);
