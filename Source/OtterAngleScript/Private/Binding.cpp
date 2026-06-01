@@ -21,6 +21,9 @@ void Declare_Types(asIScriptEngine* Engine)
 {
     int Result = Engine->RegisterObjectType("UObject", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
     check(Result >= 0);
+	
+	Result = Engine->RegisterObjectType("UScriptStruct", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
+	check(Result >= 0);
 
 	Result = Engine->RegisterObjectType("UClass", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
 	check(Result >= 0);
@@ -106,4 +109,5 @@ void Declare_Types(asIScriptEngine* Engine)
 	Declare_TSoftObjectPtr(Engine);
 	Declare_TWeakObjectPtr(Engine);
 	Declare_TSubclassOf(Engine);
+	Declare_FName(Engine);
 }

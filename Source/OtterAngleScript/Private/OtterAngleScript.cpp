@@ -71,10 +71,12 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_TWeakObjectPtr(Engine);
 	Bind_TSoftObjectPtr(Engine);
 	Bind_TArray(Engine);
+	Bind_FString(Engine);
+	Bind_TSet(Engine);
+	Bind_TMap(Engine);
 #if __has_include("OtterAngelScriptBindings.gen.h")
 	OAS_RegisterGeneratedTypes(Engine);
 #endif
-	Bind_FString(Engine);
 	Bind_FName(Engine);
 	Bind_UClass(Engine);
 	Bind_UObject(Engine);
@@ -103,11 +105,8 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_FSoftClassPath(Engine);
 	Bind_FMath(Engine);
 	Bind_Logging(Engine);
-	Bind_TSet(Engine);
-	Bind_TMap(Engine);
 	Bind_UPhysicalMaterial(Engine);
 	Bind_TSubclassOf(Engine);
-	Bind_FAudioParameter(Engine);
 	Bind_FRichCurve(Engine);
 
 	// Include and invoke the UHT-generated AngelScript bindings if they exist.

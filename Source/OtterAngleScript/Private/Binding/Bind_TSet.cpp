@@ -736,15 +736,6 @@ void Declare_TSet(asIScriptEngine* Engine)
 
 	int Result = Engine->RegisterObjectType("TSet<class T>", sizeof(FScriptTSet), TypeFlags);
 	check(Result >= 0);
-}
-
-void Bind_TSet(asIScriptEngine* Engine)
-{
-	check(Engine != nullptr);
-
-	Engine->SetTypeInfoUserDataCleanupCallback(CleanupTypeInfoTSetCache, TSET_CACHE);
-
-	int Result = 0;
 
 	Result = Engine->RegisterObjectBehaviour("TSet<T>", asBEHAVE_TEMPLATE_CALLBACK,
 		"bool f(int&in, bool&out)", asFUNCTION(TSetTemplateCallback), asCALL_CDECL);
@@ -772,6 +763,15 @@ void Bind_TSet(asIScriptEngine* Engine)
 		"void f()",
 		asFUNCTION(TSet_Destruct), asCALL_CDECL_OBJLAST);
 	check(Result >= 0);
+}
+
+void Bind_TSet(asIScriptEngine* Engine)
+{
+	check(Engine != nullptr);
+
+	Engine->SetTypeInfoUserDataCleanupCallback(CleanupTypeInfoTSetCache, TSET_CACHE);
+
+	int Result = 0;
 
 	// For-range iteration
 	Result = Engine->RegisterObjectMethod("TSet<T>",

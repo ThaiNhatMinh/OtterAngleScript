@@ -462,41 +462,6 @@ void Bind_FRichCurve(asIScriptEngine* Engine)
 	int Result;
 
 	// =========================================================================
-	// Enums
-	// =========================================================================
-
-	Result = Engine->RegisterEnum("ERichCurveInterpMode");
-	check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveInterpMode", "RCIM_Linear",   static_cast<int>(RCIM_Linear));   check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveInterpMode", "RCIM_Constant", static_cast<int>(RCIM_Constant)); check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveInterpMode", "RCIM_Cubic",    static_cast<int>(RCIM_Cubic));    check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveInterpMode", "RCIM_None",     static_cast<int>(RCIM_None));     check(Result >= 0);
-
-	Result = Engine->RegisterEnum("ERichCurveTangentMode");
-	check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveTangentMode", "RCTM_Auto",      static_cast<int>(RCTM_Auto));      check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveTangentMode", "RCTM_User",      static_cast<int>(RCTM_User));      check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveTangentMode", "RCTM_Break",     static_cast<int>(RCTM_Break));     check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveTangentMode", "RCTM_None",      static_cast<int>(RCTM_None));      check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveTangentMode", "RCTM_SmartAuto", static_cast<int>(RCTM_SmartAuto)); check(Result >= 0);
-
-	Result = Engine->RegisterEnum("ERichCurveTangentWeightMode");
-	check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveTangentWeightMode", "RCTWM_WeightedNone",   static_cast<int>(RCTWM_WeightedNone));   check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveTangentWeightMode", "RCTWM_WeightedArrive", static_cast<int>(RCTWM_WeightedArrive)); check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveTangentWeightMode", "RCTWM_WeightedLeave",  static_cast<int>(RCTWM_WeightedLeave));  check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveTangentWeightMode", "RCTWM_WeightedBoth",   static_cast<int>(RCTWM_WeightedBoth));   check(Result >= 0);
-
-	Result = Engine->RegisterEnum("ERichCurveExtrapolation");
-	check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveExtrapolation", "RCCE_Cycle",           static_cast<int>(RCCE_Cycle));           check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveExtrapolation", "RCCE_CycleWithOffset", static_cast<int>(RCCE_CycleWithOffset)); check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveExtrapolation", "RCCE_Oscillate",       static_cast<int>(RCCE_Oscillate));       check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveExtrapolation", "RCCE_Linear",          static_cast<int>(RCCE_Linear));          check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveExtrapolation", "RCCE_Constant",        static_cast<int>(RCCE_Constant));        check(Result >= 0);
-	Result = Engine->RegisterEnumValue("ERichCurveExtrapolation", "RCCE_None",            static_cast<int>(RCCE_None));            check(Result >= 0);
-
-	// =========================================================================
 	// FKeyHandle
 	// =========================================================================
 
@@ -520,50 +485,6 @@ void Bind_FRichCurve(asIScriptEngine* Engine)
 	check(Result >= 0);
 	Result = Engine->SetDefaultNamespace("");
 	check(Result >= 0);
-
-	// =========================================================================
-	// FRichCurveKey
-	// =========================================================================
-
-	REGISTER_BEHAVIOUR(FRichCurveKey, asBEHAVE_CONSTRUCT, "void f()",
-		asFUNCTION(FRichCurveKey_DefaultConstruct), asCALL_CDECL_OBJLAST);
-	REGISTER_BEHAVIOUR(FRichCurveKey, asBEHAVE_CONSTRUCT, "void f(const FRichCurveKey &in Other)",
-		asFUNCTION(FRichCurveKey_CopyConstruct), asCALL_CDECL_OBJLAST);
-	REGISTER_BEHAVIOUR(FRichCurveKey, asBEHAVE_CONSTRUCT, "void f(float InTime, float InValue)",
-		asFUNCTION(FRichCurveKey_ConstructTimeValue), asCALL_CDECL_OBJLAST);
-	REGISTER_BEHAVIOUR(FRichCurveKey, asBEHAVE_CONSTRUCT,
-		"void f(float InTime, float InValue, float InArriveTangent, float InLeaveTangent, ERichCurveInterpMode InInterpMode)",
-		asFUNCTION(FRichCurveKey_ConstructFull), asCALL_CDECL_OBJLAST);
-	REGISTER_BEHAVIOUR(FRichCurveKey, asBEHAVE_DESTRUCT, "void f()",
-		asFUNCTION(FRichCurveKey_Destruct), asCALL_CDECL_OBJLAST);
-
-	REGISTER_METHOD(FRichCurveKey, "FRichCurveKey &opAssign(const FRichCurveKey &in Other)",
-		asFUNCTION(FRichCurveKey_Assign), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FRichCurveKey, "bool opEquals(const FRichCurveKey &in Other) const",
-		asFUNCTION(FRichCurveKey_Equals), asCALL_CDECL_OBJFIRST);
-
-	REGISTER_PROPERTY(FRichCurveKey, "float Time",                Time);
-	REGISTER_PROPERTY(FRichCurveKey, "float Value",               Value);
-	REGISTER_PROPERTY(FRichCurveKey, "float ArriveTangent",       ArriveTangent);
-	REGISTER_PROPERTY(FRichCurveKey, "float ArriveTangentWeight", ArriveTangentWeight);
-	REGISTER_PROPERTY(FRichCurveKey, "float LeaveTangent",        LeaveTangent);
-	REGISTER_PROPERTY(FRichCurveKey, "float LeaveTangentWeight",  LeaveTangentWeight);
-
-	// TEnumAsByte fields are uint8 and cannot be bound directly as int32-backed AS enums.
-	REGISTER_METHOD(FRichCurveKey, "ERichCurveInterpMode get_InterpMode() const",
-		asFUNCTION(FRichCurveKey_GetInterpMode), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FRichCurveKey, "void set_InterpMode(ERichCurveInterpMode Mode)",
-		asFUNCTION(FRichCurveKey_SetInterpMode), asCALL_CDECL_OBJFIRST);
-
-	REGISTER_METHOD(FRichCurveKey, "ERichCurveTangentMode get_TangentMode() const",
-		asFUNCTION(FRichCurveKey_GetTangentMode), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FRichCurveKey, "void set_TangentMode(ERichCurveTangentMode Mode)",
-		asFUNCTION(FRichCurveKey_SetTangentMode), asCALL_CDECL_OBJFIRST);
-
-	REGISTER_METHOD(FRichCurveKey, "ERichCurveTangentWeightMode get_TangentWeightMode() const",
-		asFUNCTION(FRichCurveKey_GetTangentWeightMode), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FRichCurveKey, "void set_TangentWeightMode(ERichCurveTangentWeightMode Mode)",
-		asFUNCTION(FRichCurveKey_SetTangentWeightMode), asCALL_CDECL_OBJFIRST);
 
 	// =========================================================================
 	// FRichCurve
@@ -672,7 +593,7 @@ void Bind_FRichCurve(asIScriptEngine* Engine)
 		asFUNCTION(FRichCurve_RemoveRedundantKeys), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FRichCurve, "void ReadjustTimeRange(float NewMinTimeRange, float NewMaxTimeRange, bool bInsert, float OldStartTime, float OldEndTime)",
 		asFUNCTION(FRichCurve_ReadjustTimeRange), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FRichCurve, "void RemapTimeValue(float &inout InTime, float &inout CycleValueOffset) const",
+	REGISTER_METHOD(FRichCurve, "void RemapTimeValue(float &out InTime, float &out CycleValueOffset) const",
 		asFUNCTION(FRichCurve_RemapTimeValue), asCALL_CDECL_OBJFIRST);
 
 	// --- Handle navigation ---

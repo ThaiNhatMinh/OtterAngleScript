@@ -912,6 +912,16 @@ namespace OtterAngleScriptUbtPlugin
             bool isConst = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ConstParm);
             bool isOut = !isConst && !isReturn && property.PropertyFlags.HasAnyFlags(EPropertyFlags.OutParm);
             bool isRef = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReferenceParm);
+            bool isParam = property.PropertyFlags.HasAnyFlags(EPropertyFlags.Parm);
+            if (isParam && !isOut && !isReturn)
+            {
+                isConst = true;
+                isRef = true;
+            }
+            if (property.SourceName == "OutPath")
+            {
+                _factory.Session.LogInfo($"OAS: mapping property {property.FullName} of type {isReturn} {isConst} {isOut} {isRef} to FString since it's named 'InPath' (special case). {property.PropertyFlags}");
+            }
             switch (property)
             {
                 case UhtBoolProperty:
@@ -940,15 +950,14 @@ namespace OtterAngleScriptUbtPlugin
 
                 case UhtStrProperty:
                     if (isReturn) return "FString";
-                    return isOut ? "FString&" : $"{(isConst ? "const" : "")} FString{(isRef ? "&in" : "")}";
+                    return isOut ? "FString &out" : $"{(isConst ? "const" : "")} FString{(isRef ? "&in" : "")}";
 
                 case UhtNameProperty:
                     if (isReturn) return "FName";
-                    return isOut ? "FName&" : $"{(isConst ? "const" : "")} FName{(isRef ? "&in" : "")}";
-
+                    return isOut ? "FName &out" : $"{(isConst ? "const" : "")} FName{(isRef ? "&in" : "")}";
                 case UhtTextProperty:
                     if (isReturn) return "FText";
-                    return isOut ? "FText&" : $"{(isConst ? "const" : "")} FText{(isRef ? "&in" : "")}";
+                    return isOut ? "FText &out" : $"{(isConst ? "const" : "")} FText{(isRef ? "&in" : "")}";
                 case UhtClassProperty uclass:
                     if (uclass.MetaClass == null)
                         return null; // unsupported: TSubclassOf without a specified base class

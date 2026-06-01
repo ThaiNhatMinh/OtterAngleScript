@@ -51,16 +51,20 @@ namespace
 	}
 }
 
+void Declare_FName(asIScriptEngine* Engine)
+{
+	int Result;
+	REGISTER_BEHAVIOUR(FName, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FName_DefaultConstruct), asCALL_CDECL_OBJLAST);
+	REGISTER_BEHAVIOUR(FName, asBEHAVE_CONSTRUCT, "void f(const FName &in Other)", asFUNCTION(FName_CopyConstruct), asCALL_CDECL_OBJLAST);
+	REGISTER_BEHAVIOUR(FName, asBEHAVE_CONSTRUCT, "void f(const FString &in Value)", asFUNCTION(FName_ConstructString), asCALL_CDECL_OBJLAST);
+	REGISTER_BEHAVIOUR(FName, asBEHAVE_DESTRUCT, "void f()", asFUNCTION(FName_Destruct), asCALL_CDECL_OBJLAST);
+}
+
 void Bind_FName(asIScriptEngine* Engine)
 {
 	check(Engine != nullptr);
 
 	int Result;
-
-	REGISTER_BEHAVIOUR(FName, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FName_DefaultConstruct), asCALL_CDECL_OBJLAST);
-	REGISTER_BEHAVIOUR(FName, asBEHAVE_CONSTRUCT, "void f(const FName &in Other)", asFUNCTION(FName_CopyConstruct), asCALL_CDECL_OBJLAST);
-	REGISTER_BEHAVIOUR(FName, asBEHAVE_CONSTRUCT, "void f(const FString &in Value)", asFUNCTION(FName_ConstructString), asCALL_CDECL_OBJLAST);
-	REGISTER_BEHAVIOUR(FName, asBEHAVE_DESTRUCT, "void f()", asFUNCTION(FName_Destruct), asCALL_CDECL_OBJLAST);
 
 	REGISTER_METHOD(FName, "FName &opAssign(const FName &in Other)", asFUNCTION(FName_Assign), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FName, "bool opEquals(const FName &in Other) const", asFUNCTION(FName_OpEquals), asCALL_CDECL_OBJFIRST);

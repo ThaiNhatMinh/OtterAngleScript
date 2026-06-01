@@ -21,6 +21,7 @@ void Declare_Types(asIScriptEngine* Engine);
  * Registers FName as a value type in the AngelScript engine.
  * The type is exposed as "FName" in scripts.
  */
+void Declare_FName(asIScriptEngine* Engine);
 void Bind_FName(asIScriptEngine* Engine);
 
 /**
@@ -225,13 +226,6 @@ void Bind_TSubclassOf(asIScriptEngine* Engine);
  * EPhysicalSurface, and EPhysicalMaterialSoftCollisionMode enums.
  */
 void Bind_UPhysicalMaterial(asIScriptEngine* Engine);
-
-/**
- * Registers EAudioParameterType enum and FAudioParameter value type, including
- * constructors, scalar properties, virtual properties for ParamType and ObjectParam,
- * the Merge instance method, and FAudioParameter::CreateDefaultArray static factory.
- */
-void Bind_FAudioParameter(asIScriptEngine* Engine);
 
 /**
  * Registers FVector4f (TVector4<float>) as a value type in the AngelScript engine.
