@@ -59,6 +59,8 @@ void FOtterAngleScriptModule::StartupModule()
 	// Create the script engine
 	Engine = asCreateScriptEngine();
 	Engine->SetEngineProperty(asEP_ALLOW_IMPLICIT_HANDLE_TYPES, 1);
+	Engine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, 1);
+
 	//asSetGlobalMemoryFunctions(asCustomMalloc, asCustomFree);
 
 	int Result = Engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);

@@ -40,8 +40,8 @@ namespace
 	FBox UnrealBoxWithNaN()
 	{
 		FBox Value(ForceInit);
-		Value.Min = FVector(TNumericLimits<double>::Max(), 1.0, 2.0);
-		Value.Max = FVector(TNumericLimits<double>::Max(), 4.0, 5.0);
+		Value.Min = FVector(std::numeric_limits<float>::quiet_NaN(), 1.0, 2.0);
+		Value.Max = FVector(std::numeric_limits<float>::quiet_NaN(), 4.0, 5.0);
 		Value.IsValid = 1;
 		return Value;
 	}

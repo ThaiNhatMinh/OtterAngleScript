@@ -62,6 +62,11 @@ namespace
 		return Value == Other;
 	}
 
+	bool FVector_IsNearEquals(const FVector& Value, const FVector& Other, double Tolerance)
+	{
+		return Value.Equals(Other, Tolerance);
+	}
+
 	FVector FVector_CrossOperator(const FVector& Value, const FVector& Other)
 	{
 		return Value ^ Other;
@@ -127,34 +132,34 @@ namespace
 		return -Value;
 	}
 
-	FVector FVector_AddAssign(FVector& Value, const FVector& Other)
+	void FVector_AddAssign(FVector& Value, const FVector& Other)
 	{
-		return Value += Other;
+		Value += Other;
 	}
 
-	FVector FVector_SubtractAssign(FVector& Value, const FVector& Other)
+	void FVector_SubtractAssign(FVector& Value, const FVector& Other)
 	{
-		return Value -= Other;
+		Value -= Other;
 	}
 
-	FVector FVector_MultiplyAssignScale(FVector& Value, double Scale)
+	void FVector_MultiplyAssignScale(FVector& Value, double Scale)
 	{
-		return Value *= Scale;
+		Value *= Scale;
 	}
 
-	FVector FVector_DivideAssignScale(FVector& Value, double Scale)
+	void FVector_DivideAssignScale(FVector& Value, double Scale)
 	{
-		return Value /= Scale;
+		Value /= Scale;
 	}
 
-	FVector FVector_MultiplyAssignComponents(FVector& Value, const FVector& Other)
+	void FVector_MultiplyAssignComponents(FVector& Value, const FVector& Other)
 	{
-		return Value *= Other;
+		Value *= Other;
 	}
 
-	FVector FVector_DivideAssignComponents(FVector& Value, const FVector& Other)
+	void FVector_DivideAssignComponents(FVector& Value, const FVector& Other)
 	{
-		return Value /= Other;
+		Value /= Other;
 	}
 
 	double& FVector_IndexRef(FVector& Value, unsigned int Index)
@@ -740,6 +745,7 @@ void Bind_FVector(asIScriptEngine* Engine)
 
 	REGISTER_METHOD(FVector, "FVector &opAssign(const FVector &in Other)", asFUNCTION(FVector_Assign), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FVector, "bool opEquals(const FVector &in Other) const", asFUNCTION(FVector_Equals), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector, "bool Equals(const FVector &in Other, double Tolerance = 0.0001) const", asFUNCTION(FVector_IsNearEquals), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FVector, "FVector opXor(const FVector &in Other) const", asFUNCTION(FVector_CrossOperator), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FVector, "FVector Cross(const FVector &in Other) const", asFUNCTION(FVector_Cross), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FVector, "double opOr(const FVector &in Other) const", asFUNCTION(FVector_DotOperator), asCALL_CDECL_OBJFIRST);
@@ -753,12 +759,12 @@ void Bind_FVector(asIScriptEngine* Engine)
 	REGISTER_METHOD(FVector, "FVector opMul(const FVector &in Other) const", asFUNCTION(FVector_MultiplyComponents), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FVector, "FVector opDiv(const FVector &in Other) const", asFUNCTION(FVector_DivideComponents), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FVector, "FVector opNeg() const", asFUNCTION(FVector_Negate), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FVector, "FVector opAddAssign(const FVector &in Other)", asFUNCTION(FVector_AddAssign), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FVector, "FVector opSubAssign(const FVector &in Other)", asFUNCTION(FVector_SubtractAssign), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FVector, "FVector opMulAssign(double Scale)", asFUNCTION(FVector_MultiplyAssignScale), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FVector, "FVector opDivAssign(double Scale)", asFUNCTION(FVector_DivideAssignScale), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FVector, "FVector opMulAssign(const FVector &in Other)", asFUNCTION(FVector_MultiplyAssignComponents), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FVector, "FVector opDivAssign(const FVector &in Other)", asFUNCTION(FVector_DivideAssignComponents), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector, "FVector& opAddAssign(const FVector &in Other)", asFUNCTION(FVector_AddAssign), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector, "FVector& opSubAssign(const FVector &in Other)", asFUNCTION(FVector_SubtractAssign), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector, "FVector& opMulAssign(double Scale)", asFUNCTION(FVector_MultiplyAssignScale), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector, "FVector& opDivAssign(double Scale)", asFUNCTION(FVector_DivideAssignScale), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector, "FVector& opMulAssign(const FVector &in Other)", asFUNCTION(FVector_MultiplyAssignComponents), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector, "FVector& opDivAssign(const FVector &in Other)", asFUNCTION(FVector_DivideAssignComponents), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FVector, "double &opIndex(uint Index)", asFUNCTION(FVector_IndexRef), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FVector, "double opIndex(uint Index) const", asFUNCTION(FVector_IndexValue), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FVector, "double &Component(int Index)", asFUNCTION(FVector_ComponentRef), asCALL_CDECL_OBJFIRST);
@@ -833,6 +839,7 @@ void Bind_FVector(asIScriptEngine* Engine)
 	REGISTER_METHOD(FVector, "bool InitFromCompactString(const FString &in Source)", asFUNCTION(FVector_InitFromCompactString), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FVector, "FVector2D UnitCartesianToSpherical() const", asFUNCTION(FVector_UnitCartesianToSpherical), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FVector, "double HeadingAngle() const", asFUNCTION(FVector_HeadingAngle), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector, "bool AllComponentsEqual(double Tolerance = 0.0001) const", asMETHOD(FVector, AllComponentsEqual), asCALL_THISCALL);
 
 	REGISTER_PROPERTY(FVector, "double X", X);
 	REGISTER_PROPERTY(FVector, "double Y", Y);
@@ -848,7 +855,7 @@ void Bind_FVector(asIScriptEngine* Engine)
 	check(Result >= 0);
 	Result = Engine->RegisterGlobalFunction("FVector SlerpNormals(const FVector &in NormalA, const FVector &in NormalB, double Alpha)", asFUNCTION(FVector_SlerpNormals), asCALL_CDECL);
 	check(Result >= 0);
-	Result = Engine->RegisterGlobalFunction("void CreateOrthonormalBasis(FVector &out XAxis, FVector &out YAxis, FVector &out ZAxis)", asFUNCTION(FVector_CreateOrthonormalBasis), asCALL_CDECL);
+	Result = Engine->RegisterGlobalFunction("void CreateOrthonormalBasis(FVector &inout XAxis, FVector &inout YAxis, FVector &inout ZAxis)", asFUNCTION(FVector_CreateOrthonormalBasis), asCALL_CDECL);
 	check(Result >= 0);
 	Result = Engine->RegisterGlobalFunction("bool PointsAreSame(const FVector &in A, const FVector &in B)", asFUNCTION(FVector_PointsAreSame), asCALL_CDECL);
 	check(Result >= 0);

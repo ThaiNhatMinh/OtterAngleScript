@@ -61,7 +61,7 @@ namespace OtterAngleScriptUbtPlugin
             "FVector", "FVector2D", "FRotator", "FQuat",
             "FTransform", "FPlane", "FBox",
             "FHitResult", "FTimerHandle", "FLatentActionInfo",
-            "FActorInstanceHandle", "FMatrix", "FAlphaBlendArgs"
+            "FActorInstanceHandle", "FMatrix"
         };
         private static readonly HashSet<string> SkipStructs = new(StringComparer.Ordinal)
         {
@@ -329,10 +329,11 @@ namespace OtterAngleScriptUbtPlugin
             bool anyContent = false;
 
             var staticFuncs = ScriptFunctions(cls).Where(f => f.FunctionFlags.HasFlag(EFunctionFlags.Static)).ToList();
-            if (staticFuncs.Count > 0)
             {
                 sb.AppendLine("    // --------------STATIC FUNCTIONS--------------");
                 sb.AppendLine($"    Result = Engine->SetDefaultNamespace(\"{cls.SourceName}\"); check(Result >= 0);");
+                sb.AppendLine();
+                sb.AppendLine($"    Result = Engine->RegisterGlobalFunction(\"UClass StaticClass()\", asFUNCTION({cls.SourceName}::StaticClass), asCALL_CDECL); check(Result >= 0);");
                 foreach (var func in staticFuncs)
                 {
                     if (!TryBuildAsSignature(func, registeredTypeNames, out string? asSig, group))

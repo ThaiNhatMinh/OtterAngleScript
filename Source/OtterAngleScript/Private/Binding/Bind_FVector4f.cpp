@@ -139,34 +139,34 @@ namespace
 
 	// --- Compound assignment ---
 
-	static FVector4f FVector4f_AddAssign(FVector4f& Value, const FVector4f& Other)
+	static void FVector4f_AddAssign(FVector4f& Value, const FVector4f& Other)
 	{
-		return Value += Other;
+		Value += Other;
 	}
 
-	static FVector4f FVector4f_SubtractAssign(FVector4f& Value, const FVector4f& Other)
+	static void FVector4f_SubtractAssign(FVector4f& Value, const FVector4f& Other)
 	{
-		return Value -= Other;
+		Value -= Other;
 	}
 
-	static FVector4f FVector4f_MultiplyAssignScale(FVector4f& Value, float Scale)
+	static void FVector4f_MultiplyAssignScale(FVector4f& Value, float Scale)
 	{
-		return Value *= Scale;
+		Value *= Scale;
 	}
 
-	static FVector4f FVector4f_MultiplyAssignComponents(FVector4f& Value, const FVector4f& Other)
+	static void FVector4f_MultiplyAssignComponents(FVector4f& Value, const FVector4f& Other)
 	{
-		return Value *= Other;
+		Value *= Other;
 	}
 
-	static FVector4f FVector4f_DivideAssignScale(FVector4f& Value, float Scale)
+	static void FVector4f_DivideAssignScale(FVector4f& Value, float Scale)
 	{
-		return Value /= Scale;
+		Value /= Scale;
 	}
 
-	static FVector4f FVector4f_DivideAssignComponents(FVector4f& Value, const FVector4f& Other)
+	static void FVector4f_DivideAssignComponents(FVector4f& Value, const FVector4f& Other)
 	{
-		return Value /= Other;
+		Value /= Other;
 	}
 
 	// --- Index operators ---
@@ -317,8 +317,24 @@ namespace
 
 	// --- Static helpers ---
 
-	static FVector4f FVector4f_Zero() { return FVector4f::Zero(); }
-	static FVector4f FVector4f_One()  { return FVector4f::One(); }
+	static FVector4f FVector4f_Zero()
+	{
+		return FVector4f::Zero();
+	}
+	static FVector4f FVector4f_One()
+	{
+		return FVector4f::One();
+	}
+
+	static void* Vector4_Factory()
+	{
+		return FMemory::Malloc(sizeof(FVector4f), alignof(FVector4f));
+	}
+
+	static void Vector4_Release(FVector4f* Object)
+	{
+		FMemory::Free(Object);
+	}
 }
 
 void Bind_FVector4f(asIScriptEngine* Engine)
@@ -328,7 +344,8 @@ void Bind_FVector4f(asIScriptEngine* Engine)
 	int Result;
 
 	// --- Behaviors ---
-
+	//Engine->RegisterObjectBehaviour("FVector4f", asBEHAVE_FACTORY, "FVector4f f()", asFUNCTION(Vector4_Factory), asCALL_CDECL);
+	//Engine->RegisterObjectBehaviour("FVector4f", asBEHAVE_RELEASE, "void f()", asFUNCTION(Vector4_Release), asCALL_CDECL_OBJLAST);
 	REGISTER_BEHAVIOUR(FVector4f, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FVector4f_DefaultConstruct), asCALL_CDECL_OBJLAST);
 	REGISTER_BEHAVIOUR(FVector4f, asBEHAVE_CONSTRUCT, "void f(const FVector4f &in Other)", asFUNCTION(FVector4f_CopyConstruct), asCALL_CDECL_OBJLAST);
 	REGISTER_BEHAVIOUR(FVector4f, asBEHAVE_CONSTRUCT, "void f(float InX, float InY, float InZ, float InW)", asFUNCTION(FVector4f_ConstructXYZW), asCALL_CDECL_OBJLAST);
@@ -364,12 +381,12 @@ void Bind_FVector4f(asIScriptEngine* Engine)
 
 	// --- Compound assignment ---
 
-	REGISTER_METHOD(FVector4f, "FVector4f opAddAssign(const FVector4f &in Other)", asFUNCTION(FVector4f_AddAssign), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FVector4f, "FVector4f opSubAssign(const FVector4f &in Other)", asFUNCTION(FVector4f_SubtractAssign), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FVector4f, "FVector4f opMulAssign(float Scale)", asFUNCTION(FVector4f_MultiplyAssignScale), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FVector4f, "FVector4f opMulAssign(const FVector4f &in Other)", asFUNCTION(FVector4f_MultiplyAssignComponents), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FVector4f, "FVector4f opDivAssign(float Scale)", asFUNCTION(FVector4f_DivideAssignScale), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FVector4f, "FVector4f opDivAssign(const FVector4f &in Other)", asFUNCTION(FVector4f_DivideAssignComponents), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector4f, "FVector4f& opAddAssign(const FVector4f &in Other)", asFUNCTION(FVector4f_AddAssign), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector4f, "FVector4f& opSubAssign(const FVector4f &in Other)", asFUNCTION(FVector4f_SubtractAssign), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector4f, "FVector4f& opMulAssign(float Scale)", asFUNCTION(FVector4f_MultiplyAssignScale), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector4f, "FVector4f& opMulAssign(const FVector4f &in Other)", asFUNCTION(FVector4f_MultiplyAssignComponents), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector4f, "FVector4f& opDivAssign(float Scale)", asFUNCTION(FVector4f_DivideAssignScale), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FVector4f, "FVector4f& opDivAssign(const FVector4f &in Other)", asFUNCTION(FVector4f_DivideAssignComponents), asCALL_CDECL_OBJFIRST);
 
 	// --- Index operators ---
 

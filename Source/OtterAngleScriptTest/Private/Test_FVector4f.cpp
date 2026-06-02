@@ -572,10 +572,14 @@ int RunTest()
 		static const char Script[] = R"(
 int RunTest()
 {
-    FVector4f Z = FVector4f::Zero();
-    if (Z.X != 0.0f || Z.Y != 0.0f || Z.Z != 0.0f || Z.W != 0.0f) { return -1; }
-    FVector4f O = FVector4f::One();
-    if (O.X != 1.0f || O.Y != 1.0f || O.Z != 1.0f || O.W != 1.0f) { return -2; }
+    FVector4f OOne = FVector4f::One();
+
+    if (OOne.X != 1.0f || OOne.Y != 1.0f || OOne.Z != 1.0f || OOne.W != 1.0f) { return -2; }
+	OOne.X = 3.2f;
+	FVector4f ASD = OOne;
+
+    FVector4f Zero = FVector4f::Zero();
+    if (Zero.X != 0.0f || Zero.Y != 0.0f || Zero.Z != 0.0f || Zero.W != 0.0f) { return -1; }
     return 0;
 }
 )";

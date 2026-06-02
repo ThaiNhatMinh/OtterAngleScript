@@ -217,6 +217,12 @@ void Bind_UPhysicalMaterial(asIScriptEngine* Engine)
 	check(Result >= 0);
 
 	Result = Engine->RegisterGlobalFunction(
+		"UClass StaticClass()",
+		asFUNCTION(UPhysicalMaterial::StaticClass),
+		asCALL_CDECL);
+	check(Result >= 0);
+
+	Result = Engine->RegisterGlobalFunction(
 		"EPhysicalSurface DetermineSurfaceType(UPhysicalMaterial PhysicalMaterial)",
 		asFUNCTION(UPhysicalMaterial::DetermineSurfaceType),
 		asCALL_CDECL);

@@ -35,22 +35,22 @@ void Declare_Types(asIScriptEngine* Engine)
 	Result = Engine->RegisterObjectType("UPhysicalMaterial", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
 	check(Result >= 0);
 
-	Result = Engine->RegisterObjectType("FQuat", sizeof(FQuat), asOBJ_VALUE | asGetTypeTraits<FQuat>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	Result = Engine->RegisterObjectType("FQuat", sizeof(FQuat), asOBJ_VALUE | asGetTypeTraits<FQuat>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS | asOBJ_APP_CLASS_ALLFLOATS);
 	check(Result >= 0);
 
-    Result = Engine->RegisterObjectType("FRotator", sizeof(FRotator), asOBJ_VALUE | asGetTypeTraits<FRotator>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+    Result = Engine->RegisterObjectType("FRotator", sizeof(FRotator), asOBJ_VALUE | asGetTypeTraits<FRotator>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS | asOBJ_APP_CLASS_ALLFLOATS);
     check(Result >= 0);
 
-	Result = Engine->RegisterObjectType("FVector4f", sizeof(FVector4f), asOBJ_VALUE | asGetTypeTraits<FVector4f>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	Result = Engine->RegisterObjectType("FVector4f", sizeof(FVector4f), asOBJ_VALUE | asGetTypeTraits<FVector4f>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS | asOBJ_APP_CLASS_ALLFLOATS | asOBJ_POD | asOBJ_APP_CLASS_ALIGN8);
 	check(Result >= 0);
 
-	Result = Engine->RegisterObjectType("FVector2D", sizeof(FVector2D), asOBJ_VALUE | asGetTypeTraits<FVector2D>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	Result = Engine->RegisterObjectType("FVector2D", sizeof(FVector2D), asOBJ_VALUE | asGetTypeTraits<FVector2D>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS | asOBJ_APP_CLASS_ALLFLOATS);
 	check(Result >= 0);
 
-	Result = Engine->RegisterObjectType("FBox2D", sizeof(FBox2D), asOBJ_VALUE | asGetTypeTraits<FBox2D>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	Result = Engine->RegisterObjectType("FBox2D", sizeof(FBox2D), asOBJ_VALUE | asGetTypeTraits<FBox2D>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS | asOBJ_APP_CLASS_ALLFLOATS);
 	check(Result >= 0);
 
-	Result = Engine->RegisterObjectType("FVector", sizeof(FVector), asOBJ_VALUE | asGetTypeTraits<FVector>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	Result = Engine->RegisterObjectType("FVector", sizeof(FVector), asOBJ_VALUE | asGetTypeTraits<FVector>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS | asOBJ_APP_CLASS_ALLFLOATS);
 	check(Result >= 0);
 	
 	Result = Engine->RegisterObjectType("FName", sizeof(FName), asOBJ_VALUE | asGetTypeTraits<FName>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
@@ -78,9 +78,6 @@ void Declare_Types(asIScriptEngine* Engine)
 	check(Result >= 0);
 
 	Result = Engine->RegisterObjectType("FNavAgentSelector", sizeof(FNavAgentSelector), asOBJ_VALUE | asGetTypeTraits<FNavAgentSelector>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectType("FAlphaBlendArgs", sizeof(FAlphaBlendArgs), asOBJ_VALUE | asGetTypeTraits<FAlphaBlendArgs>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
 	check(Result >= 0);
 
 	Result = Engine->RegisterObjectType("FKeyHandle", sizeof(FKeyHandle), asOBJ_VALUE | asGetTypeTraits<FKeyHandle>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);

@@ -10,40 +10,6 @@
 #include "UObject/SoftObjectPtr.h"
 #include "angelscript.h"
 
-namespace
-{/*
-	static UClass* GetObjectStaticClass()
-	{
-		return UObject::StaticClass();
-	}
-
-	static UClass* GetPhysMatStaticClass()
-	{
-		return UPhysicalMaterial::StaticClass();
-	}
-
-	void RegisterTSoftClassPtrFixtures(asIScriptEngine* Engine)
-	{
-		static bool bRegistered = false;
-		if (bRegistered)
-		{
-			return;
-		}
-
-		int Result = Engine->RegisterGlobalFunction(
-			"UClass@ GetObjectStaticClass()",
-			asFUNCTION(GetObjectStaticClass), asCALL_CDECL);
-		check(Result >= 0);
-
-		Result = Engine->RegisterGlobalFunction(
-			"UClass@ GetPhysMatStaticClass()",
-			asFUNCTION(GetPhysMatStaticClass), asCALL_CDECL);
-		check(Result >= 0);
-
-		bRegistered = true;
-	}*/
-}
-
 TEST_CLASS_WITH_FLAGS(
 	FOtterAngleScriptTSoftClassPtrTests,
 	"OtterAngleScript.TSoftClassPtr",
@@ -178,7 +144,7 @@ int RunCopyConstructor()
 		static const char Script[] = R"(
 int RunConstructFromClass()
 {
-    UClass@ Cls = GetObjectStaticClass();
+    UClass Cls = AActor::StaticClass();
     TSoftClassPtr<UObject> Ptr(Cls);
     if (Ptr.IsNull())
     {
@@ -216,7 +182,7 @@ int RunConstructFromPath()
 		static const char Script[] = R"(
 int RunAssignOperator()
 {
-    UClass@ Cls = GetObjectStaticClass();
+    UClass Cls = AActor::StaticClass();
     TSoftClassPtr<UObject> A(Cls);
     TSoftClassPtr<UObject> B;
     B = A;
@@ -238,7 +204,7 @@ int RunAssignOperator()
 int RunAssignFromClass()
 {
     TSoftClassPtr<UObject> Ptr;
-    Ptr = GetObjectStaticClass();
+    Ptr = AActor::StaticClass();
     if (Ptr.IsNull())
     {
         return -1;
@@ -276,7 +242,7 @@ int RunAssignFromPath()
 		static const char Script[] = R"(
 int RunEqualsOperator()
 {
-    UClass@ Cls = GetObjectStaticClass();
+    UClass Cls = AActor::StaticClass();
     TSoftClassPtr<UObject> A(Cls);
     TSoftClassPtr<UObject> B(Cls);
     if (!A.opEquals(B))
@@ -301,8 +267,8 @@ int RunEqualsOperator()
 		static const char Script[] = R"(
 int RunEqualsClass()
 {
-    TSoftClassPtr<UObject> Ptr(GetObjectStaticClass());
-    if (!Ptr.opEquals(GetObjectStaticClass()))
+    TSoftClassPtr<UObject> Ptr(AActor::StaticClass());
+    if (!Ptr.opEquals(AActor::StaticClass()))
     {
         return -1;
     }
@@ -377,7 +343,7 @@ int RunIsPending()
 		static const char Script[] = R"(
 int RunReset()
 {
-    UClass@ Cls = GetObjectStaticClass();
+    UClass Cls = AActor::StaticClass();
     TSoftClassPtr<UObject> Ptr(Cls);
     if (Ptr.IsNull())
     {
@@ -402,12 +368,12 @@ int RunReset()
 int RunGet()
 {
     TSoftClassPtr<UObject> Null;
-    UClass@ Cls = Null.Get();
+    UClass Cls = Null.Get();
     if (Cls !is null)
     {
         return -1;
     }
-    TSoftClassPtr<UObject> Ptr(GetObjectStaticClass());
+    TSoftClassPtr<UObject> Ptr(AActor::StaticClass());
     Cls = Ptr.Get();
     if (Cls is null)
     {
@@ -431,7 +397,7 @@ int RunToString()
     {
         return -1;
     }
-    UClass@ Cls = GetObjectStaticClass();
+    UClass Cls = AActor::StaticClass();
     TSoftClassPtr<UObject> Ptr(Cls);
     if (Ptr.ToString() == "")
     {
@@ -450,7 +416,7 @@ int RunToString()
 		static const char Script[] = R"(
 int RunGetAssetName()
 {
-    UClass@ Cls = GetObjectStaticClass();
+    UClass Cls = AActor::StaticClass();
     TSoftClassPtr<UObject> Ptr(Cls);
     if (Ptr.GetAssetName() == "")
     {
@@ -469,7 +435,7 @@ int RunGetAssetName()
 		static const char Script[] = R"(
 int RunToSoftObjectPath()
 {
-    UClass@ Cls = GetObjectStaticClass();
+    UClass Cls = AActor::StaticClass();
     TSoftClassPtr<UObject> Ptr(Cls);
     FSoftObjectPath Retrieved = Ptr.ToSoftObjectPath();
     if (!Retrieved.IsValid())
@@ -492,8 +458,8 @@ int RunToSoftObjectPath()
 		static const char Script[] = R"(
 int RunMultipleInstantiations()
 {
-    TSoftClassPtr<UObject> ObjPtr(GetObjectStaticClass());
-    TSoftClassPtr<UPhysicalMaterial> PhysPtr(GetPhysMatStaticClass());
+    TSoftClassPtr<UObject> ObjPtr(AActor::StaticClass());
+    TSoftClassPtr<UPhysicalMaterial> PhysPtr(UPhysicalMaterial::StaticClass());
 
     if (ObjPtr.IsNull())
     {

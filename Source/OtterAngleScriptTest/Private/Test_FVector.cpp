@@ -1290,7 +1290,7 @@ int RunAddBounded()
 
     FVector AddBoundedRadiusValue(1.0, 1.0, 1.0);
     AddBoundedRadiusValue.AddBounded(FVector(10.0, 0.0, 0.0), 3.0);
-    if (AddBoundedRadiusValue.Size() > 3.0001)
+    if (AddBoundedRadiusValue.X != 3 || AddBoundedRadiusValue.Y != 1 || AddBoundedRadiusValue.Z != 1)
     {
         return -2;
     }
