@@ -207,7 +207,7 @@ namespace
 
 		// --- FAlign16Float4 (alignas(16), POD, all floats) ---
 		Result = Engine->RegisterObjectType("FAlign16Float4", sizeof(FAlign16Float4),
-			asOBJ_VALUE | asGetTypeTraits<FAlign16Float4>() | asOBJ_APP_CLASS_ALLFLOATS | asOBJ_POD | asOBJ_APP_ALIGN16);
+			asOBJ_VALUE | asGetTypeTraits<FAlign16Float4>() | asOBJ_APP_CLASS_ALLFLOATS | asOBJ_POD);
 		check(Result >= 0);
 
 		REGISTER_BEHAVIOUR(FAlign16Float4, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(Align16Float4_DefaultConstruct), asCALL_CDECL_OBJLAST);
