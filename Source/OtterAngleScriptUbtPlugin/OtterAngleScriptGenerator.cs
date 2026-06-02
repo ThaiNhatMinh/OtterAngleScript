@@ -73,6 +73,11 @@ namespace OtterAngleScriptUbtPlugin
             "FAudioCookOutputs"
         };
 
+        private static readonly HashSet<string> SkipClass = new (StringComparer.Ordinal)
+        {
+            "UKismetNodeHelperLibrary"
+        };
+
         private static readonly HashSet<string> SkipHeaderPath = new(StringComparer.Ordinal)
         {
             "Tests", "Internal", "Private", "NoExportTypes.h", "EdGraph"
@@ -124,6 +129,7 @@ namespace OtterAngleScriptUbtPlugin
                 .Where(c => !c.ClassFlags.HasAnyFlags(EClassFlags.Interface))
                 .Where(c => !ManuallyBoundTypes.Contains(c.SourceName))
                 .Where(c => !SkipHeaderPath.Any(skip => c.HeaderFile.FilePath.Contains(skip)))
+                .Where(c => !SkipClass.Contains(c.SourceName))
                 .Where(c => !c.Deprecated)
                 .ToList();
             foreach (var c in packageList
@@ -329,7 +335,7 @@ namespace OtterAngleScriptUbtPlugin
                 sb.AppendLine($"    Result = Engine->SetDefaultNamespace(\"{cls.SourceName}\"); check(Result >= 0);");
                 foreach (var func in staticFuncs)
                 {
-                    if (!TryBuildAsSignature(func, registeredTypeNames, out string? asSig))
+                    if (!TryBuildAsSignature(func, registeredTypeNames, out string? asSig, group))
                     {
                         _factory.Session.LogInfo($"OAS: skipping static function {cls.SourceName}::{func.SourceName} {func.FunctionFlags} since its signature contains unsupported types.");
                         continue;
@@ -353,7 +359,7 @@ namespace OtterAngleScriptUbtPlugin
                 const string callConv = "asCALL_THISCALL";
                 foreach (var func in nonStaticFuncs)
                 {
-                    if (!TryBuildAsSignature(func, registeredTypeNames, out string? asSig))
+                    if (!TryBuildAsSignature(func, registeredTypeNames, out string? asSig, group))
                         continue;
                     if (func.FunctionFlags.HasAnyFlags(EFunctionFlags.Protected | EFunctionFlags.Private))
                         continue; // TODO: support non-public functions via wrapper functions.
@@ -616,6 +622,10 @@ namespace OtterAngleScriptUbtPlugin
             {
                 return IsPropertySupport(arrayProperty.ValueProperty, group);
             }
+            else if (prop is UhtMapProperty mapProperty)
+            {
+                return IsPropertySupport(mapProperty.KeyProperty, group) && IsPropertySupport(mapProperty.ValueProperty, group);
+            }
             return true;
         }
         private static bool HasScriptExposedContent(UhtClass cls)
@@ -743,13 +753,13 @@ namespace OtterAngleScriptUbtPlugin
         /// Tries to build an AngelScript method signature string for RegisterObjectMethod.
         /// Returns false if any parameter/return type cannot be mapped.
         /// </summary>
-        private bool TryBuildAsSignature(UhtFunction func, HashSet<string> registeredTypeNames, out string? asSignature)
+        private bool TryBuildAsSignature(UhtFunction func, HashSet<string> registeredTypeNames, out string? asSignature, HeaderFileGroup group)
         {
             asSignature = null;
 
             var returnProp = GetReturnProperty(func);
             string asRet = returnProp != null
-                ? MapPropertyAsType(returnProp, registeredTypeNames) ?? ""
+                ? MapPropertyAsType(returnProp, registeredTypeNames, group) ?? ""
                 : "void";
             if (returnProp != null && asRet == "")
                 return false;
@@ -757,7 +767,7 @@ namespace OtterAngleScriptUbtPlugin
             var paramParts = new List<string>();
             foreach (var p in GetParamProperties(func))
             {
-                string? asType = MapPropertyAsType(p, registeredTypeNames);
+                string? asType = MapPropertyAsType(p, registeredTypeNames, group);
                 if (asType == null)
                 {
                     _factory.Session.LogInfo($"skipping function {func.SourceName} since parameter {p.SourceName} has unsupported type.");
@@ -906,7 +916,7 @@ namespace OtterAngleScriptUbtPlugin
         /// Maps a UHT property to an AngelScript type declaration string.
         /// Returns null if the type is not supported (the function will be skipped).
         /// </summary>
-        private string? MapPropertyAsType(UhtProperty property, HashSet<string> registeredTypeNames)
+        private string? MapPropertyAsType(UhtProperty property, HashSet<string> registeredTypeNames, HeaderFileGroup group)
         {
             bool isReturn = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReturnParm);
             bool isConst = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ConstParm);
@@ -961,14 +971,20 @@ namespace OtterAngleScriptUbtPlugin
                 case UhtClassProperty uclass:
                     if (uclass.MetaClass == null)
                         return null; // unsupported: TSubclassOf without a specified base class
+                    if (!group.Classes.Contains(uclass.MetaClass))
+                        return null; // unsupported: TSubclassOf with a base class not in the current group
                     return $"TSubclassOf<{uclass.MetaClass.SourceName}>";
 
                 case UhtObjectProperty p when p.Class != null:
+                    if (!group.Classes.Contains(p.Class))
+                        return null; // unsupported: object with a class not in the current group
                     return $"{p.Class.SourceName}";
 
-                case UhtStructProperty p
-                        when registeredTypeNames.Contains(p.ScriptStruct.SourceName):
-                    if (isReturn) return p.ScriptStruct.SourceName;
+                case UhtStructProperty p:
+                    if (!group.Structs.Contains(p.ScriptStruct) || !registeredTypeNames.Contains(p.ScriptStruct.SourceName))
+                        return null; // unsupported: struct type not in the current group
+                    if (isReturn)
+                        return p.ScriptStruct.SourceName;
                     return isOut
                         ? $"{p.ScriptStruct.SourceName} &out"
                         : $"const {p.ScriptStruct.SourceName} &in";

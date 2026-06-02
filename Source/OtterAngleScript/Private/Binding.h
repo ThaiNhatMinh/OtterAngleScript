@@ -255,3 +255,12 @@ void Bind_FRichCurve(asIScriptEngine* Engine);
  * Identity static property.
  */
 void Bind_FMatrix(asIScriptEngine* Engine);
+
+/**
+ * Registers TSoftClassPtr<T> as a value-type AngelScript template.
+ * Declare_TSoftClassPtr registers the template type declaration; Bind_TSoftClassPtr registers
+ * the template callback, constructors, and all methods.
+ * TSoftClassPtr inherits from TSoftObjectPtr and exposes UClass@ Get() / LoadSynchronous().
+ */
+void Declare_TSoftClassPtr(asIScriptEngine* Engine);
+void Bind_TSoftClassPtr(asIScriptEngine* Engine);

@@ -107,6 +107,7 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_Logging(Engine);
 	Bind_UPhysicalMaterial(Engine);
 	Bind_TSubclassOf(Engine);
+	Bind_TSoftClassPtr(Engine);
 	Bind_FRichCurve(Engine);
 	Bind_FMatrix(Engine);
 

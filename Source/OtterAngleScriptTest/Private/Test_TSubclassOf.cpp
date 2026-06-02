@@ -14,12 +14,12 @@
 
 namespace
 {
-	UClass* GetObjectStaticClass()
+	static UClass* GetObjectStaticClass()
 	{
 		return UObject::StaticClass();
 	}
 
-	UClass* GetPhysMatStaticClass()
+	static UClass* GetPhysMatStaticClass()
 	{
 		return UPhysicalMaterial::StaticClass();
 	}
