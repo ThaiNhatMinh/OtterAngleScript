@@ -1248,14 +1248,19 @@ namespace OtterAngleScriptUbtPlugin
             {
                 builder.Append("const ");
             }
-            if (property.SourceName == "EasingFunc" && property is UhtByteProperty byteProperty && byteProperty.Enum != null)
+            if (property is UhtByteProperty byteProperty && byteProperty.Enum != null && byteProperty.Enum.CppForm == UhtEnumCppForm.Namespaced)
             {
                 StringBuilder test = new StringBuilder();
                 UhtEnumProperty.AppendEnumText(test, property, byteProperty.Enum, UhtPropertyTextType.GenericFunctionArgOrRetVal, false);
 
-                _factory.Session.LogInfo($"OAS: processing property {property.FullName} with type {property.GetType()} and {test} {byteProperty.Enum?.CppForm} {property.PropertyFlags}");
+                _factory.Session.LogInfo($"OAS: processing property {property.FullName} with type {property.GetType()} and {test} {byteProperty.Enum?.CppForm} {byteProperty.Enum?.CppType}");
+                property.AppendText(builder, UhtPropertyTextType.Generic);
             }
-            property.AppendText(builder, UhtPropertyTextType.GenericFunctionArgOrRetVal);
+            else
+            {
+                property.AppendText(builder, UhtPropertyTextType.GenericFunctionArgOrRetVal);
+
+            }
 
             //bool fromConstClass = false;
             //bool constAtTheEnd = fromConstClass || (isConstParam && shouldHaveRef);
