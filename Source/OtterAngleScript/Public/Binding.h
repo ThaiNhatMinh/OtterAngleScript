@@ -2,7 +2,10 @@
 
 #pragma once
 
-class asIScriptEngine;
+#ifdef _MSC_VER
+#pragma warning(disable:4191 4996)
+#endif
+#include "angelscript.h"
 
 void Declare_Types(asIScriptEngine* Engine);
 
@@ -233,6 +236,14 @@ void Bind_UPhysicalMaterial(asIScriptEngine* Engine);
  * geometric methods, and FVector4f::Zero/One static helpers.
  */
 void Bind_FVector4f(asIScriptEngine* Engine);
+
+/**
+ * Registers FVector3f (TVector<float>) as a value type in the AngelScript engine.
+ * Exposes X/Y/Z float components, arithmetic/compound operators, index operators,
+ * normalization, geometric methods, and FVector3f::Zero/One/UnitX/UnitY/UnitZ
+ * static helpers.
+ */
+void Bind_FVector3f(asIScriptEngine* Engine);
 
 /**
  * Registers FBox2D (TBox2<double>) as a value type in the AngelScript engine.

@@ -59,9 +59,10 @@ namespace OtterAngleScriptUbtPlugin
             "UObject", "UClass", "UPhysicalMaterial", "UInterface", "FLinearColor", "FColor",
             "FString", "FName", "FText",
             "FVector", "FVector2D", "FRotator", "FQuat",
-            "FTransform", "FPlane", "FBox",
+            "FTransform", "FPlane", "FBox", "FBox2D",
             "FHitResult", "FTimerHandle", "FLatentActionInfo",
-            "FActorInstanceHandle", "FMatrix", "FKey", "FDateTime", "FInputChord", "FSoftObjectPath", "FSoftClassPath", "FPrimaryAssetId", "FInputEvent", "FKeyEvent", "FPointerEvent", "FPrimaryAssetType"
+            "FActorInstanceHandle", "FMatrix", "FKey", "FDateTime", "FInputChord", "FSoftObjectPath", "FSoftClassPath", "FPrimaryAssetId", "FInputEvent", "FKeyEvent", "FPointerEvent", "FPrimaryAssetType",
+            "FPlatformUserId", "EPhysicalSurface", "FIntVector", "FInputDeviceId", "FGuid", "FIntPoint", "FIntVector", "FVector4", "FFrameRate", "FRandomStream", "EAxis", "FTimespan", "FVector3f", "FIntVector2", "FTopLevelAssetPath"
         };
         private static readonly HashSet<string> SkipStructs = new(StringComparer.Ordinal)
         {
@@ -75,7 +76,7 @@ namespace OtterAngleScriptUbtPlugin
 
         private static readonly HashSet<string> SkipClass = new (StringComparer.Ordinal)
         {
-            "UKismetNodeHelperLibrary", "UAnimationDataModelNotifiesExtensions", "UBlueprintInstancedStructLibrary", "UDataTableFunctionLibrary"
+            "UKismetNodeHelperLibrary", "UAnimationDataModelNotifiesExtensions", "UBlueprintInstancedStructLibrary", "UDataTableFunctionLibrary", "UAnimationAttributeIdentifierExtensions"
         };
 
         private static readonly HashSet<string> SkipHeaderPath = new(StringComparer.Ordinal)
@@ -1247,7 +1248,13 @@ namespace OtterAngleScriptUbtPlugin
             {
                 builder.Append("const ");
             }
+            if (property.SourceName == "EasingFunc" && property is UhtByteProperty byteProperty && byteProperty.Enum != null)
+            {
+                StringBuilder test = new StringBuilder();
+                UhtEnumProperty.AppendEnumText(test, property, byteProperty.Enum, UhtPropertyTextType.GenericFunctionArgOrRetVal, false);
 
+                _factory.Session.LogInfo($"OAS: processing property {property.FullName} with type {property.GetType()} and {test} {byteProperty.Enum?.CppForm} {property.PropertyFlags}");
+            }
             property.AppendText(builder, UhtPropertyTextType.GenericFunctionArgOrRetVal);
 
             //bool fromConstClass = false;

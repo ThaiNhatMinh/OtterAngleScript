@@ -102,6 +102,7 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_FLinearColor(Engine);
 	Bind_FColor(Engine);
 	Bind_FVector4f(Engine);
+	Bind_FVector3f(Engine);
 	Bind_FSoftObjectPath(Engine);
 	Bind_FSoftClassPath(Engine);
 	Bind_FMath(Engine);
@@ -131,6 +132,28 @@ void FOtterAngleScriptModule::StartupModule()
 
 	// TODO: Multiple modules or single module?
 	ScriptModule = Engine->GetModule("OtterAngleScript", asGM_ALWAYS_CREATE);
+
+	IPluginManager& PluginManager = IPluginManager::Get();
+	auto Plugins = PluginManager.GetDiscoveredPlugins();
+	for (auto Plugin : Plugins)
+	{
+		auto BaseDir = Plugin->GetBaseDir();
+		auto ScriptDir = FPaths::Combine(BaseDir, TEXT("Scripts"));
+		TArray<FString> FoundScripts;
+		IFileManager::Get().FindFilesRecursive(FoundScripts, *ScriptDir, TEXT("*.as"), true, false);
+		for (auto Script : FoundScripts)
+		{
+			FString ScriptName = FPaths::GetBaseFilename(Script);
+			auto NewScriptModule = Engine->GetModule(TCHAR_TO_ANSI(*ScriptName), asGM_ALWAYS_CREATE);
+			FString ScriptCode;
+			FFileHelper::LoadFileToString(ScriptCode, *Script);
+			int Result = NewScriptModule->AddScriptSection(TCHAR_TO_UTF8(*ScriptName), TCHAR_TO_UTF8(*ScriptCode));
+			if (Result < 0)
+			{
+				UE_LOG(LogOtterAngleScript, Error, TEXT("Failed to add script section for %s"), *Script);
+			}
+		}
+	}
 }
 
 void FOtterAngleScriptModule::ShutdownModule()

@@ -3,7 +3,6 @@
 #include "Binding.h"
 #include "Misc/AssertionMacros.h"
 #include "HAL/UnrealMemory.h"
-#include "angelscript.h"
 #include "OtterAngleScript.h"
 
 #include <new>

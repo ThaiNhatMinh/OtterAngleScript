@@ -44,6 +44,9 @@ void Declare_Types(asIScriptEngine* Engine)
 	Result = Engine->RegisterObjectType("FVector4f", sizeof(FVector4f), asOBJ_VALUE | asGetTypeTraits<FVector4f>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS | asOBJ_APP_CLASS_ALLFLOATS | asOBJ_POD | asOBJ_APP_CLASS_ALIGN8);
 	check(Result >= 0);
 
+	Result = Engine->RegisterObjectType("FVector3f", sizeof(FVector3f), asOBJ_VALUE | asGetTypeTraits<FVector3f>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS | asOBJ_APP_CLASS_ALLFLOATS | asOBJ_POD);
+	check(Result >= 0);
+
 	Result = Engine->RegisterObjectType("FVector2D", sizeof(FVector2D), asOBJ_VALUE | asGetTypeTraits<FVector2D>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS | asOBJ_APP_CLASS_ALLFLOATS);
 	check(Result >= 0);
 
