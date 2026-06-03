@@ -105,6 +105,14 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_FSoftObjectPath(Engine);
 	Bind_FSoftClassPath(Engine);
 	Bind_FMath(Engine);
+	Bind_FKey(Engine);
+	Bind_FDateTime(Engine);
+	Bind_FIntVector(Engine);
+	Bind_FPlatformUserId(Engine);
+	Bind_FGuid(Engine);
+	Bind_FInputDeviceId(Engine);
+	Bind_FInputChord(Engine);
+	Bind_FPrimaryAssetId(Engine);
 	Bind_Logging(Engine);
 	Bind_UPhysicalMaterial(Engine);
 	Bind_TSubclassOf(Engine);

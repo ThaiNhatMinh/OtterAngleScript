@@ -50,6 +50,8 @@ public class OtterAngleScript : ModuleRules
 			new string[]
 			{
 				"Engine",
+				"Slate",
+				"SlateCore",
 				"PhysicsCore",
 				// ... add private dependencies that you statically link with here ...	
 			}

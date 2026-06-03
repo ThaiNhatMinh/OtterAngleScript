@@ -257,6 +257,68 @@ void Bind_FRichCurve(asIScriptEngine* Engine);
 void Bind_FMatrix(asIScriptEngine* Engine);
 
 /**
+ * Registers FKey as a value type in the AngelScript engine.
+ * The type is exposed as "FKey" in scripts.
+ * Exposes constructors (default, copy, from FName, from FString),
+ * assignment, equality/comparison, type queries (IsValid, IsModifierKey,
+ * IsGamepadKey, IsTouch, IsMouseButton, IsDigital, IsAnalog, etc.),
+ * and helpers (GetDisplayName, ToString, GetFName, GetMenuCategory,
+ * GetPairedAxis, GetPairedAxisKey).
+ */
+void Bind_FKey(asIScriptEngine* Engine);
+
+/**
+ * Registers FDateTime as a value type in the AngelScript engine.
+ * The type is exposed as "FDateTime" in scripts.
+ * Also registers EDayOfWeek and EMonthOfYear enums required by its API.
+ * Exposes constructors, date/time component accessors, string conversion
+ * (ToString, ToIso8601, ToHttpDate, ToFormattedString), Unix timestamp
+ * helpers, and static methods (Now, UtcNow, Today, Parse, etc.).
+ */
+void Bind_FDateTime(asIScriptEngine* Engine);
+
+/**
+ * Registers FIntVector (TIntVector3<int32>) as a value type in the AngelScript engine.
+ * Exposes X/Y/Z properties, arithmetic/bitwise operators, and utility methods
+ * (IsZero, GetMax, GetMin, Size, ComponentMin/Max, ToString, etc.).
+ */
+void Bind_FIntVector(asIScriptEngine* Engine);
+
+/**
+ * Registers FPlatformUserId as a value type in the AngelScript engine.
+ * Exposes IsValid, GetInternalId, and the CreateFromInternalId static factory.
+ */
+void Bind_FPlatformUserId(asIScriptEngine* Engine);
+
+/**
+ * Registers FGuid as a value type in the AngelScript engine.
+ * Also registers the EGuidFormats enum. Exposes A/B/C/D components,
+ * constructors, IsValid, Invalidate, ToString, NewGuid, Parse, etc.
+ */
+void Bind_FGuid(asIScriptEngine* Engine);
+
+/**
+ * Registers FInputDeviceId as a value type in the AngelScript engine.
+ * Exposes IsValid, GetId, and the CreateFromInternalId static factory.
+ */
+void Bind_FInputDeviceId(asIScriptEngine* Engine);
+
+/**
+ * Registers FInputChord as a value type in the AngelScript engine.
+ * Also registers the nested ERelationshipType enum. Exposes Key, modifier
+ * properties (bShift/bCtrl/bAlt/bCmd), GetRelationship, Needs* methods,
+ * GetInputText, IsValidChord, etc.
+ */
+void Bind_FInputChord(asIScriptEngine* Engine);
+
+/**
+ * Registers FPrimaryAssetType and FPrimaryAssetId as value types in the
+ * AngelScript engine. Exposes constructors, IsValid, ToString, property
+ * accessors, and static helpers (FromString, ParseTypeAndName).
+ */
+void Bind_FPrimaryAssetId(asIScriptEngine* Engine);
+
+/**
  * Registers TSoftClassPtr<T> as a value-type AngelScript template.
  * Declare_TSoftClassPtr registers the template type declaration; Bind_TSoftClassPtr registers
  * the template callback, constructors, and all methods.

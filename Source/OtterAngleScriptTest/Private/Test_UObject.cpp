@@ -453,7 +453,7 @@ int RunGetFullNameWithOuter()
     {
         return -1;
     }
-    if (!Child.GetFullName(Parent).Contains("OtterChild"))
+    if (!Child.GetFullName(Parent).Contains("/Temp/OtterAngleScriptTest.OtterParent:OtterChild"))
     {
         return -2;
     }

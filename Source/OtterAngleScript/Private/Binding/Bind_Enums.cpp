@@ -2,6 +2,7 @@
 
 #include "Binding.h"
 #include "Engine/EngineTypes.h"
+#include "InputCoreTypes.h"
 #include "Math/Vector.h"
 #include "Misc/CoreMiscDefines.h"
 #include "Misc/AssertionMacros.h"
@@ -29,4 +30,14 @@ void Bind_Enums(asIScriptEngine* Engine)
 	Result = Engine->RegisterEnumValue("EForceInitType", "ForceInitToZero", static_cast<int>(ForceInitToZero));
 	check(Result >= 0);
 
+	Result = Engine->RegisterEnum("EPairedAxis");
+	check(Result >= 0);
+	Result = Engine->RegisterEnumValue("EPairedAxis", "Unpaired", static_cast<int>(EPairedAxis::Unpaired));
+	check(Result >= 0);
+	Result = Engine->RegisterEnumValue("EPairedAxis", "X", static_cast<int>(EPairedAxis::X));
+	check(Result >= 0);
+	Result = Engine->RegisterEnumValue("EPairedAxis", "Y", static_cast<int>(EPairedAxis::Y));
+	check(Result >= 0);
+	Result = Engine->RegisterEnumValue("EPairedAxis", "Z", static_cast<int>(EPairedAxis::Z));
+	check(Result >= 0);
 }
