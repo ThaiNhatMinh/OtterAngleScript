@@ -33,7 +33,7 @@ namespace
 
 	FRotator UnrealRotatorWithNaN()
 	{
-		return FRotator(0.0 / 0.0000010, 1.0, 2.0);
+		return FRotator(std::numeric_limits<float>::quiet_NaN(), 1.0, 2.0);
 	}
 
 	bool RegisterFRotatorInteropFunctions(asIScriptEngine* Engine)
@@ -187,313 +187,805 @@ TEST_CLASS_WITH_FLAGS(
 		Engine = nullptr;
 	}
 
-	TEST_METHOD(ConstructorsOperatorsAndComparisons)
+	TEST_METHOD(DefaultConstructor)
 	{
 		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("FRotator")));
 		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("EForceInitType")));
 
 		static const char Script[] = R"(
-int RunConstructorsOperatorsAndComparisons()
+int RunDefaultConstructor()
 {
     FRotator DefaultValue;
     if (!DefaultValue.opEquals(FRotator(0.0, 0.0, 0.0)))
     {
         return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorDefaultCtor", Script, "int RunDefaultConstructor()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(ScalarConstructor)
+	{
+		static const char Script[] = R"(
+int RunScalarConstructor()
+{
     FRotator Scalar(5.0);
     if (Scalar.Pitch != 5.0 || Scalar.Yaw != 5.0 || Scalar.Roll != 5.0)
     {
-        return -2;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorScalarCtor", Script, "int RunScalarConstructor()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(PitchYawRollConstructor)
+	{
+		static const char Script[] = R"(
+int RunPitchYawRollConstructor()
+{
+    FRotator Value(10.0, 20.0, 30.0);
+    if (Value.Pitch != 10.0 || Value.Yaw != 20.0 || Value.Roll != 30.0)
+    {
+        return -1;
+    }
+    return 1;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FRotatorPYRCtor", Script, "int RunPitchYawRollConstructor()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(ForceInitConstructor)
+	{
+		static const char Script[] = R"(
+int RunForceInitConstructor()
+{
     FRotator Zeroed(ForceInit);
     if (!Zeroed.opEquals(FRotator(0.0, 0.0, 0.0)))
     {
-        return -17;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorForceInitCtor", Script, "int RunForceInitConstructor()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(CopyConstructor)
+	{
+		static const char Script[] = R"(
+int RunCopyConstructor()
+{
     FRotator Value(10.0, 20.0, 30.0);
     FRotator Copy(Value);
     if (!Copy.opEquals(Value))
     {
-        return -3;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorCopyCtor", Script, "int RunCopyConstructor()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(AssignmentOperator)
+	{
+		static const char Script[] = R"(
+int RunAssignmentOperator()
+{
+    FRotator Value(10.0, 20.0, 30.0);
     FRotator Assigned;
     Assigned = Value;
     if (!Assigned.opEquals(Value))
     {
-        return -4;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorAssign", Script, "int RunAssignmentOperator()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(FromQuatConstructor)
+	{
+		static const char Script[] = R"(
+int RunFromQuatConstructor()
+{
     FRotator FromQuat(FQuat(0.0, 0.0, 0.0, 1.0));
     if (!FromQuat.Equals(FRotator(0.0, 0.0, 0.0), 0.0001))
     {
-        return -5;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorQuatCtor", Script, "int RunFromQuatConstructor()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(AdditionOperator)
+	{
+		static const char Script[] = R"(
+int RunAdditionOperator()
+{
+    FRotator Value(10.0, 20.0, 30.0);
     if (!(Value + FRotator(1.0, 2.0, 3.0)).opEquals(FRotator(11.0, 22.0, 33.0)))
     {
-        return -6;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorAdd", Script, "int RunAdditionOperator()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(SubtractionOperator)
+	{
+		static const char Script[] = R"(
+int RunSubtractionOperator()
+{
+    FRotator Value(10.0, 20.0, 30.0);
     if (!(Value - FRotator(1.0, 2.0, 3.0)).opEquals(FRotator(9.0, 18.0, 27.0)))
     {
-        return -7;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorSub", Script, "int RunSubtractionOperator()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(MultiplyByScalar)
+	{
+		static const char Script[] = R"(
+int RunMultiplyByScalar()
+{
+    FRotator Value(10.0, 20.0, 30.0);
     if (!(Value * 2.0).opEquals(FRotator(20.0, 40.0, 60.0)))
     {
-        return -8;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorMul", Script, "int RunMultiplyByScalar()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(ScalarMultiplyRotator)
+	{
+		static const char Script[] = R"(
+int RunScalarMultiplyRotator()
+{
+    FRotator Value(10.0, 20.0, 30.0);
     if (!(2.0 * Value).opEquals(FRotator(20.0, 40.0, 60.0)))
     {
-        return -9;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorMulR", Script, "int RunScalarMultiplyRotator()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(CompoundAssignment)
+	{
+		static const char Script[] = R"(
+int RunCompoundAssignment()
+{
     FRotator Mutating(1.0, 2.0, 3.0);
     Mutating += FRotator(1.0, 1.0, 1.0);
     Mutating -= FRotator(0.0, 1.0, 1.0);
     Mutating *= 2.0;
     if (!Mutating.opEquals(FRotator(4.0, 4.0, 6.0)))
     {
-        return -10;
+        return -1;
     }
-
-    if (!FRotator(0.0, 360.0, 0.0).IsNearlyZero())
-    {
-        return -11;
-    }
-
-    if (!FRotator(0.0, 360.0, 0.0).IsZero())
-    {
-        return -12;
-    }
-
-    if (!FRotator(0.0, 360.0, 0.0).Equals(FRotator(0.0, 0.0, 0.0)))
-    {
-        return -13;
-    }
-
-    FRotator Equivalent = Value.GetEquivalentRotator();
-    if (Value.Equals(Equivalent))
-    {
-        return -14;
-    }
-
-    if (!Value.EqualsOrientation(Equivalent))
-    {
-        return -15;
-    }
-
-    Value.Add(1.0, 2.0, 3.0);
-    if (!Value.opEquals(FRotator(11.0, 22.0, 33.0)))
-    {
-        return -16;
-    }
-
-    return 17;
+    return 1;
 }
 )";
 
-		asIScriptFunction* Function = BuildFunction("FRotatorConstructorsOperators", Script, "int RunConstructorsOperatorsAndComparisons()");
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 17));
+		asIScriptFunction* Function = BuildFunction("FRotatorCompAssign", Script, "int RunCompoundAssignment()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
 	}
 
-	TEST_METHOD(InstanceMethods)
+	TEST_METHOD(IsNearlyZero)
 	{
 		static const char Script[] = R"(
-int RunInstanceMethods()
+int RunIsNearlyZero()
+{
+    if (!FRotator(0.0, 360.0, 0.0).IsNearlyZero())
+    {
+        return -1;
+    }
+    return 1;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FRotatorIsNearlyZero", Script, "int RunIsNearlyZero()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(IsZero)
+	{
+		static const char Script[] = R"(
+int RunIsZero()
+{
+    if (!FRotator(0.0, 360.0, 0.0).IsZero())
+    {
+        return -1;
+    }
+    return 1;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FRotatorIsZero", Script, "int RunIsZero()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(Equals)
+	{
+		static const char Script[] = R"(
+int RunEquals()
+{
+    if (!FRotator(0.0, 360.0, 0.0).Equals(FRotator(0.0, 0.0, 0.0)))
+    {
+        return -1;
+    }
+    return 1;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FRotatorEquals", Script, "int RunEquals()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(EqualsOrientation)
+	{
+		static const char Script[] = R"(
+int RunEqualsOrientation()
+{
+    FRotator Value(10.0, 20.0, 30.0);
+    FRotator Equivalent = Value.GetEquivalentRotator();
+    if (Value.Equals(Equivalent))
+    {
+        return -1;
+    }
+    if (!Value.EqualsOrientation(Equivalent))
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FRotatorEqualsOrient", Script, "int RunEqualsOrientation()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(Add)
+	{
+		static const char Script[] = R"(
+int RunAdd()
+{
+    FRotator Value(10.0, 20.0, 30.0);
+    Value.Add(1.0, 2.0, 3.0);
+    if (!Value.opEquals(FRotator(11.0, 22.0, 33.0)))
+    {
+        return -1;
+    }
+    return 1;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FRotatorAddMethod", Script, "int RunAdd()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GetInverse)
+	{
+		static const char Script[] = R"(
+int RunGetInverse()
 {
     FRotator Inverse = FRotator(0.0, 90.0, 0.0).GetInverse();
     if (!Inverse.RotateVector(FVector(0.0, 1.0, 0.0)).Equals(FVector(1.0, 0.0, 0.0), 0.0001))
     {
         return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorGetInverse", Script, "int RunGetInverse()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GridSnap)
+	{
+		static const char Script[] = R"(
+int RunGridSnap()
+{
     if (!FRotator(13.0, 27.0, 44.0).GridSnap(FRotator(10.0, 15.0, 30.0)).opEquals(FRotator(10.0, 30.0, 30.0)))
     {
-        return -2;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorGridSnap", Script, "int RunGridSnap()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(Vector)
+	{
+		static const char Script[] = R"(
+int RunVector()
+{
     if (!FRotator(0.0, 90.0, 0.0).Vector().Equals(FVector(0.0, 1.0, 0.0), 0.0001))
     {
-        return -3;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorVector", Script, "int RunVector()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(Quaternion)
+	{
+		static const char Script[] = R"(
+int RunQuaternion()
+{
     if (!FRotator(0.0, 0.0, 0.0).Quaternion().Equals(FQuat(0.0, 0.0, 0.0, 1.0), 0.0001))
     {
-        return -4;
+        return -1;
     }
+    return 1;
+}
+)";
 
-    if (!FRotator(10.0, 20.0, 30.0).Euler().Equals(FVector(10.0, 20.0, 30.0), 0.0001))
+		asIScriptFunction* Function = BuildFunction("FRotatorQuatMethod", Script, "int RunQuaternion()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(Euler)
+	{
+		static const char Script[] = R"(
+int RunEuler()
+{
+    if (!FRotator(10.0, 20.0, 30.0).Euler().Equals(FVector(30.0, 10.0f, 20.0f), 0.0001))
     {
-        return -5;
+        return -1;
     }
+    return 1;
+}
+)";
+		auto Rotator = FRotator(10.0, 20.0, 30.0);
+		auto Euler = Rotator.Euler();
 
+		asIScriptFunction* Function = BuildFunction("FRotatorEuler", Script, "int RunEuler()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(RotateVector)
+	{
+		static const char Script[] = R"(
+int RunRotateVector()
+{
     if (!FRotator(0.0, 90.0, 0.0).RotateVector(FVector(1.0, 0.0, 0.0)).Equals(FVector(0.0, 1.0, 0.0), 0.0001))
     {
-        return -6;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorRotateVec", Script, "int RunRotateVector()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(UnrotateVector)
+	{
+		static const char Script[] = R"(
+int RunUnrotateVector()
+{
     if (!FRotator(0.0, 90.0, 0.0).UnrotateVector(FVector(0.0, 1.0, 0.0)).Equals(FVector(1.0, 0.0, 0.0), 0.0001))
     {
-        return -7;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorUnrotateVec", Script, "int RunUnrotateVector()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(Clamp)
+	{
+		static const char Script[] = R"(
+int RunClamp()
+{
     if (!FRotator(370.0, -10.0, 540.0).Clamp().opEquals(FRotator(10.0, 350.0, 180.0)))
     {
-        return -8;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorClamp", Script, "int RunClamp()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GetNormalized)
+	{
+		static const char Script[] = R"(
+int RunGetNormalized()
+{
     if (!FRotator(0.0, 540.0, 0.0).GetNormalized().opEquals(FRotator(0.0, 180.0, 0.0)))
     {
-        return -9;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorGetNormalized", Script, "int RunGetNormalized()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GetDenormalized)
+	{
+		static const char Script[] = R"(
+int RunGetDenormalized()
+{
     if (!FRotator(-10.0, 370.0, -540.0).GetDenormalized().opEquals(FRotator(350.0, 10.0, 180.0)))
     {
-        return -10;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorGetDenormalized", Script, "int RunGetDenormalized()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GetComponentForAxis)
+	{
+		static const char Script[] = R"(
+int RunGetComponentForAxis()
+{
     FRotator AxisValue(10.0, 20.0, 30.0);
     if (!UnrealNearlyEqual(AxisValue.GetComponentForAxis(X), 30.0, 0.0001))
     {
-        return -11;
+        return -1;
     }
-
     if (!UnrealNearlyEqual(AxisValue.GetComponentForAxis(Y), 10.0, 0.0001))
     {
-        return -12;
+        return -2;
     }
-
     if (!UnrealNearlyEqual(AxisValue.GetComponentForAxis(Z), 20.0, 0.0001))
     {
-        return -13;
+        return -3;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorGetComponent", Script, "int RunGetComponentForAxis()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(SetComponentForAxis)
+	{
+		static const char Script[] = R"(
+int RunSetComponentForAxis()
+{
+    FRotator AxisValue(10.0, 20.0, 30.0);
     AxisValue.SetComponentForAxis(X, 40.0);
     AxisValue.SetComponentForAxis(Y, 50.0);
     AxisValue.SetComponentForAxis(Z, 60.0);
     if (!AxisValue.opEquals(FRotator(50.0, 60.0, 40.0)))
     {
-        return -14;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorSetComponent", Script, "int RunSetComponentForAxis()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(Normalize)
+	{
+		static const char Script[] = R"(
+int RunNormalize()
+{
     FRotator ToNormalize(0.0, 540.0, 0.0);
     ToNormalize.Normalize();
     if (!ToNormalize.opEquals(FRotator(0.0, 180.0, 0.0)))
     {
-        return -15;
+        return -1;
     }
+    return 1;
+}
+)";
 
+		asIScriptFunction* Function = BuildFunction("FRotatorNormalize", Script, "int RunNormalize()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GetWindingAndRemainder)
+	{
+		static const char Script[] = R"(
+int RunGetWindingAndRemainder()
+{
     FRotator Winding;
     FRotator Remainder;
     FRotator(450.0, -540.0, 30.0).GetWindingAndRemainder(Winding, Remainder);
     if (!(Winding + Remainder).opEquals(FRotator(450.0, -540.0, 30.0)))
     {
-        return -16;
+        return -1;
     }
-
     if (!Remainder.opEquals(Remainder.GetNormalized()))
     {
-        return -17;
+        return -2;
     }
-
-    if (!UnrealNearlyEqual(FRotator(10.0, 20.0, 30.0).GetManhattanDistance(FRotator(1.0, 2.0, 3.0)), 54.0, 0.0001))
-    {
-        return -18;
-    }
-
-    FRotator Equivalent = FRotator(10.0, 20.0, 30.0).GetEquivalentRotator();
-    if (!Equivalent.opEquals(FRotator(170.0, 200.0, 210.0)))
-    {
-        return -19;
-    }
-
-    FRotator Closest = Equivalent;
-    FRotator(10.0, 20.0, 30.0).SetClosestToMe(Closest);
-    if (!Closest.opEquals(FRotator(10.0, 20.0, 30.0)))
-    {
-        return -20;
-    }
-
-    FString FullText = FRotator(10.0, 20.0, 30.0).ToString();
-    if (!FullText.StartsWith("P="))
-    {
-        return -21;
-    }
-
-    FString CompactText = FRotator(10.0, 20.0, 30.0).ToCompactString();
-    if (CompactText.IsEmpty())
-    {
-        return -22;
-    }
-
-    FRotator Parsed;
-    if (!Parsed.InitFromString("P=10.0 Y=20.0 R=30.0"))
-    {
-        return -23;
-    }
-
-    if (!Parsed.opEquals(FRotator(10.0, 20.0, 30.0)))
-    {
-        return -24;
-    }
-
-    if (!UnrealRotatorWithNaN().ContainsNaN())
-    {
-        return -25;
-    }
-
-    return 25;
+    return 1;
 }
 )";
 
-		asIScriptFunction* Function = BuildFunction("FRotatorInstanceMethods", Script, "int RunInstanceMethods()");
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 25));
+		asIScriptFunction* Function = BuildFunction("FRotatorWindingRem", Script, "int RunGetWindingAndRemainder()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
 	}
 
-	TEST_METHOD(StaticNamespaceFunctions)
+	TEST_METHOD(GetManhattanDistance)
 	{
 		static const char Script[] = R"(
-int RunStaticNamespaceFunctions()
+int RunGetManhattanDistance()
+{
+    if (!UnrealNearlyEqual(FRotator(10.0, 20.0, 30.0).GetManhattanDistance(FRotator(1.0, 2.0, 3.0)), 54.0, 0.0001))
+    {
+        return -1;
+    }
+    return 1;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FRotatorManhattan", Script, "int RunGetManhattanDistance()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GetEquivalentRotator)
+	{
+		static const char Script[] = R"(
+int RunGetEquivalentRotator()
+{
+    FRotator Equivalent = FRotator(10.0, 20.0, 30.0).GetEquivalentRotator();
+    if (!Equivalent.opEquals(FRotator(170.0, 200.0, 210.0)))
+    {
+        return -1;
+    }
+    return 1;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FRotatorEquivRot", Script, "int RunGetEquivalentRotator()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(SetClosestToMe)
+	{
+		static const char Script[] = R"(
+int RunSetClosestToMe()
+{
+    FRotator Equivalent = FRotator(10.0, 20.0, 30.0).GetEquivalentRotator();
+    FRotator Closest = Equivalent;
+    FRotator(10.0, 20.0, 30.0).SetClosestToMe(Closest);
+    if (!Closest.opEquals(FRotator(170.0, 200.0, 210.0)))
+    {
+        return -1;
+    }
+    return 1;
+}
+)";
+		FRotator Equivalent = FRotator(10.0, 20.0, 30.0).GetEquivalentRotator();
+		FRotator Closest = Equivalent;
+		FRotator(10.0, 20.0, 30.0).SetClosestToMe(Closest);
+
+		asIScriptFunction* Function = BuildFunction("FRotatorSetClosest", Script, "int RunSetClosestToMe()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(ToString)
+	{
+		static const char Script[] = R"(
+int RunToString()
+{
+    FString FullText = FRotator(10.0, 20.0, 30.0).ToString();
+    if (!FullText.StartsWith("P="))
+    {
+        return -1;
+    }
+    return 1;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FRotatorToString", Script, "int RunToString()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(ToCompactString)
+	{
+		static const char Script[] = R"(
+int RunToCompactString()
+{
+    FString CompactText = FRotator(10.0, 20.0, 30.0).ToCompactString();
+    if (CompactText.IsEmpty())
+    {
+        return -1;
+    }
+    return 1;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FRotatorToCompact", Script, "int RunToCompactString()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(InitFromString)
+	{
+		static const char Script[] = R"(
+int RunInitFromString()
+{
+    FRotator Parsed;
+    if (!Parsed.InitFromString("P=10.0 Y=20.0 R=30.0"))
+    {
+        return -1;
+    }
+    if (!Parsed.opEquals(FRotator(10.0, 20.0, 30.0)))
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FRotatorInitStr", Script, "int RunInitFromString()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(ContainsNaN)
+	{
+		static const char Script[] = R"(
+int RunContainsNaN()
+{
+    if (!UnrealRotatorWithNaN().ContainsNaN())
+    {
+        return -1;
+    }
+    return 1;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FRotatorNaN", Script, "int RunContainsNaN()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(ClampAxis)
+	{
+		static const char Script[] = R"(
+int RunClampAxis()
 {
     if (!UnrealNearlyEqual(FRotator::ClampAxis(-10.0), 350.0, 0.0001))
     {
         return -1;
     }
-
-    if (!UnrealNearlyEqual(FRotator::NormalizeAxis(350.0), -10.0, 0.0001))
-    {
-        return -2;
-    }
-
-    uint8 ByteValue = FRotator::CompressAxisToByte(90.0);
-    if (!UnrealNearlyEqual(FRotator::DecompressAxisFromByte(ByteValue), 90.0, 2.0))
-    {
-        return -3;
-    }
-
-    uint16 ShortValue = FRotator::CompressAxisToShort(180.0);
-    if (!UnrealNearlyEqual(FRotator::DecompressAxisFromShort(ShortValue), 180.0, 0.1))
-    {
-        return -4;
-    }
-
-    if (!FRotator::MakeFromEuler(FVector(10.0, 20.0, 30.0)).Euler().Equals(FVector(10.0, 20.0, 30.0), 0.0001))
-    {
-        return -5;
-    }
-
-    return 5;
+    return 1;
 }
 )";
 
-		asIScriptFunction* Function = BuildFunction("FRotatorStaticFunctions", Script, "int RunStaticNamespaceFunctions()");
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 5));
+		asIScriptFunction* Function = BuildFunction("FRotatorClampAxis", Script, "int RunClampAxis()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(NormalizeAxis)
+	{
+		static const char Script[] = R"(
+int RunNormalizeAxis()
+{
+    if (!UnrealNearlyEqual(FRotator::NormalizeAxis(350.0), -10.0, 0.0001))
+    {
+        return -1;
+    }
+    return 1;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FRotatorNormAxis", Script, "int RunNormalizeAxis()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(CompressDecompressByte)
+	{
+		static const char Script[] = R"(
+int RunCompressDecompressByte()
+{
+    uint8 ByteValue = FRotator::CompressAxisToByte(90.0);
+    if (!UnrealNearlyEqual(FRotator::DecompressAxisFromByte(ByteValue), 90.0, 2.0))
+    {
+        return -1;
+    }
+    return 1;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FRotatorCompByte", Script, "int RunCompressDecompressByte()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(CompressDecompressShort)
+	{
+		static const char Script[] = R"(
+int RunCompressDecompressShort()
+{
+    uint16 ShortValue = FRotator::CompressAxisToShort(180.0);
+    if (!UnrealNearlyEqual(FRotator::DecompressAxisFromShort(ShortValue), 180.0, 0.1))
+    {
+        return -1;
+    }
+    return 1;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FRotatorCompShort", Script, "int RunCompressDecompressShort()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(MakeFromEuler)
+	{
+		static const char Script[] = R"(
+int RunMakeFromEuler()
+{
+    if (!FRotator::MakeFromEuler(FVector(10.0, 20.0, 30.0)).Euler().Equals(FVector(10.0, 20.0, 30.0), 0.0001))
+    {
+        return -1;
+    }
+    return 1;
+}
+)";
+
+		asIScriptFunction* Function = BuildFunction("FRotatorMakeEuler", Script, "int RunMakeFromEuler()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
 	}
 
 	TEST_METHOD(ScriptCallsUnrealWithRotator)

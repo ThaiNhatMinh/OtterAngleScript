@@ -52,6 +52,16 @@ namespace
 		return Scale * Value;
 	}
 
+	static bool FRotator_EqualsTolerance(const FRotator& Value, const FRotator& V, double Tolerance)
+	{
+		return Value.Equals(V, Tolerance);
+	}
+
+	static bool FRotator_Equals(const FRotator& A, const FRotator& B)
+	{
+		return A.operator==(B);
+	}
+
 }
 
 void Bind_FRotator(asIScriptEngine* Engine)
@@ -76,11 +86,18 @@ void Bind_FRotator(asIScriptEngine* Engine)
 	REGISTER_METHOD(FRotator, "FRotator opAddAssign(const FRotator &in Other)", asMETHODPR(FRotator, operator+=, (const FRotator&), FRotator), asCALL_THISCALL);
 	REGISTER_METHOD(FRotator, "FRotator opSubAssign(const FRotator &in Other)", asMETHODPR(FRotator, operator-=, (const FRotator&), FRotator), asCALL_THISCALL);
 	REGISTER_METHOD(FRotator, "FRotator opMulAssign(double Scale)", asMETHODPR(FRotator, operator*=, (double), FRotator), asCALL_THISCALL);
+#if 0
+	REGISTER_METHOD(FRotator, "bool Equals(const FRotator &in Other, double Tolerance = 0.0001) const", asMETHODPR(FRotator, Equals, (const FRotator&, double) const, bool), asCALL_THISCALL);
 	REGISTER_METHOD(FRotator, "bool opEquals(const FRotator &in Other) const", asMETHODPR(FRotator, operator==, (const FRotator&) const, bool), asCALL_THISCALL);
+#else
+	REGISTER_METHOD(FRotator, "bool Equals(const FRotator &in Other, double Tolerance = 0.0001) const", asFUNCTION(FRotator_EqualsTolerance), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FRotator, "bool opEquals(const FRotator &in Other) const", asFUNCTION(FRotator_Equals), asCALL_CDECL_OBJFIRST);
+
+#endif
 
 	REGISTER_METHOD(FRotator, "bool IsNearlyZero(double Tolerance = 0.0001) const", asMETHODPR(FRotator, IsNearlyZero, (double) const, bool), asCALL_THISCALL);
 	REGISTER_METHOD(FRotator, "bool IsZero() const", asMETHODPR(FRotator, IsZero, () const, bool), asCALL_THISCALL);
-	REGISTER_METHOD(FRotator, "bool Equals(const FRotator &in Other, double Tolerance = 0.0001) const", asMETHODPR(FRotator, Equals, (const FRotator&, double) const, bool), asCALL_THISCALL);
+	
 	REGISTER_METHOD(FRotator, "bool EqualsOrientation(const FRotator &in Other, double Tolerance = 0.0001) const", asMETHODPR(FRotator, EqualsOrientation, (const FRotator&, double) const, bool), asCALL_THISCALL);
 	REGISTER_METHOD(FRotator, "FRotator Add(double DeltaPitch, double DeltaYaw, double DeltaRoll)", asMETHODPR(FRotator, Add, (double, double, double), FRotator), asCALL_THISCALL);
 	REGISTER_METHOD(FRotator, "FRotator GetInverse() const", asMETHODPR(FRotator, GetInverse, () const, FRotator), asCALL_THISCALL);
@@ -99,7 +116,7 @@ void Bind_FRotator(asIScriptEngine* Engine)
 	REGISTER_METHOD(FRotator, "void GetWindingAndRemainder(FRotator &out Winding, FRotator &out Remainder) const", asMETHODPR(FRotator, GetWindingAndRemainder, (FRotator&, FRotator&) const, void), asCALL_THISCALL);
 	REGISTER_METHOD(FRotator, "double GetManhattanDistance(const FRotator &in Other) const", asMETHODPR(FRotator, GetManhattanDistance, (const FRotator&) const, double), asCALL_THISCALL);
 	REGISTER_METHOD(FRotator, "FRotator GetEquivalentRotator() const", asMETHODPR(FRotator, GetEquivalentRotator, () const, FRotator), asCALL_THISCALL);
-	REGISTER_METHOD(FRotator, "void SetClosestToMe(FRotator &out MakeClosest) const", asMETHODPR(FRotator, SetClosestToMe, (FRotator&) const, void), asCALL_THISCALL);
+	REGISTER_METHOD(FRotator, "void SetClosestToMe(FRotator &inout MakeClosest) const", asMETHODPR(FRotator, SetClosestToMe, (FRotator&) const, void), asCALL_THISCALL);
 	REGISTER_METHOD(FRotator, "FString ToString() const", asMETHODPR(FRotator, ToString, () const, FString), asCALL_THISCALL);
 	REGISTER_METHOD(FRotator, "FString ToCompactString() const", asMETHODPR(FRotator, ToCompactString, () const, FString), asCALL_THISCALL);
 	REGISTER_METHOD(FRotator, "bool InitFromString(const FString &in Source)", asMETHODPR(FRotator, InitFromString, (const FString&), bool), asCALL_THISCALL);

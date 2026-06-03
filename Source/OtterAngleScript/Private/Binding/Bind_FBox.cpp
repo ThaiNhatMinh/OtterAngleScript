@@ -126,8 +126,8 @@ void Bind_FBox(asIScriptEngine* Engine)
 	REGISTER_METHOD(FBox, "bool Equals(const FBox &in Other, double Tolerance = 0.0001) const", asMETHODPR(FBox, Equals, (const FBox&, double) const, bool), asCALL_THISCALL);
 	REGISTER_METHOD(FBox, "FBox opAdd(const FVector &in Other) const", asMETHODPR(FBox, operator+, (const FVector&) const, FBox), asCALL_THISCALL);
 	REGISTER_METHOD(FBox, "FBox opAdd(const FBox &in Other) const", asMETHODPR(FBox, operator+, (const FBox&) const, FBox), asCALL_THISCALL);
-	REGISTER_METHOD(FBox, "FBox opAddAssign(const FVector &in Other)", asMETHODPR(FBox, operator+=, (const FVector&), FBox&), asCALL_THISCALL);
-	REGISTER_METHOD(FBox, "FBox opAddAssign(const FBox &in Other)", asMETHODPR(FBox, operator+=, (const FBox&), FBox&), asCALL_THISCALL);
+	REGISTER_METHOD(FBox, "FBox& opAddAssign(const FVector &in Other)", asMETHODPR(FBox, operator+=, (const FVector&), FBox&), asCALL_THISCALL);
+	REGISTER_METHOD(FBox, "FBox& opAddAssign(const FBox &in Other)", asMETHODPR(FBox, operator+=, (const FBox&), FBox&), asCALL_THISCALL);
 	REGISTER_METHOD(FBox, "FVector &opIndex(uint Index)", asFUNCTION(FBox_IndexRef), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FBox, "FVector opIndex(uint Index) const", asFUNCTION(FBox_IndexValue), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FBox, "bool ContainsNaN() const", asMETHODPR(FBox, ContainsNaN, () const, bool), asCALL_THISCALL);

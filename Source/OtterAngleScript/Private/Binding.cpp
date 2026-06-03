@@ -89,7 +89,7 @@ void Declare_Types(asIScriptEngine* Engine)
 	Result = Engine->RegisterObjectType("FPhysicalMaterialStrength", sizeof(FPhysicalMaterialStrength), asOBJ_VALUE | asOBJ_POD);
 	check(Result >= 0);
 
-	Result = Engine->RegisterObjectType("FPhysicalMaterialDamageModifier", sizeof(FPhysicalMaterialDamageModifier), asOBJ_VALUE | asOBJ_POD);
+	Result = Engine->RegisterObjectType("FPhysicalMaterialDamageModifier", sizeof(FPhysicalMaterialDamageModifier), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<FPhysicalMaterialDamageModifier>());
 	check(Result >= 0);
 
 	Result = Engine->RegisterObjectType(

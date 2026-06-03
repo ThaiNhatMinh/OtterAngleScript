@@ -522,8 +522,8 @@ int RunTest()
     FVector4f V(1.0f, -1.0f, 0.0f, 0.0f);
     FVector4f Normal(0.0f, 1.0f, 0.0f, 0.0f);
     FVector4f R = V.Reflect3(Normal);
-    if (!FMath::IsNearlyEqual(R.X, 1.0f, 0.001f)) { return -1; }
-    if (!FMath::IsNearlyEqual(R.Y, 1.0f, 0.001f)) { return -2; }
+    if (!FMath::IsNearlyEqual(R.X, -1.0f, 0.001f)) { return -1; }
+    if (!FMath::IsNearlyEqual(R.Y, -1.0f, 0.001f)) { return -2; }
     return 0;
 }
 )";

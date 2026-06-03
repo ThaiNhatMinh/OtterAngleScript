@@ -11,6 +11,14 @@
 
 namespace
 {
+	struct FVector4f_noalign
+	{
+		float X;
+		float Y;
+		float Z;
+		float W;
+	};
+
 	static float& SetVector4fIndexException(FVector4f& Value, const char* Message)
 	{
 		SetScriptException(Message);
@@ -51,9 +59,9 @@ namespace
 		new (Memory) FVector4f();
 	}
 
-	static void FVector4f_CopyConstruct(const FVector4f& Other, FVector4f* Memory)
+	static void FVector4f_CopyConstruct(const FVector4f_noalign& Other, FVector4f_noalign* Memory)
 	{
-		new (Memory) FVector4f(Other);
+		new (Memory) FVector4f_noalign(Other);
 	}
 
 	static void FVector4f_ConstructXYZW(float InX, float InY, float InZ, float InW, FVector4f* Memory)
@@ -73,10 +81,10 @@ namespace
 
 	// --- Assignment / comparison ---
 
-	static FVector4f& FVector4f_Assign(FVector4f& Value, const FVector4f& Other)
+	static FVector4f& FVector4f_Assign(FVector4f_noalign& Value, const FVector4f_noalign& Other)
 	{
 		Value = Other;
-		return Value;
+		return (FVector4f&)Value;
 	}
 
 	static bool FVector4f_Equals_Op(const FVector4f& Value, const FVector4f& Other)

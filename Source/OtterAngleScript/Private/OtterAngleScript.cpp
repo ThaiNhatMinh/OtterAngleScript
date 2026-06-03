@@ -95,7 +95,6 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_FActorInstanceHandle(Engine);
 	Bind_FHitResult(Engine);
 	Bind_FTimerHandle(Engine);
-	Bind_FLatentActionInfo(Engine);
 	Bind_FFrameNumber(Engine);
 	Bind_FFrameTime(Engine);
 	Bind_FFrameRate(Engine);

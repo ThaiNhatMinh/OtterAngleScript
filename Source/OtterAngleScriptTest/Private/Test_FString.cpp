@@ -747,11 +747,7 @@ int RunTrimQuotesInline()
 int RunRemoveSpacesInline()
 {
     FString Value = "a b c";
-    int Removed = Value.RemoveSpacesInline();
-    if (Removed != 2)
-    {
-        return -1;
-    }
+    Value.RemoveSpacesInline();
 
     if (Value != "abc")
     {
@@ -794,7 +790,7 @@ int RunConvertTabsToSpacesInline()
 {
     FString Value = "A	B";
     Value.ConvertTabsToSpacesInline(4);
-    if (Value != "A    B")
+    if (Value != "A   B")
     {
         return -1;
     }

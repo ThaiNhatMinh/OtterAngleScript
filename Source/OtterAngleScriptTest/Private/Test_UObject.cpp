@@ -3,13 +3,68 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #if WITH_EDITOR
 
+#include "Test_UObject.h"
 #include "CQTest.h"
 #include "Misc/AssertionMacros.h"
 #include "Modules/ModuleManager.h"
 #include "OtterAngleScript.h"
+#include "UObject/Class.h"
 #include "UObject/Object.h"
 #include "UObject/Package.h"
 #include "angelscript.h"
+
+namespace
+{
+	UObject* GetFixtureChildObject()
+	{
+		static UObject* Child = nullptr;
+		if (Child == nullptr)
+		{
+			UPackage* Package = CreatePackage(TEXT("/Temp/OtterAngleScriptTest"));
+			Package->AddToRoot();
+			UObject* Parent = NewObject<UDummyTestUObject>(Package, TEXT("OtterParent"));
+			Parent->AddToRoot();
+			Child = NewObject<UDummyTestUObject>(Parent, TEXT("OtterChild"));
+			Child->AddToRoot();
+		}
+		return Child;
+	}
+
+	UObject* GetFixtureParentObject()
+	{
+		GetFixtureChildObject(); // ensure created
+		return GetFixtureChildObject()->GetOuter();
+	}
+
+	UClass* GetFixtureUObjectClass()
+	{
+		return UObject::StaticClass();
+	}
+
+	UObject* GetFixturePackageObject()
+	{
+		GetFixtureChildObject(); // ensure created
+		return GetFixtureChildObject()->GetPackage();
+	}
+
+	bool RegisterUObjectFixtureBindings(asIScriptEngine* Engine)
+	{
+		static bool bRegistered = false;
+		if (bRegistered) return true;
+
+		int Result = Engine->RegisterGlobalFunction("UObject GetFixtureChildObject()", asFUNCTION(GetFixtureChildObject), asCALL_CDECL);
+		check(Result >= 0);
+		Result = Engine->RegisterGlobalFunction("UObject GetFixtureParentObject()", asFUNCTION(GetFixtureParentObject), asCALL_CDECL);
+		check(Result >= 0);
+		Result = Engine->RegisterGlobalFunction("UClass GetFixtureUObjectClass()", asFUNCTION(GetFixtureUObjectClass), asCALL_CDECL);
+		check(Result >= 0);
+		Result = Engine->RegisterGlobalFunction("UObject GetFixturePackageObject()", asFUNCTION(GetFixturePackageObject), asCALL_CDECL);
+		check(Result >= 0);
+
+		bRegistered = true;
+		return true;
+	}
+}
 
 TEST_CLASS_WITH_FLAGS(
 	FOtterAngleScriptUObjectTests,
@@ -83,6 +138,8 @@ TEST_CLASS_WITH_FLAGS(
 		Engine = Module.GetScriptEngine();
 		ASSERT_THAT(IsNotNull(Engine));
 
+		ASSERT_THAT(IsTrue(RegisterUObjectFixtureBindings(Engine)));
+
 		ScriptModule = Engine->GetModule("OtterAngleScriptUObjectTest", asGM_ALWAYS_CREATE);
 		ASSERT_THAT(IsNotNull(ScriptModule));
 	}
@@ -104,175 +161,475 @@ TEST_CLASS_WITH_FLAGS(
 		Engine = nullptr;
 	}
 
-	TEST_METHOD(BasicQueries)
+	TEST_METHOD(TypeInfo)
 	{
 		ASSERT_THAT(IsNotNull(Engine->GetTypeInfoByDecl("UObject")));
+	}
 
+	TEST_METHOD(GetClass)
+	{
 		static const char Script[] = R"(
-int RunBasicQueries()
+int RunGetClass()
 {
-    UObject@ Value = GetFixtureChildObject();
+    UObject Value = GetFixtureChildObject();
     if (Value is null)
     {
         return -1;
     }
-
     if (Value.GetClass() is null)
     {
         return -2;
     }
-
-    if (!Value.IsA(GetFixtureUObjectClass()))
-    {
-        return -3;
-    }
-
-    if (Value.GetName() != "OtterChild")
-    {
-        return -4;
-    }
-
-    if (Value.GetOuter() is null || Value.GetOuter().GetName() != "OtterParent")
-    {
-        return -5;
-    }
-
-    if (Value.GetUniqueID() == 0)
-    {
-        return -6;
-    }
-
-    if (!Value.IsValidLowLevel())
-    {
-        return -7;
-    }
-
-    if (!Value.IsValidLowLevelFast())
-    {
-        return -8;
-    }
-
-    if (Value.IsTemplate())
-    {
-        return -9;
-    }
-
-    return 10;
+    return 1;
 }
 )";
-
-		asIScriptFunction* Function = BuildFunction("UObjectBasicQueries", Script, "int RunBasicQueries()");
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 10));
+		asIScriptFunction* Function = BuildFunction("UObjectGetClass", Script, "int RunGetClass()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
 	}
 
-	TEST_METHOD(OuterQueries)
+	TEST_METHOD(IsA)
 	{
 		static const char Script[] = R"(
-int RunOuterQueries()
+int RunIsA()
 {
-    UObject@ Parent = GetFixtureParentObject();
-    UObject@ Child = GetFixtureChildObject();
-    if (Parent is null || Child is null)
-    {
-        return -1;
-    }
-
-    if (!Child.IsIn(Parent))
-    {
-        return -2;
-    }
-
-    if (!Child.IsInA(GetFixtureUObjectClass()))
-    {
-        return -3;
-    }
-
-    UObject@ TypedOuter = Child.GetTypedOuter(GetFixtureUObjectClass());
-    if (TypedOuter is null || TypedOuter.GetName() != "OtterParent")
-    {
-        return -4;
-    }
-
-    if (Child.GetPathName(Parent) != "OtterChild")
-    {
-        return -5;
-    }
-
-    if (!Child.GetPathName().Contains("OtterParent.OtterChild"))
-    {
-        return -6;
-    }
-
-    if (!Child.GetFullName(Parent).Contains("OtterChild"))
-    {
-        return -7;
-    }
-
-    if (Child.GetPackage() is null || Child.GetPackage().GetName() != GetFixturePackageObject().GetName())
-    {
-        return -8;
-    }
-
-    if (Child.GetOutermost() is null || Child.GetOutermost().GetName() != GetFixturePackageObject().GetName())
-    {
-        return -9;
-    }
-
-    return 11;
-}
-)";
-
-		asIScriptFunction* Function = BuildFunction("UObjectOuterQueries", Script, "int RunOuterQueries()");
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 11));
-	}
-
-	TEST_METHOD(StateQueries)
-	{
-		static const char Script[] = R"(
-int RunStateQueries()
-{
-    UObject@ Value = GetFixtureChildObject();
+    UObject Value = GetFixtureChildObject();
     if (Value is null)
     {
         return -1;
     }
+    if (!Value.IsA(GetFixtureUObjectClass()))
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectIsA", Script, "int RunIsA()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
 
+	TEST_METHOD(GetName)
+	{
+		static const char Script[] = R"(
+int RunGetName()
+{
+    UObject Value = GetFixtureChildObject();
+    if (Value is null)
+    {
+        return -1;
+    }
+    if (Value.GetName() != "OtterChild")
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectGetName", Script, "int RunGetName()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GetOuter)
+	{
+		static const char Script[] = R"(
+int RunGetOuter()
+{
+    UObject Value = GetFixtureChildObject();
+    if (Value is null)
+    {
+        return -1;
+    }
+    if (Value.GetOuter() is null || Value.GetOuter().GetName() != "OtterParent")
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectGetOuter", Script, "int RunGetOuter()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GetUniqueID)
+	{
+		static const char Script[] = R"(
+int RunGetUniqueID()
+{
+    UObject Value = GetFixtureChildObject();
+    if (Value is null)
+    {
+        return -1;
+    }
+    if (Value.GetUniqueID() == 0)
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectGetUniqueID", Script, "int RunGetUniqueID()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(IsValidLowLevel)
+	{
+		static const char Script[] = R"(
+int RunIsValidLowLevel()
+{
+    UObject Value = GetFixtureChildObject();
+    if (Value is null)
+    {
+        return -1;
+    }
+    if (!Value.IsValidLowLevel())
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectIsValidLowLevel", Script, "int RunIsValidLowLevel()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(IsValidLowLevelFast)
+	{
+		static const char Script[] = R"(
+int RunIsValidLowLevelFast()
+{
+    UObject Value = GetFixtureChildObject();
+    if (Value is null)
+    {
+        return -1;
+    }
+    if (!Value.IsValidLowLevelFast())
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectIsValidLowLevelFast", Script, "int RunIsValidLowLevelFast()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(IsTemplate)
+	{
+		static const char Script[] = R"(
+int RunIsTemplate()
+{
+    UObject Value = GetFixtureChildObject();
+    if (Value is null)
+    {
+        return -1;
+    }
+    if (Value.IsTemplate())
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectIsTemplate", Script, "int RunIsTemplate()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(IsIn)
+	{
+		static const char Script[] = R"(
+int RunIsIn()
+{
+    UObject Parent = GetFixtureParentObject();
+    UObject Child = GetFixtureChildObject();
+    if (Parent is null || Child is null)
+    {
+        return -1;
+    }
+    if (!Child.IsIn(Parent))
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectIsIn", Script, "int RunIsIn()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(IsInA)
+	{
+		static const char Script[] = R"(
+int RunIsInA()
+{
+    UObject Child = GetFixtureChildObject();
+    if (Child is null)
+    {
+        return -1;
+    }
+    if (!Child.IsInA(GetFixtureUObjectClass()))
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectIsInA", Script, "int RunIsInA()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GetTypedOuter)
+	{
+		static const char Script[] = R"(
+int RunGetTypedOuter()
+{
+    UObject Child = GetFixtureChildObject();
+    if (Child is null)
+    {
+        return -1;
+    }
+    UObject TypedOuter = Child.GetTypedOuter(GetFixtureUObjectClass());
+    if (TypedOuter is null || TypedOuter.GetName() != "OtterParent")
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectGetTypedOuter", Script, "int RunGetTypedOuter()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GetPathName_WithOuter)
+	{
+		static const char Script[] = R"(
+int RunGetPathNameWithOuter()
+{
+    UObject Parent = GetFixtureParentObject();
+    UObject Child = GetFixtureChildObject();
+    if (Parent is null || Child is null)
+    {
+        return -1;
+    }
+    if (Child.GetPathName(Parent) != "OtterChild")
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectGetPathNameWithOuter", Script, "int RunGetPathNameWithOuter()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GetPathName_NoArg)
+	{
+		static const char Script[] = R"(
+int RunGetPathNameNoArg()
+{
+    UObject Child = GetFixtureChildObject();
+    if (Child is null)
+    {
+        return -1;
+    }
+    if (!Child.GetPathName().Contains("/Temp/OtterAngleScriptTest.OtterParent:OtterChild"))
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectGetPathNameNoArg", Script, "int RunGetPathNameNoArg()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GetFullName_WithOuter)
+	{
+		static const char Script[] = R"(
+int RunGetFullNameWithOuter()
+{
+    UObject Parent = GetFixtureParentObject();
+    UObject Child = GetFixtureChildObject();
+    if (Parent is null || Child is null)
+    {
+        return -1;
+    }
+    if (!Child.GetFullName(Parent).Contains("OtterChild"))
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectGetFullNameWithOuter", Script, "int RunGetFullNameWithOuter()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GetPackage)
+	{
+		static const char Script[] = R"(
+int RunGetPackage()
+{
+    UObject Child = GetFixtureChildObject();
+    if (Child is null)
+    {
+        return -1;
+    }
+    if (Child.GetPackage() is null || Child.GetPackage().GetName() != GetFixturePackageObject().GetName())
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectGetPackage", Script, "int RunGetPackage()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GetOutermost)
+	{
+		static const char Script[] = R"(
+int RunGetOutermost()
+{
+    UObject Child = GetFixtureChildObject();
+    if (Child is null)
+    {
+        return -1;
+    }
+    if (Child.GetOutermost() is null || Child.GetOutermost().GetName() != GetFixturePackageObject().GetName())
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectGetOutermost", Script, "int RunGetOutermost()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(IsRooted)
+	{
+		static const char Script[] = R"(
+int RunIsRooted()
+{
+    UObject Value = GetFixtureChildObject();
+    if (Value is null)
+    {
+        return -1;
+    }
     if (!Value.IsRooted())
     {
         return -2;
     }
-
-    if (Value.IsNative())
-    {
-        return -3;
-    }
-
-    if (Value.IsDefaultSubobject())
-    {
-        return -4;
-    }
-
-    if (Value.IsAsset())
-    {
-        return -5;
-    }
-
-    if (Value.GetWorld() !is null)
-    {
-        return -6;
-    }
-
-    if (!Value.GetDesc().IsEmpty())
-    {
-        return -7;
-    }
-
-    return 8;
+    return 1;
 }
 )";
+		asIScriptFunction* Function = BuildFunction("UObjectIsRooted", Script, "int RunIsRooted()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
 
-		asIScriptFunction* Function = BuildFunction("UObjectStateQueries", Script, "int RunStateQueries()");
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 8));
+	TEST_METHOD(IsNative)
+	{
+		static const char Script[] = R"(
+int RunIsNative()
+{
+    UObject Value = GetFixtureChildObject();
+    if (Value is null)
+    {
+        return -1;
+    }
+    if (Value.IsNative())
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectIsNative", Script, "int RunIsNative()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(IsDefaultSubobject)
+	{
+		static const char Script[] = R"(
+int RunIsDefaultSubobject()
+{
+    UObject Value = GetFixtureChildObject();
+    if (Value is null)
+    {
+        return -1;
+    }
+    if (Value.IsDefaultSubobject())
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectIsDefaultSubobject", Script, "int RunIsDefaultSubobject()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(IsAsset)
+	{
+		static const char Script[] = R"(
+int RunIsAsset()
+{
+    UObject Value = GetFixtureChildObject();
+    if (Value is null)
+    {
+        return -1;
+    }
+    if (Value.IsAsset())
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectIsAsset", Script, "int RunIsAsset()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GetWorld_Null)
+	{
+		static const char Script[] = R"(
+int RunGetWorldNull()
+{
+    UObject Value = GetFixtureChildObject();
+    if (Value is null)
+    {
+        return -1;
+    }
+    if (Value.GetWorld() !is null)
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectGetWorldNull", Script, "int RunGetWorldNull()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(GetDesc)
+	{
+		static const char Script[] = R"(
+int RunGetDesc()
+{
+    UObject Value = GetFixtureChildObject();
+    if (Value is null)
+    {
+        return -1;
+    }
+    if (!Value.GetDesc().IsEmpty())
+    {
+        return -2;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectGetDesc", Script, "int RunGetDesc()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
 	}
 };
 

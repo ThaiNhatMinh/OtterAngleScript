@@ -39,9 +39,9 @@ namespace
 		return static_cast<int>(Mat->SurfaceType.GetValue());
 	}
 
-	void UPhysicalMaterial_SetSurfaceType(UPhysicalMaterial* Mat, int Value)
+	void UPhysicalMaterial_SetSurfaceType(UPhysicalMaterial* Mat, EPhysicalSurface Value)
 	{
-		Mat->SurfaceType = static_cast<EPhysicalSurface>(Value);
+		Mat->SurfaceType = Value;
 	}
 
 	int UPhysicalMaterial_GetSoftCollisionMode(const UPhysicalMaterial* Mat)
@@ -174,10 +174,13 @@ void Bind_UPhysicalMaterial(asIScriptEngine* Engine)
 	// --- UPhysicalMaterial: Surface properties ---
 
 	REGISTER_PROPERTY(UPhysicalMaterial, "float Friction", Friction);
+	REGISTER_PROPERTY(UPhysicalMaterial, "EPhysicalSurface SurfaceType", SurfaceType);
 	REGISTER_PROPERTY(UPhysicalMaterial, "float StaticFriction", StaticFriction);
 	REGISTER_PROPERTY(UPhysicalMaterial, "bool bOverrideFrictionCombineMode", bOverrideFrictionCombineMode);
 	REGISTER_PROPERTY(UPhysicalMaterial, "float Restitution", Restitution);
 	REGISTER_PROPERTY(UPhysicalMaterial, "bool bOverrideRestitutionCombineMode", bOverrideRestitutionCombineMode);
+	REGISTER_PROPERTY(UPhysicalMaterial, "EFrictionCombineMode FrictionCombineMode", FrictionCombineMode);
+	REGISTER_PROPERTY(UPhysicalMaterial, "EFrictionCombineMode RestitutionCombineMode", RestitutionCombineMode);
 
 	REGISTER_METHOD(UPhysicalMaterial, "EFrictionCombineMode get_FrictionCombineMode() const", asFUNCTION(UPhysicalMaterial_GetFrictionCombineMode), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(UPhysicalMaterial, "void set_FrictionCombineMode(EFrictionCombineMode Value)", asFUNCTION(UPhysicalMaterial_SetFrictionCombineMode), asCALL_CDECL_OBJFIRST);
@@ -210,6 +213,7 @@ void Bind_UPhysicalMaterial(asIScriptEngine* Engine)
 	REGISTER_METHOD(UPhysicalMaterial, "void set_SoftCollisionMode(EPhysicalMaterialSoftCollisionMode Value)", asFUNCTION(UPhysicalMaterial_SetSoftCollisionMode), asCALL_CDECL_OBJFIRST);
 	REGISTER_PROPERTY(UPhysicalMaterial, "float SoftCollisionThickness", SoftCollisionThickness);
 	REGISTER_PROPERTY(UPhysicalMaterial, "float BaseFrictionImpulse", BaseFrictionImpulse);
+	REGISTER_PROPERTY(UPhysicalMaterial, "EPhysicalMaterialSoftCollisionMode SoftCollisionMode", SoftCollisionMode);
 
 	// --- UPhysicalMaterial: Static functions ---
 

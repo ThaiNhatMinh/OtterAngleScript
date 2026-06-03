@@ -752,11 +752,11 @@ int TestToString()
 
 	TEST_METHOD(InitFromString)
 	{
-		static const char Script[] = R"(
+		static const char Script[] = R"AA(
 int TestInitFromString()
 {
     FLinearColor Value;
-    if (!Value.InitFromString(\"(R=0.500000,G=0.250000,B=0.750000,A=1.000000)\"))
+    if (!Value.InitFromString("(R=0.500000,G=0.250000,B=0.750000,A=1.000000)"))
     {
         return -1;
     }
@@ -766,7 +766,7 @@ int TestInitFromString()
     }
     return 1;
 }
-)";
+)AA";
 
 		asIScriptFunction* Function = BuildFunction("FLC_InitFromString", Script, "int TestInitFromString()");
 		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));

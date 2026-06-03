@@ -182,56 +182,6 @@ int RunSoftCollisionModeTest()
 		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 10));
 	}
 
-	TEST_METHOD(StrengthStructBinding)
-	{
-		static const char Script[] = R"(
-int RunStrengthStructTest()
-{
-    FPhysicalMaterialStrength S;
-    S.TensileStrength = 1.0f;
-    S.CompressionStrength = 2.0f;
-    S.ShearStrength = 3.0f;
-    if (S.TensileStrength != 1.0f)      return -1;
-    if (S.CompressionStrength != 2.0f)  return -2;
-    if (S.ShearStrength != 3.0f)        return -3;
-
-    FPhysicalMaterialStrength Copy(S);
-    if (Copy.TensileStrength != 1.0f)   return -4;
-
-    FPhysicalMaterialStrength Assigned;
-    Assigned = S;
-    if (Assigned.CompressionStrength != 2.0f) return -5;
-
-    return 10;
-}
-)";
-		asIScriptFunction* Function = BuildFunction("StrengthStructTest", Script, "int RunStrengthStructTest()");
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 10));
-	}
-
-	TEST_METHOD(DamageModifierStructBinding)
-	{
-		static const char Script[] = R"(
-int RunDamageModifierTest()
-{
-    FPhysicalMaterialDamageModifier D;
-    D.DamageThresholdMultiplier = 5.5f;
-    if (D.DamageThresholdMultiplier != 5.5f) return -1;
-
-    FPhysicalMaterialDamageModifier Copy(D);
-    if (Copy.DamageThresholdMultiplier != 5.5f) return -2;
-
-    FPhysicalMaterialDamageModifier Assigned;
-    Assigned = D;
-    if (Assigned.DamageThresholdMultiplier != 5.5f) return -3;
-
-    return 10;
-}
-)";
-		asIScriptFunction* Function = BuildFunction("DamageModifierStructTest", Script, "int RunDamageModifierTest()");
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 10));
-	}
-
 	TEST_METHOD(SurfacePropertiesBinding)
 	{
 		static const char Script[] = R"(

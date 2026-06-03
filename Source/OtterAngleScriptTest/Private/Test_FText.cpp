@@ -116,7 +116,7 @@ int RunDefaultConstructor()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextDefaultConstructor", Script, "int RunDefaultConstructor()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(CopyConstructor)
@@ -135,7 +135,7 @@ int RunCopyConstructor()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextCopyConstructor", Script, "int RunCopyConstructor()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(Assign)
@@ -155,7 +155,7 @@ int RunAssign()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextAssign", Script, "int RunAssign()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(ToString)
@@ -174,7 +174,7 @@ int RunToString()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextToString", Script, "int RunToString()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(BuildSourceString)
@@ -193,7 +193,7 @@ int RunBuildSourceString()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextBuildSourceString", Script, "int RunBuildSourceString()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(IsNumeric)
@@ -216,7 +216,7 @@ int RunIsNumeric()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextIsNumeric", Script, "int RunIsNumeric()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(CompareTo)
@@ -240,7 +240,7 @@ int RunCompareTo()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextCompareTo", Script, "int RunCompareTo()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(CompareToCaseIgnored)
@@ -259,7 +259,7 @@ int RunCompareToCaseIgnored()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextCompareToCaseIgnored", Script, "int RunCompareToCaseIgnored()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(EqualTo)
@@ -283,7 +283,7 @@ int RunEqualTo()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextEqualTo", Script, "int RunEqualTo()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(EqualToCaseIgnored)
@@ -302,7 +302,7 @@ int RunEqualToCaseIgnored()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextEqualToCaseIgnored", Script, "int RunEqualToCaseIgnored()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(IdenticalTo)
@@ -321,7 +321,7 @@ int RunIdenticalTo()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextIdenticalTo", Script, "int RunIdenticalTo()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(IsEmpty)
@@ -344,7 +344,7 @@ int RunIsEmpty()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextIsEmpty", Script, "int RunIsEmpty()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(IsEmptyOrWhitespace)
@@ -367,7 +367,7 @@ int RunIsEmptyOrWhitespace()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextIsEmptyOrWhitespace", Script, "int RunIsEmptyOrWhitespace()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(ToLower)
@@ -391,7 +391,7 @@ int RunToLower()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextToLower", Script, "int RunToLower()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(ToUpper)
@@ -415,7 +415,7 @@ int RunToUpper()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextToUpper", Script, "int RunToUpper()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(IsTransient)
@@ -433,7 +433,7 @@ int RunIsTransient()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextIsTransient", Script, "int RunIsTransient()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(IsCultureInvariant)
@@ -456,7 +456,7 @@ int RunIsCultureInvariant()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextIsCultureInvariant", Script, "int RunIsCultureInvariant()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(IsInitializedFromString)
@@ -474,7 +474,7 @@ int RunIsInitializedFromString()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextIsInitializedFromString", Script, "int RunIsInitializedFromString()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(IsFromStringTable)
@@ -492,7 +492,7 @@ int RunIsFromStringTable()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextIsFromStringTable", Script, "int RunIsFromStringTable()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(GetEmpty)
@@ -510,7 +510,7 @@ int RunGetEmpty()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextGetEmpty", Script, "int RunGetEmpty()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(FromString)
@@ -532,7 +532,7 @@ int RunFromString()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextFromString", Script, "int RunFromString()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(FromName)
@@ -551,7 +551,7 @@ int RunFromName()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextFromName", Script, "int RunFromName()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(AsCultureInvariantFromText)
@@ -574,7 +574,7 @@ int RunAsCultureInvariantFromText()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextAsCultureInvariantFromText", Script, "int RunAsCultureInvariantFromText()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(AsCultureInvariantFromString)
@@ -596,7 +596,7 @@ int RunAsCultureInvariantFromString()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextAsCultureInvariantFromString", Script, "int RunAsCultureInvariantFromString()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(TrimPreceding)
@@ -620,7 +620,7 @@ int RunTrimPreceding()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextTrimPreceding", Script, "int RunTrimPreceding()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(TrimTrailing)
@@ -644,7 +644,7 @@ int RunTrimTrailing()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextTrimTrailing", Script, "int RunTrimTrailing()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(TrimPrecedingAndTrailing)
@@ -668,7 +668,7 @@ int RunTrimPrecedingAndTrailing()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextTrimPrecedingAndTrailing", Script, "int RunTrimPrecedingAndTrailing()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(AsNumberInt)
@@ -690,7 +690,7 @@ int RunAsNumberInt()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextAsNumberInt", Script, "int RunAsNumberInt()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(AsNumberInt64)
@@ -703,7 +703,7 @@ int RunAsNumberInt64()
     {
         return -1;
     }
-    if (!T.IsNumeric())
+    if (T.ToString() != "1,000,000,000")
     {
         return -2;
     }
@@ -712,7 +712,7 @@ int RunAsNumberInt64()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextAsNumberInt64", Script, "int RunAsNumberInt64()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(AsNumberFloat)
@@ -734,7 +734,7 @@ int RunAsNumberFloat()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextAsNumberFloat", Script, "int RunAsNumberFloat()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(AsNumberDouble)
@@ -756,7 +756,7 @@ int RunAsNumberDouble()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextAsNumberDouble", Script, "int RunAsNumberDouble()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(AsPercentFloat)
@@ -774,7 +774,7 @@ int RunAsPercentFloat()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextAsPercentFloat", Script, "int RunAsPercentFloat()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(AsPercentDouble)
@@ -792,7 +792,7 @@ int RunAsPercentDouble()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextAsPercentDouble", Script, "int RunAsPercentDouble()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(Format1Text)
@@ -816,7 +816,7 @@ int RunFormat1Text()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextFormat1Text", Script, "int RunFormat1Text()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(Format2Text)
@@ -841,7 +841,7 @@ int RunFormat2Text()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextFormat2Text", Script, "int RunFormat2Text()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(Format3Text)
@@ -867,7 +867,7 @@ int RunFormat3Text()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextFormat3Text", Script, "int RunFormat3Text()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(Format1Int)
@@ -886,7 +886,7 @@ int RunFormat1Int()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextFormat1Int", Script, "int RunFormat1Int()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 
 	TEST_METHOD(Format1Float)
@@ -905,7 +905,7 @@ int RunFormat1Float()
 )";
 		asIScriptFunction* Function = BuildFunction("FTextFormat1Float", Script, "int RunFormat1Float()");
 		ASSERT_THAT(IsNotNull(Function));
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 0));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
 	}
 };
 

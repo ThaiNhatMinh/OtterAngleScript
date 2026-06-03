@@ -92,6 +92,10 @@ void Bind_FHitResult(asIScriptEngine* Engine)
 	REGISTER_METHOD(FHitResult, "void Init(const FVector &in Start, const FVector &in End)", asFUNCTION(FHitResult_Init), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FHitResult, "void Reset(float InTime = 1.0f, bool bPreserveTraceData = false)", asFUNCTION(FHitResult_Reset), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FHitResult, "bool IsValidBlockingHit() const", asFUNCTION(FHitResult_IsValidBlockingHit), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void SetBlockingHit(bool bBlockingHit)", asFUNCTION(FHitResult_SetBlockingHit), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "void SetStartPenetrating(bool bStartPenetrating)", asFUNCTION(FHitResult_SetStartPenetrating), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FHitResult, "bool IsStartPenetrating() const", asFUNCTION(FHitResult_GetStartPenetrating), asCALL_CDECL_OBJFIRST);
+
 	REGISTER_METHOD(FHitResult, "FString ToString() const", asFUNCTION(FHitResult_ToString), asCALL_CDECL_OBJFIRST);
 
 	REGISTER_PROPERTY(FHitResult, "int FaceIndex", FaceIndex);

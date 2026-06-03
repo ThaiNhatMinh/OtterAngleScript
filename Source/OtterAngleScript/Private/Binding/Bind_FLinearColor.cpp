@@ -45,6 +45,11 @@ namespace
 	{
 		return Scalar * Value;
 	}
+
+	bool FLinearColor_InitFromString(FLinearColor& Value, const FString& Source)
+	{
+		Value.InitFromString(Source);
+	}
 }
 
 void Bind_FLinearColor(asIScriptEngine* Engine)
@@ -73,12 +78,12 @@ void Bind_FLinearColor(asIScriptEngine* Engine)
 	REGISTER_METHOD(FLinearColor, "FLinearColor opMul_r(float Scalar) const", asFUNCTION(FLinearColor_MultiplyScalarReverse), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FLinearColor, "FLinearColor opDiv(const FLinearColor &in Other) const", asMETHODPR(FLinearColor, operator/, (const FLinearColor&) const, FLinearColor), asCALL_THISCALL);
 	REGISTER_METHOD(FLinearColor, "FLinearColor opDiv(float Scalar) const", asMETHODPR(FLinearColor, operator/, (float) const, FLinearColor), asCALL_THISCALL);
-	REGISTER_METHOD(FLinearColor, "FLinearColor opAddAssign(const FLinearColor &in Other)", asMETHODPR(FLinearColor, operator+=, (const FLinearColor&), FLinearColor&), asCALL_THISCALL);
-	REGISTER_METHOD(FLinearColor, "FLinearColor opSubAssign(const FLinearColor &in Other)", asMETHODPR(FLinearColor, operator-=, (const FLinearColor&), FLinearColor&), asCALL_THISCALL);
-	REGISTER_METHOD(FLinearColor, "FLinearColor opMulAssign(const FLinearColor &in Other)", asMETHODPR(FLinearColor, operator*=, (const FLinearColor&), FLinearColor&), asCALL_THISCALL);
-	REGISTER_METHOD(FLinearColor, "FLinearColor opMulAssign(float Scalar)", asMETHODPR(FLinearColor, operator*=, (float), FLinearColor&), asCALL_THISCALL);
-	REGISTER_METHOD(FLinearColor, "FLinearColor opDivAssign(const FLinearColor &in Other)", asMETHODPR(FLinearColor, operator/=, (const FLinearColor&), FLinearColor&), asCALL_THISCALL);
-	REGISTER_METHOD(FLinearColor, "FLinearColor opDivAssign(float Scalar)", asMETHODPR(FLinearColor, operator/=, (float), FLinearColor&), asCALL_THISCALL);
+	REGISTER_METHOD(FLinearColor, "FLinearColor& opAddAssign(const FLinearColor &in Other)", asMETHODPR(FLinearColor, operator+=, (const FLinearColor&), FLinearColor&), asCALL_THISCALL);
+	REGISTER_METHOD(FLinearColor, "FLinearColor& opSubAssign(const FLinearColor &in Other)", asMETHODPR(FLinearColor, operator-=, (const FLinearColor&), FLinearColor&), asCALL_THISCALL);
+	REGISTER_METHOD(FLinearColor, "FLinearColor& opMulAssign(const FLinearColor &in Other)", asMETHODPR(FLinearColor, operator*=, (const FLinearColor&), FLinearColor&), asCALL_THISCALL);
+	REGISTER_METHOD(FLinearColor, "FLinearColor& opMulAssign(float Scalar)", asMETHODPR(FLinearColor, operator*=, (float), FLinearColor&), asCALL_THISCALL);
+	REGISTER_METHOD(FLinearColor, "FLinearColor& opDivAssign(const FLinearColor &in Other)", asMETHODPR(FLinearColor, operator/=, (const FLinearColor&), FLinearColor&), asCALL_THISCALL);
+	REGISTER_METHOD(FLinearColor, "FLinearColor& opDivAssign(float Scalar)", asMETHODPR(FLinearColor, operator/=, (float), FLinearColor&), asCALL_THISCALL);
 
 	REGISTER_METHOD(FLinearColor, "bool Equals(const FLinearColor &in Other, float Tolerance = 0.0001) const", asMETHODPR(FLinearColor, Equals, (const FLinearColor&, float) const, bool), asCALL_THISCALL);
 	REGISTER_METHOD(FLinearColor, "FLinearColor CopyWithNewOpacity(float NewOpacity) const", asMETHODPR(FLinearColor, CopyWithNewOpacity, (float) const, FLinearColor), asCALL_THISCALL);

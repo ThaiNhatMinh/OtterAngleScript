@@ -9,6 +9,17 @@
 
 namespace
 {
+	static constexpr uint32 Align = alignof(FTransform);
+	struct FTransform_noalign
+	{
+		/** Rotation of this transformation, as a quaternion */
+		TPersistentVectorRegisterType<double> Rotation;
+		/** Translation of this transformation, as a vector */
+		TPersistentVectorRegisterType<double> Translation;
+		/** 3D scale (always applied in local space) as a vector */
+		TPersistentVectorRegisterType<double> Scale3D;
+	};
+
 	void FTransform_DefaultConstruct(FTransform* Memory)
 	{
 		new (Memory) FTransform();
@@ -74,22 +85,22 @@ namespace
 		return Value * ScalarRegister(static_cast<float>(Scale));
 	}
 
-	FTransform FTransform_MultiplyAssignScalar(FTransform& Value, double Scale)
+	FTransform& FTransform_MultiplyAssignScalar(FTransform_noalign& Value, double Scale)
 	{
-		Value *= ScalarRegister(static_cast<float>(Scale));
-		return Value;
+		(FTransform&)Value *= ScalarRegister(static_cast<float>(Scale));
+		return (FTransform&)Value;
 	}
 
-	FTransform FTransform_MultiplyAssignTransform(FTransform& Value, const FTransform& Other)
+	FTransform& FTransform_MultiplyAssignTransform(FTransform_noalign& Value, const FTransform& Other)
 	{
-		Value *= Other;
-		return Value;
+		(FTransform&)Value *= Other;
+		return (FTransform&)Value;
 	}
 
-	FTransform FTransform_MultiplyAssignQuat(FTransform& Value, const FQuat& Other)
+	FTransform& FTransform_MultiplyAssignQuat(FTransform_noalign& Value, const FQuat& Other)
 	{
-		Value *= Other;
-		return Value;
+		(FTransform&)Value *= Other;
+		return (FTransform&)Value;
 	}
 
 	void FTransform_ScaleTranslationScalar(FTransform& Value, double Scale)
@@ -174,6 +185,8 @@ namespace
 
 void Bind_FTransform(asIScriptEngine* Engine)
 {
+	check(sizeof(FTransform) == sizeof(FTransform_noalign));
+
 	check(Engine != nullptr);
 
 	int Result = 0;
@@ -194,13 +207,13 @@ void Bind_FTransform(asIScriptEngine* Engine)
 	REGISTER_METHOD(FTransform, "void Blend(const FTransform &in Atom1, const FTransform &in Atom2, double Alpha)", asFUNCTION(FTransform_Blend), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FTransform, "void BlendWith(const FTransform &in OtherAtom, double Alpha)", asFUNCTION(FTransform_BlendWith), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FTransform, "FTransform opAdd(const FTransform &in Other) const", asMETHODPR(FTransform, operator+, (const FTransform&) const, FTransform), asCALL_THISCALL);
-	REGISTER_METHOD(FTransform, "FTransform opAddAssign(const FTransform &in Other)", asMETHODPR(FTransform, operator+=, (const FTransform&), FTransform&), asCALL_THISCALL);
 	REGISTER_METHOD(FTransform, "FTransform opMul(double Scale) const", asFUNCTION(FTransform_MultiplyScalar), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(FTransform, "FTransform opMulAssign(double Scale)", asFUNCTION(FTransform_MultiplyAssignScalar), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FTransform, "FTransform opMul(const FTransform &in Other) const", asMETHODPR(FTransform, operator*, (const FTransform&) const, FTransform), asCALL_THISCALL);
-	REGISTER_METHOD(FTransform, "FTransform opMulAssign(const FTransform &in Other)", asFUNCTION(FTransform_MultiplyAssignTransform), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FTransform, "FTransform opMul(const FQuat &in Other) const", asMETHODPR(FTransform, operator*, (const FQuat&) const, FTransform), asCALL_THISCALL);
-	REGISTER_METHOD(FTransform, "FTransform opMulAssign(const FQuat &in Other)", asFUNCTION(FTransform_MultiplyAssignQuat), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FTransform, "FTransform& opAddAssign(const FTransform &in Other)", asMETHODPR(FTransform, operator+=, (const FTransform&), FTransform&), asCALL_THISCALL);
+	REGISTER_METHOD(FTransform, "FTransform& opMulAssign(double Scale)", asFUNCTION(FTransform_MultiplyAssignScalar), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FTransform, "FTransform& opMulAssign(const FTransform &in Other)", asFUNCTION(FTransform_MultiplyAssignTransform), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(FTransform, "FTransform& opMulAssign(const FQuat &in Other)", asFUNCTION(FTransform_MultiplyAssignQuat), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FTransform, "void ScaleTranslation(const FVector &in InScale3D)", asMETHODPR(FTransform, ScaleTranslation, (const FVector&), void), asCALL_THISCALL);
 	REGISTER_METHOD(FTransform, "void ScaleTranslation(double Scale)", asFUNCTION(FTransform_ScaleTranslationScalar), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FTransform, "void RemoveScaling(double Tolerance = 0.00000001)", asFUNCTION(FTransform_RemoveScaling), asCALL_CDECL_OBJFIRST);
@@ -262,7 +275,7 @@ void Bind_FTransform(asIScriptEngine* Engine)
 	REGISTER_METHOD(FTransform, "FString ToHumanReadableString() const", asMETHODPR(FTransform, ToHumanReadableString, () const, FString), asCALL_THISCALL);
 	REGISTER_METHOD(FTransform, "FString ToString() const", asMETHODPR(FTransform, ToString, () const, FString), asCALL_THISCALL);
 	REGISTER_METHOD(FTransform, "bool InitFromString(const FString &in Source)", asMETHODPR(FTransform, InitFromString, (const FString&), bool), asCALL_THISCALL);
-
+	
 	Result = Engine->SetDefaultNamespace("FTransform");
 	check(Result >= 0);
 	Result = Engine->RegisterGlobalFunction("bool AnyHasNegativeScale(const FVector &in InScale3D, const FVector &in InOtherScale3D)", asFUNCTION(FTransform::AnyHasNegativeScale), asCALL_CDECL);
