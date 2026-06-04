@@ -647,8 +647,8 @@ namespace OtterAngleScriptUbtPlugin
 
             foreach (var group in groups)
             {
-                if (group.Modules.First() != null && group.Modules.First().Module.ModuleType != UHTModuleType.EngineRuntime)
-                    continue; 
+                //if (group.Modules.First() != null && group.Modules.First().Module.ModuleType != UHTModuleType.EngineRuntime)
+                //    continue; 
                 sb.AppendLine($"#include \"Bind_{group.FileStem}.oas.gen.h\"");
             }
             sb.AppendLine();
@@ -698,9 +698,8 @@ namespace OtterAngleScriptUbtPlugin
             foreach (var group in groups)
                 foreach (var cls in group.Classes)
                 {
-
-                    if (group.Modules.First() != null && group.Modules.First().Module.ModuleType != UHTModuleType.EngineRuntime)
-                        continue;
+                    //if (group.Modules.First() != null && group.Modules.First().Module.ModuleType != UHTModuleType.EngineRuntime)
+                    //    continue;
                     sb.AppendLine($"    OAS_RegisterMethods_{cls.SourceName}(Engine);");
                 }
             sb.AppendLine("}");
