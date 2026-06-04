@@ -11,7 +11,6 @@ class asIScriptModule;
 
 OTTERANGLESCRIPT_API asIScriptEngine* GetScriptEngine();
 
-
 void SetScriptException(const char* Message);
 
 class FOtterAngleScriptModule : public IModuleInterface

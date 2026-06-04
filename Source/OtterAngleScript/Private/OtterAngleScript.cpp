@@ -56,6 +56,7 @@ void asCustomFree(void* ptr)
 
 void FOtterAngleScriptModule::StartupModule()
 {
+	
 	// Create the script engine
 	Engine = asCreateScriptEngine();
 	Engine->SetEngineProperty(asEP_ALLOW_IMPLICIT_HANDLE_TYPES, 1);
@@ -120,6 +121,17 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_TSoftClassPtr(Engine);
 	Bind_FRichCurve(Engine);
 	Bind_FMatrix(Engine);
+	Bind_FVector4(Engine);
+	Bind_FInputEvent(Engine);
+	Bind_FKeyEvent(Engine);
+	Bind_FPointerEvent(Engine);
+	Bind_FIntVector2(Engine);
+	Bind_FTimespan(Engine);
+	Bind_FTopLevelAssetPath(Engine);
+	Bind_FFormatArgumentData(Engine);
+	Bind_FIntPoint(Engine);
+	Bind_FRandomStream(Engine);
+	Bind_FSuggestProjectileVelocityParameters(Engine);
 
 	// Include and invoke the UHT-generated AngelScript bindings if they exist.
 	// GeneratedAngelScriptBindings.h is produced by OtterAngleScriptUbtPlugin (one
@@ -135,6 +147,7 @@ void FOtterAngleScriptModule::StartupModule()
 
 	IPluginManager& PluginManager = IPluginManager::Get();
 	auto Plugins = PluginManager.GetDiscoveredPlugins();
+	Plugins.RemoveAll([](const TSharedRef<IPlugin>& Plugin) { return Plugin->GetType() != EPluginType::Project; });
 	for (auto Plugin : Plugins)
 	{
 		auto BaseDir = Plugin->GetBaseDir();
@@ -147,7 +160,7 @@ void FOtterAngleScriptModule::StartupModule()
 			auto NewScriptModule = Engine->GetModule(TCHAR_TO_ANSI(*ScriptName), asGM_ALWAYS_CREATE);
 			FString ScriptCode;
 			FFileHelper::LoadFileToString(ScriptCode, *Script);
-			int Result = NewScriptModule->AddScriptSection(TCHAR_TO_UTF8(*ScriptName), TCHAR_TO_UTF8(*ScriptCode));
+			Result = NewScriptModule->AddScriptSection(TCHAR_TO_UTF8(*ScriptName), TCHAR_TO_UTF8(*ScriptCode));
 			if (Result < 0)
 			{
 				UE_LOG(LogOtterAngleScript, Error, TEXT("Failed to add script section for %s"), *Script);

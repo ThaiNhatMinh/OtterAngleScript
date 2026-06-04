@@ -60,7 +60,7 @@ namespace OtterAngleScriptUbtPlugin
             "FString", "FName", "FText",
             "FVector", "FVector2D", "FRotator", "FQuat",
             "FTransform", "FPlane", "FBox", "FBox2D",
-            "FHitResult", "FTimerHandle", "FLatentActionInfo",
+            "FHitResult", "FTimerHandle",
             "FActorInstanceHandle", "FMatrix", "FKey", "FDateTime", "FInputChord", "FSoftObjectPath", "FSoftClassPath", "FPrimaryAssetId", "FInputEvent", "FKeyEvent", "FPointerEvent", "FPrimaryAssetType",
             "FPlatformUserId", "EPhysicalSurface", "FIntVector", "FInputDeviceId", "FGuid", "FIntPoint", "FIntVector", "FVector4", "FFrameRate", "FRandomStream", "EAxis", "FTimespan", "FVector3f", "FIntVector2", "FTopLevelAssetPath"
         };
@@ -74,9 +74,11 @@ namespace OtterAngleScriptUbtPlugin
             "FAudioCookOutputs"
         };
 
-        private static readonly HashSet<string> SkipClass = new (StringComparer.Ordinal)
+        private static readonly HashSet<string> SkipClass = new(StringComparer.Ordinal)
         {
-            "UKismetNodeHelperLibrary", "UAnimationDataModelNotifiesExtensions", "UBlueprintInstancedStructLibrary", "UDataTableFunctionLibrary", "UAnimationAttributeIdentifierExtensions"
+            "UKismetNodeHelperLibrary", "UAnimationDataModelNotifiesExtensions", "UBlueprintInstancedStructLibrary", "UDataTableFunctionLibrary", "UAnimationAttributeIdentifierExtensions", "UPhysicsThreadLibrary",
+            "UCameraLensEffectInterfaceClassSupportLibrary", "UFieldNotificationLibrary", "UVisualLoggerKismetLibrary", "UWorldPartitionBlueprintLibrary", "UAudioParameterConversionStatics",
+            "UMeshVertexPainterKismetLibrary", "UMaterialInstanceConstant", "UChaosBlueprintLibrary"
         };
 
         private static readonly HashSet<string> SkipHeaderPath = new(StringComparer.Ordinal)
@@ -98,88 +100,46 @@ namespace OtterAngleScriptUbtPlugin
                 { "ProjectWorldToScreen", "const APlayerController* , const FVector& , FVector2D& , bool" }
             }}
         };
-        private static readonly Dictionary<string, HashSet<string>> SkipMethod = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal)
+        private static readonly HashSet<string> SkipMethod = new HashSet<string>(StringComparer.Ordinal)
         {
-            {
-                "UAnimMontage", new HashSet<string>(StringComparer.Ordinal)
-                {
-                    "IsValidAdditiveSlot"
-                }
-            },
-            {
-                "UCameraLensEffectInterfaceClassSupportLibrary", new HashSet<string>(StringComparer.Ordinal)
-                {
-                    "IsInterfaceClassValid"
-                }
-            },
-            {
-                "UKismetSystemLibrary", new HashSet<string>(StringComparer.Ordinal)
-                {
-                    "RaiseScriptError"
-                }
-
-            },
-            {
-                "UMaterialInstanceConstant", new HashSet<string>(StringComparer.Ordinal)
-                {
-                    "K2_GetScalarParameterValue"
-                }
-            },
-            {
-                "APlanarReflection", new HashSet<string>(StringComparer.Ordinal)
-                {
-                    "OnInterpToggle"
-                }
-            },
-            {
-                "UPluginBlueprintLibrary", new HashSet<string>(StringComparer.Ordinal)
-                {
-                    "GetPluginDescriptorFilePath",
-                    "GetPluginBaseDir",
-                    "GetPluginMountedAssetPath",
-                    "GetPluginVersion",
-                    "GetPluginVersionName",
-                    "GetPluginDescription",
-                    "GetPluginEditorCustomVirtualPath",
-                    "IsPluginMounted"
-                }
-            },
-            {
-                "UPoseAsset", new HashSet<string>(StringComparer.Ordinal)
-                {
-                    "RenamePose",
-                    "GetBasePoseName",
-                    "SetBasePoseName"
-                }
-            },
-            {
-                "ASceneCapture2D", new HashSet<string>(StringComparer.Ordinal)
-                {
-                    "OnInterpToggle"
-                }
-            },
-            {
-                "UTexture", new HashSet<string>(StringComparer.Ordinal)
-                {
-                    "SetVirtualTextureStreaming",
-                    "Blueprint_GetMemorySize",
-                    "Blueprint_GetTextureSourceDiskAndMemorySize",
-                    "Blueprint_GetTextureSourceIdString"
-                }
-            },
-            {
-                "UTexture2D", new HashSet<string>(StringComparer.Ordinal)
-                {
-                    "Blueprint_GetSizeX",
-                    "Blueprint_GetSizeY"
-                }
-            },
-            {
-                "UVisualLoggerKismetLibrary", new HashSet<string>(StringComparer.Ordinal)
-                {
-                    "EnableRecording"
-                }
-            }
+            "UAnimMontage::IsValidAdditiveSlot",
+            "UCameraLensEffectInterfaceClassSupportLibrary::IsInterfaceClassValid",
+            "UKismetSystemLibrary::RaiseScriptError",
+            "UKismetSystemLibrary::IsObjectOfSoftClass",
+            "UMaterialInstanceConstant::K2_GetScalarParameterValue",
+            "APlanarReflection::OnInterpToggle",
+            "UPluginBlueprintLibrary::GetPluginDescriptorFilePath",
+            "UPluginBlueprintLibrary::GetPluginBaseDir",
+            "UPluginBlueprintLibrary::GetPluginMountedAssetPath",
+            "UPluginBlueprintLibrary::GetPluginVersion",
+            "UPluginBlueprintLibrary::GetPluginVersionName",
+            "UPluginBlueprintLibrary::GetPluginDescription",
+            "UPluginBlueprintLibrary::GetPluginEditorCustomVirtualPath",
+            "UPluginBlueprintLibrary::IsPluginMounted",
+            "UPoseAsset::RenamePose",
+            "UPoseAsset::GetBasePoseName",
+            "UPoseAsset::SetBasePoseName",
+            "ASceneCapture2D::OnInterpToggle",
+            "UTexture::SetVirtualTextureStreaming",
+            "UTexture::Blueprint_GetMemorySize",
+            "UTexture::Blueprint_GetTextureSourceDiskAndMemorySize",
+            "UTexture::Blueprint_GetTextureSourceIdString",
+            "UTexture2D::Blueprint_GetSizeX",
+            "UTexture2D::Blueprint_GetSizeY",
+            "UVisualLoggerKismetLibrary::EnableRecording",
+            "UGameplayStatics::BlueprintSuggestProjectileVelocity",
+            "UParticleSystem::ContainsEmitterType",
+            "UPhysicsAsset::GetConstraintByName",
+            "UPhysicsAsset::GetConstraintByBoneNames",
+            "UPhysicsAsset::GetConstraints",
+            "UPhysicsConstraintComponent::IsProjectionEnabled",
+            "UPhysicsObjectBlueprintLibrary::GetPhysicsObjectWorldTransform",
+            "UPluginBlueprintLibrary::GetAdditionalPluginSearchPaths",
+            "UPluginBlueprintLibrary::GetAdditionalProjectPluginSearchPaths",
+            "UPluginBlueprintLibrary::GetEnabledPluginNames",
+            "UPoseAsset::GetPoseNames",
+            "UTexture::ComputeTextureSourceChannelMinMax",
+            "UTexture::Blueprint_GetBuiltTextureSize",
         };
 
         public OtterAngleScriptGenerator(IUhtExportFactory factory)
@@ -195,8 +155,7 @@ namespace OtterAngleScriptUbtPlugin
         {
 #if TRUE
             var packages = _factory.Session.Modules
-                .Where(m => m.Module.ModuleType == UHTModuleType.EngineRuntime
-                         || m.Module.ModuleType == UHTModuleType.GameRuntime)
+                .Where(m => m.Module.ModuleType == UHTModuleType.EngineRuntime)
                 .Where(m => BuildModules.Contains(m.ShortName))
                 .Select(m => m.ScriptPackage);
 #else
@@ -204,7 +163,22 @@ namespace OtterAngleScriptUbtPlugin
                 .Where(p => p.Module.ModuleType == UHTModuleType.EngineRuntime
                          || p.Module.ModuleType == UHTModuleType.GameRuntime);
 #endif
-            var packageList = packages.ToList();
+            var GamePackages = _factory.Session.Modules
+                .Where(m => m.Module.ModuleType == UHTModuleType.GameEditor
+                            || m.Module.ModuleType == UHTModuleType.GameThirdParty
+                            || m.Module.ModuleType == UHTModuleType.GameRuntime)
+                .Select(m => m.ScriptPackage);
+
+            var EditorPackages = _factory.Session.Modules
+                .Where(m => m.Module.ModuleType == UHTModuleType.GameEditor)
+                .Select(m => m.ScriptPackage);
+
+            var packageList = packages.Concat(EditorPackages).Concat(GamePackages).Distinct().ToList();
+            foreach ( var package in packageList )
+            {
+
+                _factory.Session.LogInfo($"OAS: found package {package.FullName}");
+            }
 
             // Collect all UClasses excluding manually-bound types and interfaces.
             allClasses = packageList
@@ -212,14 +186,15 @@ namespace OtterAngleScriptUbtPlugin
                 .OfType<UhtClass>()
                 .Where(c => !c.ClassFlags.HasAnyFlags(EClassFlags.Interface))
                 .Where(c => !ManuallyBoundTypes.Contains(c.SourceName))
-                .Where(c => !SkipHeaderPath.Any(skip => c.HeaderFile.FilePath.Contains(skip)))
+                .Where(c => !SkipHeaderPath.Any(skip => c.HeaderFile.FilePath.Contains(skip) && c.Module.Module.ModuleType == UHTModuleType.EngineRuntime))
                 .Where(c => !SkipClass.Contains(c.SourceName))
                 .Where(c => !c.Deprecated)
                 .ToList();
-            foreach (var c in allClasses)
-            {
-                //_factory.Session.LogInfo($"OAS: found class {c.SourceName} with {c.ClassFlags} {c.ClassExportFlags}");
-            }
+
+            //foreach (var c in allClasses)
+            //{
+            //    _factory.Session.LogInfo($"OAS: found class {c.FullName}");
+            //}
 
             foreach (var ustruct in packageList
                 .SelectMany(p => TraverseTree(p))
@@ -293,6 +268,7 @@ namespace OtterAngleScriptUbtPlugin
                 .Concat(allEnums.Cast<UhtType>())
                 .GroupBy(t => t.HeaderFile.FilePath)
                 .Select(g => new HeaderFileGroup(
+                    Modules: g.Select(t => t.Module).Distinct().ToList(),
                     FileStem: Path.GetFileNameWithoutExtension(g.Key),
                     IncludePath: g.First().HeaderFile.IncludeFilePath,
                     Classes: g.OfType<UhtClass>().OrderBy(c => c.SourceName).ToList(),
@@ -304,15 +280,52 @@ namespace OtterAngleScriptUbtPlugin
             // Generate one .h / .cpp pair per header group.
             foreach (var group in allGroups)
             {
+                UhtModule? SelectModule = null;
+                foreach (var module in group.Modules)
+                {
+                    if (SelectModule == null)
+                        SelectModule = module;
+                    else if (SelectModule != module)
+                    {
+                        _factory.Session.LogWarning($"OAS: multiple modules found for header {group.IncludePath} - selected {SelectModule.ShortName} arbitrarily for logging purposes.");
+                        break;
+                    }
+                }
+                if (SelectModule == null)
+                {
+                    _factory.Session.LogError($"OAS: no module found for header {group.IncludePath} - skipping generation for this header.");
+                    continue;
+                }
+                string OutputDir;
+                if (SelectModule.Module.ModuleType == UHTModuleType.EngineRuntime)
+                {
+                    OutputDir = _factory.PluginModule!.OutputDirectory;
+                }
+                else if (SelectModule.Module.ModuleType == UHTModuleType.GameRuntime || SelectModule.Module.ModuleType == UHTModuleType.GameEditor)
+                {
+                    OutputDir = SelectModule.Module.OutputDirectory;
+                }
+                else
+                {
+                    _factory.Session.LogError($"OAS: unsupported module type {SelectModule.Module.ModuleType} for header {group.IncludePath} - skipping generation for this header.");
+                    continue;
+                }
+
                 var hdr = new StringBuilder();
                 WriteAutoGenNotice(hdr);
                 WritePerFileHeader(hdr, group);
-                _factory.CommitOutput(_factory.MakePath($"Bind_{group.FileStem}", ".oas.gen.h"), hdr);
+                var GenPath = _factory.MakePath($"Bind_{group.FileStem}", ".oas.gen.h");
+                //var GenPath = Path.Combine(OutputDir, $"Bind_{group.FileStem}.oas.gen.h");
+                _factory.Session.LogInfo($"OAS: generating {GenPath}");
+                _factory.CommitOutput(GenPath, hdr);
 
                 var src = new StringBuilder();
                 WriteAutoGenNotice(src);
                 WritePerFileSource(src, group, registeredTypeNames);
-                _factory.CommitOutput(_factory.MakePath($"Bind_{group.FileStem}", ".oas.gen.cpp"), src);
+                var SrcPath = _factory.MakePath($"Bind_{group.FileStem}", ".oas.gen.cpp");
+                //var SrcPath = Path.Combine(OutputDir, $"Bind_{group.FileStem}.oas.gen.cpp");
+                _factory.Session.LogInfo($"OAS: generating {SrcPath}");
+                _factory.CommitOutput(SrcPath, src);
             }
 
             // Generate the master header and master source.
@@ -374,6 +387,7 @@ namespace OtterAngleScriptUbtPlugin
             HeaderFileGroup group,
             HashSet<string> registeredTypeNames)
         {
+            //sb.AppendLine($"#include \"OtterAngleScript.h\"");
             sb.AppendLine($"#include \"Bind_{group.FileStem}.oas.gen.h\"");
             sb.AppendLine($"#include \"{group.IncludePath}\"");
             if (group.Structs.Count > 0)
@@ -384,6 +398,7 @@ namespace OtterAngleScriptUbtPlugin
             sb.AppendLine("#endif");
             sb.AppendLine("#include \"angelscript.h\"");
             sb.AppendLine();
+            //sb.AppendLine("extern FSimpleMulticastDelegate OnRegisterGeneratedBindings;");
 
             foreach (var cls in group.Classes)
                 WriteClassRegistrationFunction(sb, cls, registeredTypeNames, group);
@@ -407,8 +422,9 @@ namespace OtterAngleScriptUbtPlugin
         {
             sb.AppendLine($"void OAS_RegisterMethods_{cls.SourceName}(asIScriptEngine* Engine)");
             sb.AppendLine("{");
+            sb.AppendLine($"    if (auto TypeInfo = Engine->GetTypeInfoByName(\"{cls.SourceName}\")) {{ TypeInfo->SetUserData({cls.SourceName}::StaticClass()); }}");
+
             sb.AppendLine("    int Result = 0;");
-            bool anyContent = false;
 
             var staticFuncs = ScriptFunctions(cls).Where(f => f.FunctionFlags.HasFlag(EFunctionFlags.Static)).ToList();
             {
@@ -422,7 +438,7 @@ namespace OtterAngleScriptUbtPlugin
                         continue;
                     if (!TryBuildAsSignature(func, registeredTypeNames, out string? asSig))
                     {
-                        _factory.Session.LogInfo($"OAS: skipping static function {cls.SourceName}::{func.SourceName} {func.FunctionFlags} since its signature contains unsupported types.");
+                        //_factory.Session.LogInfo($"OAS: skipping static function {cls.SourceName}::{func.SourceName} {func.FunctionFlags} since its signature contains unsupported types.");
                         continue;
                     }
                     if (!TryBuildAsMethodSignature(cls, func, registeredTypeNames, out string? asMethodSig))
@@ -431,7 +447,6 @@ namespace OtterAngleScriptUbtPlugin
                     sb.AppendLine($"        asFUNCTIONPR({cls.SourceName}::{func.SourceName}, {asMethodSig}), asCALL_CDECL);");
                     sb.AppendLine("    check(Result >= 0);");
                     sb.AppendLine();
-                    anyContent = true;
                 }
                 sb.AppendLine($"    Result = Engine->SetDefaultNamespace(\"\"); check(Result >= 0);");
                 sb.AppendLine();
@@ -470,7 +485,6 @@ namespace OtterAngleScriptUbtPlugin
                     sb.AppendLine($"        asMETHODPR({cls.SourceName}, {func.SourceName}, {asMethodSig}), {callConv});");
                     sb.AppendLine("    check(Result >= 0);");
                     sb.AppendLine();
-                    anyContent = true;
                 }
             }
 
@@ -494,11 +508,7 @@ namespace OtterAngleScriptUbtPlugin
                 sb.AppendLine($"    Result = Engine->RegisterObjectProperty(\"{cls.SourceName}\", \"{asType} {prop.SourceName}\",");
                 sb.AppendLine($"        asOFFSET({cls.SourceName}, {prop.SourceName}));");
                 sb.AppendLine("    check(Result >= 0);");
-                anyContent = true;
             }
-
-            if (!anyContent)
-                sb.AppendLine("    (void)Engine; // nothing to register");
 
             sb.AppendLine("}");
             sb.AppendLine();
@@ -528,13 +538,6 @@ namespace OtterAngleScriptUbtPlugin
             sb.AppendLine($"void OAS_Register_Declare{name}(asIScriptEngine* Engine)");
             sb.AppendLine("{");
             sb.AppendLine($"    int Result = Engine->RegisterObjectType(\"{name}\", sizeof({name}), asOBJ_VALUE | asGetTypeTraits<{name}>()); check(Result >= 0);");
-            sb.AppendLine("}");
-            sb.AppendLine();
-
-            sb.AppendLine($"void OAS_Register_{name}(asIScriptEngine* Engine)");
-            sb.AppendLine("{");
-            sb.AppendLine("    int Result = 0;");
-            sb.AppendLine($"    auto TypeTrait = asGetTypeTraits<{name}>();");
             sb.AppendLine();
             sb.AppendLine($"    Result = Engine->RegisterObjectBehaviour(\"{name}\", asBEHAVE_CONSTRUCT,");
             sb.AppendLine($"        \"void f()\", asFUNCTION({name}_DefaultConstruct), asCALL_CDECL_OBJLAST);");
@@ -545,6 +548,12 @@ namespace OtterAngleScriptUbtPlugin
             sb.AppendLine($"    Result = Engine->RegisterObjectBehaviour(\"{name}\", asBEHAVE_DESTRUCT,");
             sb.AppendLine($"        \"void f()\", asFUNCTION({name}_Destruct), asCALL_CDECL_OBJLAST);");
             sb.AppendLine("    check(Result >= 0);");
+            sb.AppendLine("}");
+            sb.AppendLine();
+
+            sb.AppendLine($"void OAS_Register_{name}(asIScriptEngine* Engine)");
+            sb.AppendLine("{");
+            sb.AppendLine("    int Result = 0;");
             sb.AppendLine($"    Result = Engine->RegisterObjectMethod(\"{name}\", \"{name}& opAssign(const {name} &in)\",");
             sb.AppendLine($"        asFUNCTION({name}_Assign), asCALL_CDECL_OBJFIRST);");
             sb.AppendLine("    check(Result >= 0);");
@@ -636,7 +645,11 @@ namespace OtterAngleScriptUbtPlugin
             sb.AppendLine();
 
             foreach (var group in groups)
+            {
+                if (group.Modules.First() != null && group.Modules.First().Module.ModuleType != UHTModuleType.EngineRuntime)
+                    continue; 
                 sb.AppendLine($"#include \"Bind_{group.FileStem}.oas.gen.h\"");
+            }
             sb.AppendLine();
             sb.AppendLine("#ifdef _MSC_VER");
             sb.AppendLine("#pragma warning(disable:4191 4996)");
@@ -683,7 +696,12 @@ namespace OtterAngleScriptUbtPlugin
             sb.AppendLine("    check(Engine != nullptr);");
             foreach (var group in groups)
                 foreach (var cls in group.Classes)
+                {
+
+                    if (group.Modules.First() != null && group.Modules.First().Module.ModuleType != UHTModuleType.EngineRuntime)
+                        continue;
                     sb.AppendLine($"    OAS_RegisterMethods_{cls.SourceName}(Engine);");
+                }
             sb.AppendLine("}");
             sb.AppendLine();
         }
@@ -790,6 +808,7 @@ namespace OtterAngleScriptUbtPlugin
         }
 
         private record HeaderFileGroup(
+            List<UhtModule> Modules,
             string FileStem,
             string IncludePath,
             List<UhtClass> Classes,
@@ -866,6 +885,7 @@ namespace OtterAngleScriptUbtPlugin
             string asRet = returnProp != null
                 ? MapPropertyAsType(returnProp) ?? ""
                 : "void";
+
             if (returnProp != null && asRet == "")
                 return false;
 
@@ -981,6 +1001,7 @@ namespace OtterAngleScriptUbtPlugin
             {
                 if (ArrayProp.ValueProperty is UhtObjectProperty PropObjArr)
                 {
+                    _factory.Session.LogInfo($"OAS: OutOverlappingActors {Prop.FullName} {PropObjArr.CppForm}.");
                     if (PropObjArr.CppForm == UhtObjectCppForm.TObjectPtrObject)
                     {
                         return $"TArray<{PropObjArr.Class.SourceName}>";
@@ -1033,6 +1054,96 @@ namespace OtterAngleScriptUbtPlugin
                 isConst = true;
                 isRef = true;
             }
+
+            Func<UhtProperty, string> GetType = (prop) =>
+            {
+                String declare = prop.SourceName;
+                switch (prop)
+                {
+                    case UhtBoolProperty:
+                        declare = "bool";
+                        break;
+                    case UhtByteProperty { Enum: null }:
+                        declare = "uint8";
+                        break;
+                    case UhtIntProperty:
+                        declare = "int";
+                        break;
+                    case UhtInt64Property:
+                        declare = "int64";
+                        break;
+                    case UhtDoubleProperty:
+                        declare = "double";
+                        break;
+                    case UhtFloatProperty:
+                        declare = "float";
+                        break;
+                    case UhtStrProperty:
+                        declare = "FString";
+                        break;
+                    case UhtNameProperty:
+                        declare = "FName";
+                        break;
+                    case UhtTextProperty:
+                        declare = "FText";
+                        break;
+                    case UhtClassProperty uclass:
+                        if (uclass.MetaClass == null)
+                        {
+                            _factory.Session.LogInfo($"skipping property {uclass.FullName} since it is a TSubclassOf without a specified base class.");
+                            return ""; // unsupported: TSubclassOf without a specified base class
+                        }
+                        declare = $"TSubclassOf<{uclass.MetaClass.SourceName}>";
+                        break;
+                    case UhtSoftClassProperty softClassProp:
+                        if (softClassProp.Class == null)
+                        {
+                            _factory.Session.LogInfo($"skipping property {softClassProp.FullName} since it is a TSoftClassPtr without a specified base class.");
+                            return ""; // unsupported: TSoftClassPtr without a specified base class
+                        }
+                        declare = $"TSoftClassPtr<{softClassProp.Class.SourceName}>";
+                        break;
+                    case UhtSoftObjectProperty softObjProp:
+                        if (softObjProp.Class == null)
+                        {
+                            _factory.Session.LogInfo($"skipping property {softObjProp.FullName} since it is a TSoftObjectPtr without a specified class.");
+                            return ""; // unsupported: TSoftObjectPtr without a specified class
+                        }
+                        declare = $"TSoftObjectPtr<{softObjProp.Class.SourceName}>";
+                        break;
+                    case UhtObjectProperty objProp:
+                        if (objProp.Class == null)
+                        {
+                            _factory.Session.LogInfo($"skipping property {objProp.FullName} since it is an object property without a specified class.");
+                            return ""; // unsupported: object property without a specified class
+                        }
+                        declare = $"{objProp.Class.SourceName}";
+                        break;
+                    case UhtEnumProperty enumProp:
+                        if (enumProp.Enum == null)
+                        {
+                            _factory.Session.LogInfo($"skipping property {enumProp.FullName} since it is an enum property of an unsupported enum type (only namespaced enums are supported).");
+                            return ""; // unsupported: non-namespaced enum
+                        }
+                        declare = enumProp.Enum.SourceName;
+                        break;
+                    case UhtByteProperty byteProp:
+                        if (byteProp.Enum != null)
+                        {
+                            declare = byteProp.Enum.SourceName;
+                        }
+                        else
+                        {
+                            declare = "uint8";
+                        }
+                        break;
+                    case UhtStructProperty structProp:
+                        declare = structProp.ScriptStruct.SourceName;
+                        break;
+                }
+
+                return declare;
+            };
 
             switch (property)
             {
@@ -1132,13 +1243,36 @@ namespace OtterAngleScriptUbtPlugin
                     }
                     return p.Enum.SourceName;
                 case UhtArrayProperty arrayProperty:
-                    var declare = $"TArray<{arrayProperty.ValueProperty.SourceName}>";
-                    return isOut ? $"{declare} &out" : $"{(isConst ? "const" : "")} {declare}{(isRef ? "&in" : "")}";
+                    if (!IsPropertyBinding(arrayProperty.ValueProperty))
+                    {
+                        _factory.Session.LogInfo($"skipping property {arrayProperty.FullName} since its value property {arrayProperty.ValueProperty.FullName} is not supported.");
+                        return null; // unsupported: array property where the value property type is not supported
+                    }
+
+                    var declare = $"TArray<{GetType(arrayProperty.ValueProperty)}>";
+
+                    return $"{(isConst ? "const" : "")} {declare} {(isRef ? "&" : "")}";
                 case UhtSetProperty setProperty:
-                    var setDeclare = $"TSet<{setProperty.ValueProperty.SourceName}>";
+                    if (!IsPropertyBinding(setProperty.ValueProperty))
+                    {
+                        _factory.Session.LogInfo($"skipping property {setProperty.FullName} since its value property {setProperty.ValueProperty.FullName} is not supported.");
+                        return null; // unsupported: set property where the value property type is not supported
+                    }
+                    var setDeclare = $"TSet<{GetType(setProperty.ValueProperty)}>";
                     return isOut ? $"{setDeclare} &out" : $"{(isConst ? "const" : "")} {setDeclare}{(isRef ? "&in" : "")}";
                 case UhtMapProperty mapProperty:
-                    var mapDeclare = $"TMap<{mapProperty.KeyProperty.SourceName}, {mapProperty.ValueProperty.SourceName}>";
+                    if (!IsPropertyBinding(mapProperty.KeyProperty))
+                    {
+                        _factory.Session.LogInfo($"skipping property {mapProperty.FullName} since its key property {mapProperty.KeyProperty.FullName} is not supported.");
+                        return null; // unsupported: map property where the key property type is not supported
+                    }
+                    if (!IsPropertyBinding(mapProperty.ValueProperty))
+                    {
+                        _factory.Session.LogInfo($"skipping property {mapProperty.FullName} since its value property {mapProperty.ValueProperty.FullName} is not supported.");
+                        return null; // unsupported: map property where the value property type is not supported
+                    }
+
+                    var mapDeclare = $"TMap<{GetType(mapProperty.KeyProperty)}, {GetType(mapProperty.ValueProperty)}>";
                     return isOut ? $"{mapDeclare} &out" : $"{(isConst ? "const" : "")} {mapDeclare}{(isRef ? "&in" : "")}";
                 default:
                     _factory.Session.LogInfo($"skipping property {property.FullName} since its type {property.GetType()} is not supported.");
@@ -1237,7 +1371,7 @@ namespace OtterAngleScriptUbtPlugin
             UhtPropertyCaps caps = property.PropertyCaps;
 
             bool isInterfaceProp = property is UhtInterfaceProperty;
-                
+
             bool passCppArgsByRef = caps.HasAnyFlags(UhtPropertyCaps.PassCppArgsByRef);
             bool isConstParam = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ConstParm) || property.RefQualifier.HasFlag(UhtPropertyRefQualifier.ConstRef);
             bool isReturnParm = property.PropertyFlags.HasAnyFlags(EPropertyFlags.ReturnParm);
@@ -1248,12 +1382,11 @@ namespace OtterAngleScriptUbtPlugin
             {
                 builder.Append("const ");
             }
-            if (property is UhtByteProperty byteProperty && byteProperty.Enum != null && byteProperty.Enum.CppForm == UhtEnumCppForm.Namespaced)
+            if (property is UhtByteProperty byteProperty && byteProperty.Enum != null && byteProperty.Enum.CppForm != UhtEnumCppForm.EnumClass)
             {
                 StringBuilder test = new StringBuilder();
                 UhtEnumProperty.AppendEnumText(test, property, byteProperty.Enum, UhtPropertyTextType.GenericFunctionArgOrRetVal, false);
 
-                _factory.Session.LogInfo($"OAS: processing property {property.FullName} with type {property.GetType()} and {test} {byteProperty.Enum?.CppForm} {byteProperty.Enum?.CppType}");
                 property.AppendText(builder, UhtPropertyTextType.Generic);
             }
             else
@@ -1299,8 +1432,27 @@ namespace OtterAngleScriptUbtPlugin
 
         bool IsSkipMethod(UhtClass cls, UhtFunction func)
         {
-            return SkipMethod.TryGetValue(cls.SourceName, out var funcNames) &&
-                   funcNames.Contains(func.SourceName);
+            return SkipMethod.Contains($"{cls.SourceName}::{func.SourceName}");
+        }
+
+        bool IsPropertyBinding(UhtProperty prop)
+        {
+            if (!ManuallyBoundTypes.Contains(prop.SourceName))
+                return false;
+
+            if (prop is UhtObjectPropertyBase objProp)
+            {
+                return allClasses.Contains(objProp.Class);
+            }
+            else if (prop is UhtStructProperty structProp)
+            {
+                return allStructs.Contains(structProp.ScriptStruct);
+            }
+            else if (prop is UhtEnumProperty enumProp)
+            {
+                return allEnums.Contains(enumProp.Enum);
+            }
+            return false;
         }
     }
 }

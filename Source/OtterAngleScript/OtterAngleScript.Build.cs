@@ -40,6 +40,8 @@ public class OtterAngleScript : ModuleRules
                 "PhysicsCore",
                 "NetCore",
                 "AudioExtensions",
+				"SlateCore",
+                "ApplicationCore",
                 "Projects"
 				// ... add other public dependencies that you statically link with here ...
 			}
@@ -56,9 +58,16 @@ public class OtterAngleScript : ModuleRules
 				// ... add private dependencies that you statically link with here ...	
 			}
             );
-		
-		
-		DynamicallyLoadedModuleNames.AddRange(
+
+		PublicIncludePathModuleNames.AddRange(
+			new string[]
+			{
+                "OtterAngleScriptTest",
+				// ... add any modules that your module's public headers include which you statically link with here ...
+			}
+            );
+
+        DynamicallyLoadedModuleNames.AddRange(
 			new string[]
 			{
 				// ... add any modules that your module loads dynamically here ...

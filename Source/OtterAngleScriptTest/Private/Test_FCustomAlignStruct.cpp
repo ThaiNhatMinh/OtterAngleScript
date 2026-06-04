@@ -35,6 +35,15 @@ namespace
 		float D;
 	};
 
+	// 16-byte aligned struct with 4 floats (size = 16, alignment = 16)
+	struct FAlign16Float4_noalign
+	{
+		float A;
+		float B;
+		float C;
+		float D;
+	};
+
 	// -----------------------------------------------------------------------
 	// Constructors / destructors for FAlign8Float2
 	// -----------------------------------------------------------------------
@@ -102,10 +111,10 @@ namespace
 	// Operators for FAlign16Float4
 	// -----------------------------------------------------------------------
 
-	static FAlign16Float4& Align16Float4_Assign(FAlign16Float4& Value, const FAlign16Float4& Other)
+	static FAlign16Float4& Align16Float4_Assign(FAlign16Float4_noalign& Value, const FAlign16Float4_noalign& Other)
 	{
 		Value = Other;
-		return Value;
+		return (FAlign16Float4 & )Value;
 	}
 
 	static bool Align16Float4_OpEquals(const FAlign16Float4& A, const FAlign16Float4& B)

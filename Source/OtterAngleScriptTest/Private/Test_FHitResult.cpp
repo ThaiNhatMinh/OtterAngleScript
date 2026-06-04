@@ -76,18 +76,35 @@ namespace
 		{
 			return;
 		}
+		int Result;
+		if (Engine->GetGlobalFunctionByDecl("AActor@ GetFixtureActor()") != nullptr)
+		{
+			Result = Engine->RegisterGlobalFunction("AActor@ GetFixtureActor()", asFUNCTION(GetFixtureActor), asCALL_CDECL);
+			check(Result >= 0);
+		}
+		if (Engine->GetGlobalFunctionByDecl("UPrimitiveComponent@ GetFixtureComponent()") != nullptr)
+		{
+			Result = Engine->RegisterGlobalFunction("UPrimitiveComponent@ GetFixtureComponent()", asFUNCTION(GetFixtureComponent), asCALL_CDECL);
+			check(Result >= 0);
+		}
+		if (Engine->GetGlobalFunctionByDecl("UPhysicalMaterial@ GetFixturePhysMaterial()") != nullptr)
+		{
 
-		int Result = Engine->RegisterGlobalFunction("AActor@ GetFixtureActor()", asFUNCTION(GetFixtureActor), asCALL_CDECL);
-		check(Result >= 0);
-		Result = Engine->RegisterGlobalFunction("UPrimitiveComponent@ GetFixtureComponent()", asFUNCTION(GetFixtureComponent), asCALL_CDECL);
-		check(Result >= 0);
-		Result = Engine->RegisterGlobalFunction("UPhysicalMaterial@ GetFixturePhysMaterial()", asFUNCTION(GetFixturePhysMaterial), asCALL_CDECL);
-		check(Result >= 0);
-		Result = Engine->RegisterGlobalFunction("FActorInstanceHandle MakeFixtureActorHandle()", asFUNCTION(MakeFixtureActorHandle), asCALL_CDECL);
-		check(Result >= 0);
-		Result = Engine->RegisterGlobalFunction("FHitResult MakeFixtureHitResult()", asFUNCTION(MakeFixtureHitResult), asCALL_CDECL);
-		check(Result >= 0);
+			Result = Engine->RegisterGlobalFunction("UPhysicalMaterial@ GetFixturePhysMaterial()", asFUNCTION(GetFixturePhysMaterial), asCALL_CDECL);
+			check(Result >= 0);
+		}
 
+		if (Engine->GetGlobalFunctionByDecl("FActorInstanceHandle MakeFixtureActorHandle()") != nullptr)
+		{
+			Result = Engine->RegisterGlobalFunction("FActorInstanceHandle MakeFixtureActorHandle()", asFUNCTION(MakeFixtureActorHandle), asCALL_CDECL);
+			check(Result >= 0);
+		}
+		if (Engine->GetGlobalFunctionByDecl("FHitResult MakeFixtureHitResult()") != nullptr)
+		{
+
+			Result = Engine->RegisterGlobalFunction("FHitResult MakeFixtureHitResult()", asFUNCTION(MakeFixtureHitResult), asCALL_CDECL);
+			check(Result >= 0);
+		}
 		bRegistered = true;
 	}
 }
@@ -120,7 +137,7 @@ TEST_CLASS_WITH_FLAGS(
 		return Function;
 	}
 
-	int ExecuteFunction(asIScriptFunction* Function)
+	int ExecuteFunction(asIScriptFunction * Function)
 	{
 		if (Context != nullptr)
 		{
@@ -141,7 +158,7 @@ TEST_CLASS_WITH_FLAGS(
 		return Context->Execute();
 	}
 
-	int32 ExecuteIntFunction(asIScriptFunction* Function)
+	int32 ExecuteIntFunction(asIScriptFunction * Function)
 	{
 		const int Result = ExecuteFunction(Function);
 		if (Result == asEXECUTION_EXCEPTION)

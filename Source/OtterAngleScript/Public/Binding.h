@@ -337,3 +337,85 @@ void Bind_FPrimaryAssetId(asIScriptEngine* Engine);
  */
 void Declare_TSoftClassPtr(asIScriptEngine* Engine);
 void Bind_TSoftClassPtr(asIScriptEngine* Engine);
+
+/**
+ * Registers FSuggestProjectileVelocityParameters as a value type and the
+ * ESuggestProjVelocityTraceOption enum in the AngelScript engine.
+ * The type is exposed as "FSuggestProjectileVelocityParameters" in scripts.
+ */
+void Bind_FSuggestProjectileVelocityParameters(asIScriptEngine* Engine);
+
+/**
+ * Registers FIntPoint (FInt32Point) as a value type in the AngelScript engine.
+ * Exposes X/Y int32 components, arithmetic operators, index operator,
+ * utility methods (ComponentMin/Max, GetMin/Max, Size, SizeSquared, ToString,
+ * InitFromString), and static helpers (Num, DivideAndRoundUp/Down).
+ */
+void Bind_FIntPoint(asIScriptEngine* Engine);
+
+/**
+ * Registers FRandomStream as a value type in the AngelScript engine.
+ * Exposes seed management, random number generation (FRand, RandRange,
+ * FRandRange, VRand, RandPointInBox, VRandCone), and serialization.
+ */
+void Bind_FRandomStream(asIScriptEngine* Engine);
+
+/**
+ * Registers FVector4 (FVector4d, TVector4<double>) as a value type in the
+ * AngelScript engine.  Exposes X/Y/Z/W double components, arithmetic
+ * operators, index operators, geometric methods, and FVector4::Zero/One
+ * static helpers.
+ */
+void Bind_FVector4(asIScriptEngine* Engine);
+
+/**
+ * Registers FInputEvent as a value type in the AngelScript engine.
+ * Exposes modifier key queries (shift/control/alt/command/caps), repeat
+ * state, user/device identifiers, timestamp helpers, and event type checks.
+ */
+void Bind_FInputEvent(asIScriptEngine* Engine);
+
+/**
+ * Registers FKeyEvent as a value type in the AngelScript engine.
+ * Exposes the pressed key, character code, hardware key code, and text
+ * representation.
+ */
+void Bind_FKeyEvent(asIScriptEngine* Engine);
+
+/**
+ * Registers FPointerEvent as a value type in the AngelScript engine.
+ * Exposes cursor position/delta, mouse button state, touch parameters,
+ * gesture type/delta, and wheel delta.
+ */
+void Bind_FPointerEvent(asIScriptEngine* Engine);
+
+/**
+ * Registers FIntVector2 (TIntVector2<int32>) as a value type in the
+ * AngelScript engine. Exposes X/Y int32 components, arithmetic/bitwise
+ * operators, index operator, utility methods, and static helpers.
+ */
+void Bind_FIntVector2(asIScriptEngine* Engine);
+
+/**
+ * Registers FTimespan as a value type in the AngelScript engine.
+ * Exposes constructors, arithmetic/comparison operators, component/total
+ * accessors, ToString, and static helpers (FromDays/Hours/Minutes/Seconds,
+ * FromMilliseconds/Microseconds, MaxValue/MinValue, Parse).
+ */
+void Bind_FTimespan(asIScriptEngine* Engine);
+
+/**
+ * Registers FTopLevelAssetPath as a value type in the AngelScript engine.
+ * Exposes constructors, assignment, equality, PackageName/AssetName
+ * property accessors, IsValid, IsNull, Reset, ToString, and Compare.
+ */
+void Bind_FTopLevelAssetPath(asIScriptEngine* Engine);
+
+/**
+ * Registers FFormatArgumentData as a value type, plus the EFormatArgumentType
+ * and ETextGender enums, in the AngelScript engine.
+ * Exposes properties (ArgumentName, ArgumentValueType, ArgumentValue,
+ * ArgumentValueInt/Float/Double, ArgumentValueGender) and ResetValue.
+ */
+void Bind_FFormatArgumentData(asIScriptEngine* Engine);
+

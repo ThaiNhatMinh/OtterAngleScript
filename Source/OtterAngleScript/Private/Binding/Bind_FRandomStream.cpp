@@ -140,10 +140,6 @@ void Bind_FRandomStream(asIScriptEngine* Engine)
 
 	int Result;
 
-	Result = Engine->RegisterObjectType("FRandomStream", sizeof(FRandomStream),
-		asOBJ_VALUE | asGetTypeTraits<FRandomStream>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
-	check(Result >= 0);
-
 	REGISTER_BEHAVIOUR(FRandomStream, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FRandomStream_DefaultConstruct), asCALL_CDECL_OBJLAST);
 	REGISTER_BEHAVIOUR(FRandomStream, asBEHAVE_CONSTRUCT, "void f(const FRandomStream &in Other)", asFUNCTION(FRandomStream_CopyConstruct), asCALL_CDECL_OBJLAST);
 	REGISTER_BEHAVIOUR(FRandomStream, asBEHAVE_CONSTRUCT, "void f(int Seed)", asFUNCTION(FRandomStream_ConstructSeed), asCALL_CDECL_OBJLAST);

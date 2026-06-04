@@ -96,10 +96,6 @@ void Bind_FTopLevelAssetPath(asIScriptEngine* Engine)
 
 	int Result;
 
-	Result = Engine->RegisterObjectType("FTopLevelAssetPath", sizeof(FTopLevelAssetPath),
-		asOBJ_VALUE | asGetTypeTraits<FTopLevelAssetPath>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
-	check(Result >= 0);
-
 	REGISTER_BEHAVIOUR(FTopLevelAssetPath, asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FTopLevelAssetPath_DefaultConstruct), asCALL_CDECL_OBJLAST);
 	REGISTER_BEHAVIOUR(FTopLevelAssetPath, asBEHAVE_CONSTRUCT, "void f(const FTopLevelAssetPath &in Other)", asFUNCTION(FTopLevelAssetPath_CopyConstruct), asCALL_CDECL_OBJLAST);
 	REGISTER_BEHAVIOUR(FTopLevelAssetPath, asBEHAVE_CONSTRUCT, "void f(const FName &in PackageName, const FName &in AssetName)", asFUNCTION(FTopLevelAssetPath_ConstructComponents), asCALL_CDECL_OBJLAST);

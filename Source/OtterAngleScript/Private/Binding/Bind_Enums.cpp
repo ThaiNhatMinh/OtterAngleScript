@@ -40,4 +40,15 @@ void Bind_Enums(asIScriptEngine* Engine)
 	check(Result >= 0);
 	Result = Engine->RegisterEnumValue("EPairedAxis", "Z", static_cast<int>(EPairedAxis::Z));
 	check(Result >= 0);
+
+	Result = Engine->RegisterEnum("EAxis");
+	check(Result >= 0);
+	Result = Engine->RegisterEnumValue("EAxis", "None", static_cast<int>(EAxis::None));
+	check(Result >= 0);
+	Result = Engine->RegisterEnumValue("EAxis", "X", static_cast<int>(EAxis::X));
+	check(Result >= 0);
+	Result = Engine->RegisterEnumValue("EAxis", "Y", static_cast<int>(EAxis::Y));
+	check(Result >= 0);
+	Result = Engine->RegisterEnumValue("EAxis", "Z", static_cast<int>(EAxis::Z));
+	check(Result >= 0);
 }

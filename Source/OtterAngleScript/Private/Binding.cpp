@@ -17,20 +17,36 @@
 #include "AudioParameter.h"
 #include "Curves/RichCurve.h"
 #include "angelscript.h"
+#include "Kismet/GameplayStatics.h"
 
 void Declare_Types(asIScriptEngine* Engine)
 {
     int Result = Engine->RegisterObjectType("UObject", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
     check(Result >= 0);
-
+	if (auto TypeInfo = Engine->GetTypeInfoById(Result))
+	{
+		TypeInfo->SetUserData(UObject::StaticClass());
+	}
 	Result = Engine->RegisterObjectType("UInterface", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
 	check(Result >= 0);
+	if (auto TypeInfo = Engine->GetTypeInfoById(Result))
+	{
+		TypeInfo->SetUserData(UInterface::StaticClass());
+	}
 	
 	Result = Engine->RegisterObjectType("UScriptStruct", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
 	check(Result >= 0);
+	if (auto TypeInfo = Engine->GetTypeInfoById(Result))
+	{
+		TypeInfo->SetUserData(UScriptStruct::StaticClass());
+	}
 
 	Result = Engine->RegisterObjectType("UClass", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
 	check(Result >= 0);
+	if (auto TypeInfo = Engine->GetTypeInfoById(Result))
+	{
+		TypeInfo->SetUserData(UClass::StaticClass());
+	}
 
 	Result = Engine->RegisterObjectType("UPhysicalMaterial", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
 	check(Result >= 0);
@@ -111,6 +127,54 @@ void Declare_Types(asIScriptEngine* Engine)
 		"FMatrix",
 		sizeof(FMatrix),
 		asOBJ_VALUE | asGetTypeTraits<FMatrix>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectType(
+		"FVector4",
+		sizeof(FVector4),
+		asOBJ_VALUE | asGetTypeTraits<FVector4>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectType(
+		"FIntPoint",
+		sizeof(FIntPoint),
+		asOBJ_VALUE | asGetTypeTraits<FIntPoint>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectType("FRandomStream", sizeof(FRandomStream),
+		asOBJ_VALUE | asGetTypeTraits<FRandomStream>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectType("FSuggestProjectileVelocityParameters", sizeof(UGameplayStatics::FSuggestProjectileVelocityParameters),
+		asOBJ_VALUE | asGetTypeTraits<UGameplayStatics::FSuggestProjectileVelocityParameters>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectType("FInputEvent", sizeof(FInputEvent),
+		asOBJ_VALUE | asGetTypeTraits<FInputEvent>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectType("FKeyEvent", sizeof(FKeyEvent),
+		asOBJ_VALUE | asGetTypeTraits<FKeyEvent>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectType("FPointerEvent", sizeof(FPointerEvent),
+		asOBJ_VALUE | asGetTypeTraits<FPointerEvent>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectType("FIntVector2", sizeof(UE::Math::TIntVector2<int32>),
+		asOBJ_VALUE | asGetTypeTraits<UE::Math::TIntVector2<int32>>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectType("FTimespan", sizeof(FTimespan),
+		asOBJ_VALUE | asGetTypeTraits<FTimespan>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectType("FTopLevelAssetPath", sizeof(FTopLevelAssetPath),
+		asOBJ_VALUE | asGetTypeTraits<FTopLevelAssetPath>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
+	check(Result >= 0);
+
+	Result = Engine->RegisterObjectType("FFormatArgumentData", sizeof(FFormatArgumentData),
+		asOBJ_VALUE | asGetTypeTraits<FFormatArgumentData>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS);
 	check(Result >= 0);
 
 	Declare_TArray(Engine);

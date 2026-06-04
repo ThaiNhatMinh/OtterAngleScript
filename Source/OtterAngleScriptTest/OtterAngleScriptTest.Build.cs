@@ -5,8 +5,19 @@ public class OtterAngleScriptTest : ModuleRules
 	public OtterAngleScriptTest(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        PublicIncludePaths.AddRange(
+            new string[] {
+				// ... add public include paths required here ...
+			}
+            );
 
-		PrivateDependencyModuleNames.AddRange(
+
+        PrivateIncludePaths.AddRange(
+            new string[] {
+				// ... add other private include paths required here ...
+			}
+            );
+        PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
 				"CQTest",
@@ -16,7 +27,7 @@ public class OtterAngleScriptTest : ModuleRules
                 "Engine",
 				"OtterAngleScript",
 				"AudioExtensions"
-				}
+			}
 		);
 	}
 }

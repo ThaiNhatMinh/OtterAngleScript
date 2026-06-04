@@ -22,9 +22,9 @@ namespace
 		{
 			UPackage* Package = CreatePackage(TEXT("/Temp/OtterAngleScriptTest"));
 			Package->AddToRoot();
-			UObject* Parent = NewObject<UDummyTestUObject>(Package, TEXT("OtterParent"));
+			UObject* Parent = NewObject<UObject>(Package, TEXT("OtterParent"));
 			Parent->AddToRoot();
-			Child = NewObject<UDummyTestUObject>(Parent, TEXT("OtterChild"));
+			Child = NewObject<UObject>(Parent, TEXT("OtterChild"));
 			Child->AddToRoot();
 		}
 		return Child;
@@ -34,11 +34,6 @@ namespace
 	{
 		GetFixtureChildObject(); // ensure created
 		return GetFixtureChildObject()->GetOuter();
-	}
-
-	UClass* GetFixtureUObjectClass()
-	{
-		return UObject::StaticClass();
 	}
 
 	UObject* GetFixturePackageObject()
@@ -55,8 +50,6 @@ namespace
 		int Result = Engine->RegisterGlobalFunction("UObject GetFixtureChildObject()", asFUNCTION(GetFixtureChildObject), asCALL_CDECL);
 		check(Result >= 0);
 		Result = Engine->RegisterGlobalFunction("UObject GetFixtureParentObject()", asFUNCTION(GetFixtureParentObject), asCALL_CDECL);
-		check(Result >= 0);
-		Result = Engine->RegisterGlobalFunction("UClass GetFixtureUObjectClass()", asFUNCTION(GetFixtureUObjectClass), asCALL_CDECL);
 		check(Result >= 0);
 		Result = Engine->RegisterGlobalFunction("UObject GetFixturePackageObject()", asFUNCTION(GetFixturePackageObject), asCALL_CDECL);
 		check(Result >= 0);
@@ -197,7 +190,7 @@ int RunIsA()
     {
         return -1;
     }
-    if (!Value.IsA(GetFixtureUObjectClass()))
+    if (!Value.IsA(UObject::StaticClass()))
     {
         return -2;
     }
@@ -366,7 +359,7 @@ int RunIsInA()
     {
         return -1;
     }
-    if (!Child.IsInA(GetFixtureUObjectClass()))
+    if (!Child.IsInA(UObject::StaticClass()()))
     {
         return -2;
     }
@@ -387,7 +380,7 @@ int RunGetTypedOuter()
     {
         return -1;
     }
-    UObject TypedOuter = Child.GetTypedOuter(GetFixtureUObjectClass());
+    UObject TypedOuter = Child.GetTypedOuter(UObject::StaticClass()());
     if (TypedOuter is null || TypedOuter.GetName() != "OtterParent")
     {
         return -2;
@@ -629,6 +622,23 @@ int RunGetDesc()
 }
 )";
 		asIScriptFunction* Function = BuildFunction("UObjectGetDesc", Script, "int RunGetDesc()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(Test_NewObject)
+	{
+		static const char Script[] = R"(
+int RunNewObject()
+{
+    UDUMMYUOBJECT Value = NewObject<UDUMMYUOBJECT>(null, "DummyTestUObject");
+    if (Value is null)
+    {
+        return -1;
+    }
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectTestNewObject", Script, "int RunNewObject()");
 		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
 	}
 };

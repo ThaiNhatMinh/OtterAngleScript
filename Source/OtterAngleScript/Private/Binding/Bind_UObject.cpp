@@ -12,6 +12,7 @@
 #endif
 
 #include "angelscript.h"
+#include <OtterAngleScript.h>
 
 namespace
 {
@@ -136,6 +137,25 @@ namespace
 		return Value->GetWorld();
 	}
 #endif
+
+	void Internal_NewObject(asIScriptGeneric* Gen)
+	{
+		UObject* Outer = (UObject*)Gen->GetArgAddress(0);
+		FName* Name = (FName*)Gen->GetArgAddress(1);
+		uint32 Flags = Gen->GetArgDWord(2);
+		UObject* Template = (UObject*)Gen->GetArgAddress(3);
+		auto TypeId = Gen->GetReturnTypeId();
+		auto TypeInfo = Gen->GetEngine()->GetTypeInfoById(TypeId);
+		UClass* Class = (UClass*)TypeInfo->GetUserData();
+		if (!Class)
+		{
+			SetScriptException(TCHAR_TO_ANSI(*FString::Printf(TEXT("Type '%s' is not a UObject class"), ANSI_TO_TCHAR(TypeInfo->GetName()))));
+			Gen->SetReturnAddress(nullptr);
+			return;
+		}
+		auto Result = NewObject<UObject>(Outer, Class, *Name, (EObjectFlags)Flags, Template);
+		Gen->SetReturnAddress(&Result);
+	}
 }
 
 void Bind_UObject(asIScriptEngine* Engine)
@@ -170,4 +190,7 @@ void Bind_UObject(asIScriptEngine* Engine)
 #if WITH_ENGINE
 	REGISTER_METHOD(UObject, "UObject@ GetWorld() const", asFUNCTION(UObject_GetWorld), asCALL_CDECL_OBJFIRST);
 #endif
+
+
+	Engine->RegisterGlobalFunction("T NewObject<T>(UObject Outer, const FName&in Name, uint Flags = 0, UObject Template = null)", asFUNCTION(Internal_NewObject), asCALL_GENERIC);
 }
