@@ -231,6 +231,12 @@ void Bind_TSubclassOf(asIScriptEngine* Engine);
 void Bind_UPhysicalMaterial(asIScriptEngine* Engine);
 
 /**
+ * Registers UWorld as a reference type in the AngelScript engine.
+ * The type is exposed as "UWorld" in scripts.
+ */
+void Bind_UWorld(asIScriptEngine* Engine);
+
+/**
  * Registers FVector4f (TVector4<float>) as a value type in the AngelScript engine.
  * Exposes X/Y/Z/W float components, arithmetic operators, index operators,
  * geometric methods, and FVector4f::Zero/One static helpers.

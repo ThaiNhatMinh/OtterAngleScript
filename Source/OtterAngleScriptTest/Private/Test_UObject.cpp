@@ -22,9 +22,9 @@ namespace
 		{
 			UPackage* Package = CreatePackage(TEXT("/Temp/OtterAngleScriptTest"));
 			Package->AddToRoot();
-			UObject* Parent = NewObject<UObject>(Package, TEXT("OtterParent"));
+			UObject* Parent = NewObject<UDUMMYUOBJECT>(Package, TEXT("OtterParent"));
 			Parent->AddToRoot();
-			Child = NewObject<UObject>(Parent, TEXT("OtterChild"));
+			Child = NewObject<UDUMMYUOBJECT>(Parent, TEXT("OtterChild"));
 			Child->AddToRoot();
 		}
 		return Child;
@@ -635,11 +635,246 @@ int RunNewObject()
     {
         return -1;
     }
+	if (Value.GetName() != "DummyTestUObject")
+		return -2;
+
     return 1;
 }
 )";
 		asIScriptFunction* Function = BuildFunction("UObjectTestNewObject", Script, "int RunNewObject()");
 		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(NewObject_WithOuter)
+	{
+		static const char Script[] = R"(
+int RunNewObject()
+{
+    UObject Outer = GetFixtureParentObject();
+    UDUMMYUOBJECT Value = NewObject<UDUMMYUOBJECT>(Outer, "DummyWithOuter");
+    if (Value is null)
+        return -1;
+    if (Value.GetOuter() !is Outer)
+        return -2;
+    if (Value.GetName() != "DummyWithOuter")
+        return -3;
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectNewObjectWithOuter", Script, "int RunNewObject()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(NewObject_DefaultName)
+	{
+		static const char Script[] = R"(
+int RunNewObject()
+{
+    UDUMMYUOBJECT Value = NewObject<UDUMMYUOBJECT>(null);
+    if (Value is null)
+        return -1;
+    // With NAME_None the engine auto-generates a name
+    if (Value.GetName().IsEmpty())
+        return -2;
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectNewObjectDefaultName", Script, "int RunNewObject()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(NewObject_VerifyClass)
+	{
+		static const char Script[] = R"(
+int RunNewObject()
+{
+    UDUMMYUOBJECT Value = NewObject<UDUMMYUOBJECT>(null, "DummyVerifyClass");
+    if (Value is null)
+        return -1;
+    UClass ExpectedClass = UDUMMYUOBJECT::StaticClass();
+    if (Value.GetClass() !is ExpectedClass)
+        return -2;
+    if (!Value.IsA(UDUMMYUOBJECT::StaticClass()))
+        return -3;
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectNewObjectVerifyClass", Script, "int RunNewObject()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(NewObject_ExplicitClass)
+	{
+		static const char Script[] = R"(
+int RunNewObject()
+{
+    UObject Value = NewObject(null, UDUMMYUOBJECT::StaticClass(), "ExplicitClassObj");
+    if (Value is null)
+        return -1;
+    if (Value.GetName() != "ExplicitClassObj")
+        return -2;
+    if (Value.GetClass() !is UDUMMYUOBJECT::StaticClass())
+        return -3;
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectNewObjectExplicitClass", Script, "int RunNewObject()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(NewObject_NullClass)
+	{
+		static const char Script[] = R"(
+int RunNewObject()
+{
+    // Passing null UClass to the non-template NewObject should trigger an exception
+    UObject Value = NewObject(null, null, "NullClassObj");
+    // Should never reach here if exception is raised
+    if (Value is null)
+        return -1;
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectNewObjectNullClass", Script, "int RunNewObject()");
+		// NewObject with null class triggers an AngelScript exception;
+		// ExecuteIntFunction returns -1 when an exception occurs
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == -1));
+	}
+
+	// --- DuplicateObject tests ---
+
+	TEST_METHOD(DuplicateObject_Basic)
+	{
+		static const char Script[] = R"(
+int RunDuplicateObject()
+{
+    UDUMMYUOBJECT Source = NewObject<UDUMMYUOBJECT>(null, "SourceObject");
+    if (Source is null)
+        return -1;
+    UDUMMYUOBJECT Dup = DuplicateObject<UDUMMYUOBJECT>(Source, null, "DuplicatedObject");
+    if (Dup is null)
+        return -2;
+    if (Dup.GetName() != "DuplicatedObject")
+        return -3;
+    // Duplicate should not be the same instance as source
+    if (Dup is Source)
+        return -4;
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectDuplicateObjectBasic", Script, "int RunDuplicateObject()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(DuplicateObject_WithOuter)
+	{
+		static const char Script[] = R"(
+int RunDuplicateObject()
+{
+    UDUMMYUOBJECT Source = NewObject<UDUMMYUOBJECT>(null, "SourceWithOuter");
+    if (Source is null)
+        return -1;
+    UObject Outer = GetFixtureParentObject();
+    UDUMMYUOBJECT Dup = DuplicateObject<UDUMMYUOBJECT>(Source, Outer, "DuplicatedWithOuter");
+    if (Dup is null)
+        return -2;
+    if (Dup.GetOuter() !is Outer)
+        return -3;
+    if (Dup.GetName() != "DuplicatedWithOuter")
+        return -4;
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectDuplicateObjectWithOuter", Script, "int RunDuplicateObject()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(DuplicateObject_DefaultName)
+	{
+		static const char Script[] = R"(
+int RunDuplicateObject()
+{
+    UDUMMYUOBJECT Source = NewObject<UDUMMYUOBJECT>(null, "SourceDefaultName");
+    if (Source is null)
+        return -1;
+    // Duplicate without specifying a name (uses NAME_None → auto-generated)
+    UDUMMYUOBJECT Dup = DuplicateObject<UDUMMYUOBJECT>(Source, null);
+    if (Dup is null)
+        return -2;
+    if (Dup.GetName().IsEmpty())
+        return -3;
+    if (Dup is Source)
+        return -4;
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectDuplicateObjectDefaultName", Script, "int RunDuplicateObject()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(DuplicateObject_VerifyNotSame)
+	{
+		static const char Script[] = R"(
+int RunDuplicateObject()
+{
+    UDUMMYUOBJECT Source = NewObject<UDUMMYUOBJECT>(null, "SourceVerifyNotSame");
+    if (Source is null)
+        return -1;
+    UDUMMYUOBJECT Dup = DuplicateObject<UDUMMYUOBJECT>(Source, null, "DuplicatedVerifyNotSame");
+    if (Dup is null)
+        return -2;
+    if (Dup is Source)
+        return -3;
+    // Source should still be valid after duplication
+    if (Source.GetName() != "SourceVerifyNotSame")
+        return -4;
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectDuplicateObjectVerifyNotSame", Script, "int RunDuplicateObject()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(DuplicateObject_VerifyClass)
+	{
+		static const char Script[] = R"(
+int RunDuplicateObject()
+{
+    UDUMMYUOBJECT Source = NewObject<UDUMMYUOBJECT>(null, "SourceVerifyClass");
+    if (Source is null)
+        return -1;
+    UDUMMYUOBJECT Dup = DuplicateObject<UDUMMYUOBJECT>(Source, null, "DuplicatedVerifyClass");
+    if (Dup is null)
+        return -2;
+    // Duplicate should have the same class as the source
+    if (Dup.GetClass() !is Source.GetClass())
+        return -3;
+    if (Dup.GetClass() !is UDUMMYUOBJECT::StaticClass())
+        return -4;
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectDuplicateObjectVerifyClass", Script, "int RunDuplicateObject()");
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+	}
+
+	TEST_METHOD(DuplicateObject_NullSource)
+	{
+		static const char Script[] = R"(
+int RunDuplicateObject()
+{
+    UDUMMYUOBJECT Null;
+    UDUMMYUOBJECT Dup = DuplicateObject<UDUMMYUOBJECT>(Null, null, "NullSourceDup");
+    // Should never reach here if exception is raised
+    if (Dup is null)
+        return -1;
+    return 1;
+}
+)";
+		asIScriptFunction* Function = BuildFunction("UObjectDuplicateObjectNullSource", Script, "int RunDuplicateObject()");
+		// DuplicateObject with null source triggers an AngelScript exception;
+		// ExecuteIntFunction returns -1 when an exception occurs
+		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == -1));
 	}
 };
 

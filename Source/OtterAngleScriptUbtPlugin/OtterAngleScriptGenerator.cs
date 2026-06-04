@@ -316,7 +316,7 @@ namespace OtterAngleScriptUbtPlugin
                 WritePerFileHeader(hdr, group);
                 var GenPath = _factory.MakePath($"Bind_{group.FileStem}", ".oas.gen.h");
                 //var GenPath = Path.Combine(OutputDir, $"Bind_{group.FileStem}.oas.gen.h");
-                _factory.Session.LogInfo($"OAS: generating {GenPath}");
+                //_factory.Session.LogInfo($"OAS: generating {GenPath}");
                 _factory.CommitOutput(GenPath, hdr);
 
                 var src = new StringBuilder();
@@ -324,7 +324,7 @@ namespace OtterAngleScriptUbtPlugin
                 WritePerFileSource(src, group, registeredTypeNames);
                 var SrcPath = _factory.MakePath($"Bind_{group.FileStem}", ".oas.gen.cpp");
                 //var SrcPath = Path.Combine(OutputDir, $"Bind_{group.FileStem}.oas.gen.cpp");
-                _factory.Session.LogInfo($"OAS: generating {SrcPath}");
+                //_factory.Session.LogInfo($"OAS: generating {SrcPath}");
                 _factory.CommitOutput(SrcPath, src);
             }
 
@@ -468,7 +468,7 @@ namespace OtterAngleScriptUbtPlugin
 
                     if (!TryBuildAsSignature(func, registeredTypeNames, out string? asSig))
                     {
-                        _factory.Session.LogInfo($"OAS: skipping function {cls.SourceName}::{func.SourceName} {func.FunctionFlags} TryBuildAsSignature");
+                        _factory.Session.LogTrace($"OAS: skipping function {cls.SourceName}::{func.SourceName} {func.FunctionFlags} TryBuildAsSignature");
                         continue;
                     }
                     if (func.FunctionFlags.HasAnyFlags(EFunctionFlags.Protected | EFunctionFlags.Private))
@@ -478,7 +478,7 @@ namespace OtterAngleScriptUbtPlugin
                     }
                     if (!TryBuildAsMethodSignature(cls, func, registeredTypeNames, out string? asMethodSig))
                     {
-                        _factory.Session.LogInfo($"OAS: skipping function {cls.SourceName}::{func.SourceName} {func.FunctionFlags} TryBuildAsMethodSignature");
+                        _factory.Session.LogTrace($"OAS: skipping function {cls.SourceName}::{func.SourceName} {func.FunctionFlags} TryBuildAsMethodSignature");
                         continue;
                     }
 
@@ -1246,6 +1246,10 @@ namespace OtterAngleScriptUbtPlugin
                     if (!IsPropertyBinding(arrayProperty.ValueProperty))
                     {
                         _factory.Session.LogInfo($"skipping property {arrayProperty.FullName} since its value property {arrayProperty.ValueProperty.FullName} is not supported.");
+                        if (property.SourceName == "ActorsToIgnore" && arrayProperty.ValueProperty is UhtObjectProperty objectProperty)
+                        {
+                            _factory.Session.LogInfo($"OAS: AAAA {objectProperty.Class.SourceName} {allClasses.Contains(objectProperty.Class)}");
+                        }
                         return null; // unsupported: array property where the value property type is not supported
                     }
 

@@ -138,7 +138,7 @@ namespace
 	}
 #endif
 
-	void Internal_NewObject(asIScriptGeneric* Gen)
+	void Internal_NewObject_FromTemplate(asIScriptGeneric* Gen)
 	{
 		UObject* Outer = (UObject*)Gen->GetArgAddress(0);
 		FName* Name = (FName*)Gen->GetArgAddress(1);
@@ -153,7 +153,41 @@ namespace
 			Gen->SetReturnAddress(nullptr);
 			return;
 		}
-		auto Result = NewObject<UObject>(Outer, Class, *Name, (EObjectFlags)Flags, Template);
+		auto Result = NewObject<UObject>(Outer != nullptr ? Outer : GetTransientPackage(), Class, Name != nullptr ? *Name : NAME_None, (EObjectFlags)Flags, Template);
+		Gen->SetReturnAddress(&Result);
+	}
+
+	void Internal_NewObject(asIScriptGeneric* Gen)
+	{
+		UObject* Outer = (UObject*)Gen->GetArgAddress(0);
+		UClass* Class = (UClass*)Gen->GetArgAddress(1);
+		FName* Name = (FName*)Gen->GetArgAddress(2);
+		uint32 Flags = Gen->GetArgDWord(3);
+		UObject* Template = (UObject*)Gen->GetArgAddress(4);
+
+		if (!Class)
+		{
+			SetScriptException("NewObject with null class");
+			Gen->SetReturnAddress(nullptr);
+			return;
+		}
+		auto Result = NewObject<UObject>(Outer != nullptr ? Outer : GetTransientPackage(), Class, Name != nullptr ? *Name : NAME_None, (EObjectFlags)Flags, Template);
+		Gen->SetReturnAddress(&Result);
+	}
+
+	void Internal_DuplicateObject_Template(asIScriptGeneric* Gen)
+	{
+		UObject* SourceObject = (UObject*)Gen->GetArgAddress(0);
+		if (!IsValid(SourceObject))
+		{
+			SetScriptException("DuplicateObject with invalid source object");
+			Gen->SetReturnAddress(nullptr);
+			return;
+		}
+
+		UObject* Outer = (UObject*)Gen->GetArgAddress(1);
+		FName* Name = (FName*)Gen->GetArgAddress(2);
+		auto Result = DuplicateObject<UObject>(SourceObject, Outer != nullptr ? Outer : GetTransientPackage(), Name != nullptr ? *Name : NAME_None);
 		Gen->SetReturnAddress(&Result);
 	}
 }
@@ -188,9 +222,16 @@ void Bind_UObject(asIScriptEngine* Engine)
 	REGISTER_METHOD(UObject, "bool IsAsset() const", asMETHOD(UObject, IsAsset), asCALL_THISCALL);
 
 #if WITH_ENGINE
-	REGISTER_METHOD(UObject, "UObject@ GetWorld() const", asFUNCTION(UObject_GetWorld), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD(UObject, "UObject GetWorld() const", asFUNCTION(UObject_GetWorld), asCALL_CDECL_OBJFIRST);
 #endif
 
 
-	Engine->RegisterGlobalFunction("T NewObject<T>(UObject Outer, const FName&in Name, uint Flags = 0, UObject Template = null)", asFUNCTION(Internal_NewObject), asCALL_GENERIC);
+	Result = Engine->RegisterGlobalFunction("T NewObject<T>(UObject Outer, const FName&in Name = NAME_None, uint Flags = 0, UObject Template = null)", asFUNCTION(Internal_NewObject_FromTemplate), asCALL_GENERIC);
+	check(Result >= 0);
+
+	Result = Engine->RegisterGlobalFunction("UObject NewObject(UObject Outer, const UClass&in Class, const FName&in Name = NAME_None, uint Flags = 0)", asFUNCTION(Internal_NewObject), asCALL_GENERIC);
+	check(Result >= 0);
+
+	Result = Engine->RegisterGlobalFunction("T DuplicateObject<T>(T SourceObject, UObject Outer, const FName&in Name = NAME_None)", asFUNCTION(Internal_DuplicateObject_Template), asCALL_GENERIC);
+	check(Result >= 0);
 }

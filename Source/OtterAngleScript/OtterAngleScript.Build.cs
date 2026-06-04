@@ -93,5 +93,12 @@ public class OtterAngleScript : ModuleRules
         // present when this module is compiled (after the first UHT pass).
         string GeneratedIncludePath = Path.GetFullPath(Path.Combine(ModuleDirectory, "../../Intermediate"));
         PrivateIncludePaths.Add(GeneratedIncludePath);
+
+        // Add the ScriptBuilder output directory so that generated bindings from
+        // annotated headers (ASCLASS/ASSTRUCT/ASENUM) can be included:
+        //   #include "OtterAngelScriptBindings.gen.h"
+        // Run `python ScriptBuilder/generate_bindings.py --project-dir ...` before building.
+        string ScriptBuilderIncludePath = Path.GetFullPath(Path.Combine(ModuleDirectory, "../../Intermediate/AngelScriptBindings"));
+        PrivateIncludePaths.Add(ScriptBuilderIncludePath);
     }
 }

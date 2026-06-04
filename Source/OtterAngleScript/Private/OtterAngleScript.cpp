@@ -17,6 +17,13 @@
 #if __has_include("OtterAngelScriptBindings.gen.h")
 #include "OtterAngelScriptBindings.gen.h"
 #endif
+
+// ScriptBuilder-generated bindings (from ASCLASS/ASSTRUCT/ASENUM annotations).
+// Generate with: python ScriptBuilder/generate_bindings.py --project-dir <root>
+#if __has_include("ScriptBuilderBindings.gen.h")
+#include "ScriptBuilderBindings.gen.h"
+#endif
+
 #include "AudioDevice.h"
 
 DEFINE_LOG_CATEGORY(LogOtterAngleScript);
@@ -80,6 +87,11 @@ void FOtterAngleScriptModule::StartupModule()
 #if __has_include("OtterAngelScriptBindings.gen.h")
 	OAS_RegisterGeneratedTypes(Engine);
 #endif
+
+	// Register ScriptBuilder-generated bindings from ASCLASS/ASSTRUCT/ASENUM annotations.
+#if __has_include("ScriptBuilderBindings.gen.h")
+	OAS_RegisterGeneratedTypes(Engine);
+#endif
 	Bind_FName(Engine);
 	Bind_UClass(Engine);
 	Bind_UObject(Engine);
@@ -117,6 +129,7 @@ void FOtterAngleScriptModule::StartupModule()
 	Bind_FPrimaryAssetId(Engine);
 	Bind_Logging(Engine);
 	Bind_UPhysicalMaterial(Engine);
+	Bind_UWorld(Engine);
 	Bind_TSubclassOf(Engine);
 	Bind_TSoftClassPtr(Engine);
 	Bind_FRichCurve(Engine);
