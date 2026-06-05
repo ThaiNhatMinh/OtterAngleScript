@@ -159,17 +159,7 @@ void Bind_UPhysicalMaterial(asIScriptEngine* Engine)
 
 	REGISTER_PROPERTY(FPhysicalMaterialDamageModifier, "float DamageThresholdMultiplier", DamageThresholdMultiplier);
 
-	// --- UPhysicalMaterial: UObject base methods ---
-
-	REGISTER_METHOD(UPhysicalMaterial, "FName GetFName() const", asFUNCTION(UPhysicalMaterial_GetFName), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UPhysicalMaterial, "FString GetName() const", asFUNCTION(UPhysicalMaterial_GetName), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UPhysicalMaterial, "FString GetPathName() const", asFUNCTION(UPhysicalMaterial_GetPathName), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UPhysicalMaterial, "FString GetFullName() const", asFUNCTION(UPhysicalMaterial_GetFullName), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UPhysicalMaterial, "UObject GetOuter() const", asFUNCTION(UPhysicalMaterial_GetOuter), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UPhysicalMaterial, "UClass GetClass() const", asFUNCTION(UPhysicalMaterial_GetClass), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UPhysicalMaterial, "bool IsA(UClass SomeBase) const", asFUNCTION(UPhysicalMaterial_IsA), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UPhysicalMaterial, "bool IsValidLowLevel() const", asFUNCTION(UPhysicalMaterial_IsValidLowLevel), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UPhysicalMaterial, "bool IsAsset() const", asFUNCTION(UPhysicalMaterial_IsAsset), asCALL_CDECL_OBJFIRST);
+	OAS_RegisterMethods_UObject(Engine, "UPhysicalMaterial");
 
 	// --- UPhysicalMaterial: Surface properties ---
 

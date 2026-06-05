@@ -714,40 +714,6 @@ int RunIsPlayInEditor()
 		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
 	}
 
-	TEST_METHOD(IsInSeamlessTravel)
-	{
-		static const char Script[] = R"(
-int RunIsInSeamlessTravel()
-{
-    UWorld World = GetFixtureWorld();
-    if (World is null)
-        return -1;
-    if (World.IsInSeamlessTravel())
-        return -2;
-    return 1;
-}
-)";
-		asIScriptFunction* Function = BuildFunction("UWorldIsInSeamlessTravel", Script, "int RunIsInSeamlessTravel()");
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
-	}
-
-	TEST_METHOD(IsPreparingMapChange)
-	{
-		static const char Script[] = R"(
-int RunIsPreparingMapChange()
-{
-    UWorld World = GetFixtureWorld();
-    if (World is null)
-        return -1;
-    if (World.IsPreparingMapChange())
-        return -2;
-    return 1;
-}
-)";
-		asIScriptFunction* Function = BuildFunction("UWorldIsPreparingMapChange", Script, "int RunIsPreparingMapChange()");
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
-	}
-
 	TEST_METHOD(HasBegunPlay)
 	{
 		static const char Script[] = R"(

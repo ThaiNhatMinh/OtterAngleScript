@@ -366,7 +366,10 @@ namespace OtterAngleScriptUbtPlugin
             sb.AppendLine("class asIScriptEngine;");
             sb.AppendLine();
             foreach (var cls in group.Classes)
+            {
                 sb.AppendLine($"void OAS_RegisterMethods_{cls.SourceName}(asIScriptEngine* Engine);");
+                sb.AppendLine($"void OAS_RegisterMethods_{cls.SourceName}(asIScriptEngine* Engine, const FString& ChildClassName);");
+            }
             foreach (var s in group.Structs)
             {
                 sb.AppendLine($"void OAS_Register_Declare{s.SourceName}(asIScriptEngine* Engine);");
@@ -389,6 +392,7 @@ namespace OtterAngleScriptUbtPlugin
         {
             //sb.AppendLine($"#include \"OtterAngleScript.h\"");
             sb.AppendLine($"#include \"Bind_{group.FileStem}.oas.gen.h\"");
+            sb.AppendLine($"#include \"Binding.h\"");
             sb.AppendLine($"#include \"{group.IncludePath}\"");
             if (group.Structs.Count > 0)
                 sb.AppendLine("#include <new>");
@@ -398,7 +402,6 @@ namespace OtterAngleScriptUbtPlugin
             sb.AppendLine("#endif");
             sb.AppendLine("#include \"angelscript.h\"");
             sb.AppendLine();
-            //sb.AppendLine("extern FSimpleMulticastDelegate OnRegisterGeneratedBindings;");
 
             foreach (var cls in group.Classes)
                 WriteClassRegistrationFunction(sb, cls, registeredTypeNames, group);
@@ -422,7 +425,6 @@ namespace OtterAngleScriptUbtPlugin
         {
             sb.AppendLine($"void OAS_RegisterMethods_{cls.SourceName}(asIScriptEngine* Engine)");
             sb.AppendLine("{");
-            //sb.AppendLine($"    if (auto TypeInfo = Engine->GetTypeInfoByName(\"{cls.SourceName}\")) {{ TypeInfo->SetUserData({cls.SourceName}::StaticClass()); }}");
             sb.AppendLine($"    {{auto TypeInfo = Engine->GetTypeInfoByName(\"{cls.SourceName}\"); TypeInfo->SetUserData({cls.SourceName}::StaticClass()); }}");
 
             sb.AppendLine("    int Result = 0;");
@@ -452,6 +454,25 @@ namespace OtterAngleScriptUbtPlugin
                 sb.AppendLine($"    Result = Engine->SetDefaultNamespace(\"\"); check(Result >= 0);");
                 sb.AppendLine();
             }
+
+            sb.AppendLine($"    OAS_RegisterMethods_{cls.SourceName}(Engine, \"{cls.SourceName}\");");
+            var SuperClass = cls.SuperClass;
+            while (SuperClass != null)
+            {
+                if (allClasses.Contains(SuperClass) || ManuallyBoundTypes.Contains(SuperClass.SourceName))
+                {
+                    sb.AppendLine($"    extern void OAS_RegisterMethods_{SuperClass.SourceName}(asIScriptEngine* Engine, const FString& ChildClassName);");
+                    sb.AppendLine($"    OAS_RegisterMethods_{SuperClass.SourceName}(Engine, \"{cls.SourceName}\");");
+                }
+                SuperClass = SuperClass.SuperClass;
+            }
+
+            sb.AppendLine("}");
+            sb.AppendLine();
+
+            sb.AppendLine($"void OAS_RegisterMethods_{cls.SourceName}(asIScriptEngine* Engine, const FString& ChildClassName)");
+            sb.AppendLine("{");
+            sb.AppendLine("    int Result = 0;");
             foreach (var func in cls.Functions)
             {
                 //_factory.Session.LogInfo($"OAS: {func.SourceName} {func.FunctionExportFlags}");
@@ -473,7 +494,7 @@ namespace OtterAngleScriptUbtPlugin
                     }
                     if (func.FunctionFlags.HasAnyFlags(EFunctionFlags.Protected | EFunctionFlags.Private))
                     {
-                        _factory.Session.LogInfo($"OAS: skipping non-public function {cls.SourceName}::{func.SourceName} {func.FunctionFlags} since non-public functions are not public.");
+                        _factory.Session.LogTrace($"OAS: skipping non-public function {cls.SourceName}::{func.SourceName} {func.FunctionFlags} since non-public functions are not public.");
                         continue; // TODO: support non-public functions via wrapper functions.
                     }
                     if (!TryBuildAsMethodSignature(cls, func, registeredTypeNames, out string? asMethodSig))
@@ -482,7 +503,7 @@ namespace OtterAngleScriptUbtPlugin
                         continue;
                     }
 
-                    sb.AppendLine($"    Result = Engine->RegisterObjectMethod(\"{cls.SourceName}\", \"{asSig}\",");
+                    sb.AppendLine($"    Result = Engine->RegisterObjectMethod(TCHAR_TO_ANSI(*ChildClassName), \"{asSig}\",");
                     sb.AppendLine($"        asMETHODPR({cls.SourceName}, {func.SourceName}, {asMethodSig}), {callConv});");
                     sb.AppendLine("    check(Result >= 0);");
                     sb.AppendLine();
@@ -506,7 +527,7 @@ namespace OtterAngleScriptUbtPlugin
                 if (asType.ToLower().Contains("fdeprecate")) // FDeprecate
                     continue;
 
-                sb.AppendLine($"    Result = Engine->RegisterObjectProperty(\"{cls.SourceName}\", \"{asType} {prop.SourceName}\",");
+                sb.AppendLine($"    Result = Engine->RegisterObjectProperty(TCHAR_TO_ANSI(*ChildClassName), \"{asType} {prop.SourceName}\",");
                 sb.AppendLine($"        asOFFSET({cls.SourceName}, {prop.SourceName}));");
                 sb.AppendLine("    check(Result >= 0);");
             }
@@ -895,7 +916,7 @@ namespace OtterAngleScriptUbtPlugin
                 string? asType = MapPropertyAsType(p);
                 if (asType == null)
                 {
-                    _factory.Session.LogInfo($"skipping function {func.SourceName} since parameter {p.SourceName} has unsupported type.");
+                    _factory.Session.LogTrace($"skipping function {func.SourceName} since parameter {p.SourceName} has unsupported type.");
                     return false;
                 }
                 paramParts.Add($"{asType} {p.SourceName}");

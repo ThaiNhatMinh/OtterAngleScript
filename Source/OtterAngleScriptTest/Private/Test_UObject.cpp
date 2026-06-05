@@ -4,6 +4,7 @@
 #if WITH_EDITOR
 
 #include "Test_UObject.h"
+#include "DummyUObject.h"
 #include "CQTest.h"
 #include "Misc/AssertionMacros.h"
 #include "Modules/ModuleManager.h"
@@ -109,7 +110,7 @@ TEST_CLASS_WITH_FLAGS(
 		return Context->Execute();
 	}
 
-	int32 ExecuteIntFunction(asIScriptFunction* Function)
+	int32 ExecuteIntFunction(asIScriptFunction* Function, int ExpectResult = asEXECUTION_FINISHED)
 	{
 		const int Result = ExecuteFunction(Function);
 		if (Result == asEXECUTION_EXCEPTION)
@@ -117,7 +118,7 @@ TEST_CLASS_WITH_FLAGS(
 			AddError(Context->GetExceptionString());
 		}
 
-		if (!Assert.IsTrue(Result == asEXECUTION_FINISHED))
+		if (!Assert.AreEqual(ExpectResult, Result))
 		{
 			return -1;
 		}
@@ -359,7 +360,7 @@ int RunIsInA()
     {
         return -1;
     }
-    if (!Child.IsInA(UObject::StaticClass()()))
+    if (!Child.IsInA(UObject::StaticClass()))
     {
         return -2;
     }
@@ -380,7 +381,7 @@ int RunGetTypedOuter()
     {
         return -1;
     }
-    UObject TypedOuter = Child.GetTypedOuter(UObject::StaticClass()());
+    UObject TypedOuter = Child.GetTypedOuter(UObject::StaticClass());
     if (TypedOuter is null || TypedOuter.GetName() != "OtterParent")
     {
         return -2;
@@ -446,7 +447,7 @@ int RunGetFullNameWithOuter()
     {
         return -1;
     }
-    if (!Child.GetFullName(Parent).Contains("/Temp/OtterAngleScriptTest.OtterParent:OtterChild"))
+    if (Child.GetFullName(Parent) != "DUMMYUOBJECT OtterChild")
     {
         return -2;
     }
@@ -736,9 +737,10 @@ int RunNewObject()
 }
 )";
 		asIScriptFunction* Function = BuildFunction("UObjectNewObjectNullClass", Script, "int RunNewObject()");
+        TestRunner->AddExpectedError("NewObject with null class");
 		// NewObject with null class triggers an AngelScript exception;
 		// ExecuteIntFunction returns -1 when an exception occurs
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == -1));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function, asEXECUTION_EXCEPTION)));
 	}
 
 	// --- DuplicateObject tests ---
@@ -872,9 +874,10 @@ int RunDuplicateObject()
 }
 )";
 		asIScriptFunction* Function = BuildFunction("UObjectDuplicateObjectNullSource", Script, "int RunDuplicateObject()");
+        TestRunner->AddExpectedError(TEXT("DuplicateObject with invalid source object"));
 		// DuplicateObject with null source triggers an AngelScript exception;
 		// ExecuteIntFunction returns -1 when an exception occurs
-		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == -1));
+		ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function, asEXECUTION_EXCEPTION)));
 	}
 };
 

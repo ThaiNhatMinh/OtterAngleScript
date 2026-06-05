@@ -70,7 +70,4 @@ void Bind_FName(asIScriptEngine* Engine)
 	REGISTER_METHOD(FName, "bool opEquals(const FName &in Other) const", asFUNCTION(FName_OpEquals), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FName, "bool IsNone() const", asFUNCTION(FName_IsNone), asCALL_CDECL_OBJFIRST);
 	REGISTER_METHOD(FName, "FString ToString() const", asFUNCTION(FName_ToString), asCALL_CDECL_OBJFIRST);
-
-	Result = Engine->RegisterGlobalProperty("const FName NAME_None", (void*)&NAME_None);
-	check(Result >= 0);
 }

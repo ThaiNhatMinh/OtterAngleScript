@@ -16,8 +16,16 @@ void Declare_Types(asIScriptEngine* Engine);
 	Result = Engine->RegisterObjectMethod(#ClassType, Declaration, Function, CallConv); \
 	check(Result >= 0)
 
+#define REGISTER_METHOD_NAMED(ClassType, Declaration, Function, CallConv) \
+	Result = Engine->RegisterObjectMethod(ClassType, Declaration, Function, CallConv); \
+	check(Result >= 0)
+
 #define REGISTER_PROPERTY(ClassType, Declaration, Member) \
 	Result = Engine->RegisterObjectProperty(#ClassType, Declaration, asOFFSET(ClassType, Member)); \
+	check(Result >= 0)
+
+#define REGISTER_PROPERTY_NAMED(ClassType, Declaration, Member) \
+	Result = Engine->RegisterObjectProperty(ClassType, Declaration, asOFFSET(ClassType, Member)); \
 	check(Result >= 0)
 
 /**
@@ -31,11 +39,13 @@ void Bind_FName(asIScriptEngine* Engine);
  * Registers UObject as a reference type in the AngelScript engine.
  */
 void Bind_UObject(asIScriptEngine* Engine);
+void OAS_RegisterMethods_UObject(asIScriptEngine* Engine, const FString& ChildName);
 
 /**
  * Registers UClass as a reference type in the AngelScript engine.
  */
 void Bind_UClass(asIScriptEngine* Engine);
+void OAS_RegisterMethods_UClass(asIScriptEngine* Engine, const FString& ChildName);
 
 /**
  * Registers FActorInstanceHandle as a value type in the AngelScript engine.
@@ -120,11 +130,6 @@ void Bind_FHitResult(asIScriptEngine* Engine);
  * Registers FTimerHandle as a value type in the AngelScript engine.
  */
 void Bind_FTimerHandle(asIScriptEngine* Engine);
-
-/**
- * Registers FLatentActionInfo as a value type in the AngelScript engine.
- */
-void Bind_FLatentActionInfo(asIScriptEngine* Engine);
 
 /**
  * Registers global FMath helpers under the FMath script namespace.

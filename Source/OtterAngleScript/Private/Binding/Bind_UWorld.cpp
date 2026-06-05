@@ -253,12 +253,6 @@ void Bind_UWorld(asIScriptEngine* Engine)
 	check(Engine != nullptr);
 	int Result;
 
-	// --- UObject base methods ---
-
-	REGISTER_METHOD(UWorld, "UClass GetClass() const", asFUNCTION(UWorld_GetClass), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UWorld, "FString GetName() const", asFUNCTION(UWorld_GetName), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UWorld, "bool IsA(UClass SomeBase) const", asFUNCTION(UWorld_IsA), asCALL_CDECL_OBJFIRST);
-
 	// --- Level access ---
 
 	REGISTER_METHOD(UWorld, "UObject GetPersistentLevel() const", asFUNCTION(UWorld_GetPersistentLevel), asCALL_CDECL_OBJFIRST);

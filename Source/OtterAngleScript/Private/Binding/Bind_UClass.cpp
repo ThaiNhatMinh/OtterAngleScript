@@ -51,25 +51,22 @@ namespace
 	{
 		return Value->GetPropertiesSize();
 	}
-
-	bool UClass_IsNative(const UClass* Value)
-	{
-		return Value->IsNative();
-	}
 }
 
 void Bind_UClass(asIScriptEngine* Engine)
 {
 	check(Engine != nullptr);
+	OAS_RegisterMethods_UObject(Engine, "UClass");
+	OAS_RegisterMethods_UClass(Engine, "UClass");
+}
+
+void OAS_RegisterMethods_UClass(asIScriptEngine* Engine, const FString& ChildName)
+{
+	check(Engine != nullptr);
 	int Result;
-	REGISTER_METHOD(UClass, "FName GetFName() const", asFUNCTION(UClass_GetFName), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UClass, "FString GetName() const", asFUNCTION(UClass_GetName), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UClass, "FString GetPathName() const", asFUNCTION(UClass_GetPathName), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UClass, "FString GetFullName() const", asFUNCTION(UClass_GetFullName), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UClass, "UObject GetOuter() const", asFUNCTION(UClass_GetOuter), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UClass, "UClass GetSuperClass() const", asFUNCTION(UClass_GetSuperClass), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UClass, "bool IsChildOf(UClass SomeBase) const", asFUNCTION(UClass_IsChildOf), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UClass, "UObject GetDefaultObject() const", asFUNCTION(UClass_GetDefaultObject), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UClass, "int GetPropertiesSize() const", asFUNCTION(UClass_GetPropertiesSize), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD(UClass, "bool IsNative() const", asFUNCTION(UClass_IsNative), asCALL_CDECL_OBJFIRST);
+
+	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "UClass GetSuperClass() const", asFUNCTION(UClass_GetSuperClass), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "bool IsChildOf(UClass SomeBase) const", asFUNCTION(UClass_IsChildOf), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "UObject GetDefaultObject() const", asFUNCTION(UClass_GetDefaultObject), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "int GetPropertiesSize() const", asFUNCTION(UClass_GetPropertiesSize), asCALL_CDECL_OBJFIRST);
 }

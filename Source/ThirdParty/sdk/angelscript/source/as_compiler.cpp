@@ -12709,12 +12709,22 @@ int asCCompiler::InstantiateTemplateFunctions(asCArray<int>& funcs, asCScriptNod
 		// TODO: If types for template instance has been given in the node, and no matching template function exists then an error must be given
 		if (numTypes == 0) continue;
 		asCArray<asCDataType> dataTypes;
+		// UE5-BEGIN
+		bool bSkipTemplate = false;
+		// UE5-END
 		// TODO: If there is more than one template function with the same name, then use only the one that matches
 		for (asUINT j = 0; j < numTypes; j++)
 		{
 			// If the number of types doesn't match the template then give an error 
 			if (types == 0 || types->nodeType == snArgList)
 			{
+				// UE5-BEGIN: If there are multiple function, possible other function will match
+				if (funcs.GetLength() > 1)
+				{
+					bSkipTemplate = true;
+					break;
+				}
+				// UE5-END
 				asCString msg;
 				msg.Format(TXT_TMPL_s_EXPECTS_d_SUBTYPES, func->GetName(), numTypes);
 				Error(msg, startNode);
@@ -12723,6 +12733,11 @@ int asCCompiler::InstantiateTemplateFunctions(asCArray<int>& funcs, asCScriptNod
 			dataTypes.PushLast(builder->CreateDataTypeFromNode(types, script, func->nameSpace, func->objectType, 0, true, 0, 0, &m_namespaceVisibility));
 			types = types->next;
 		}
+
+		// UE5-BEGIN
+		if (bSkipTemplate)
+			continue;
+		// UE5-END
 		// Check that there isn't additional types
 		if (types == 0 || types->nodeType != snArgList)
 		{
