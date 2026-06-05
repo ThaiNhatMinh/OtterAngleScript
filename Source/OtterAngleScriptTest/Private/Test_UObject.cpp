@@ -646,6 +646,33 @@ int RunNewObject()
 		ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
 	}
 
+    TEST_METHOD(Test_NewClassObject)
+    {
+        static const char Script[] = R"(
+class FooDerived : UObject
+  {
+    void CallMe()
+    {
+    }
+  }
+
+int RunNewObject()
+{
+    UDUMMYUOBJECT Value = NewObject<UDUMMYUOBJECT>(null, "DummyTestUObject");
+    if (Value is null)
+    {
+        return -1;
+    }
+	if (Value.GetName() != "DummyTestUObject")
+		return -2;
+
+    return 1;
+}
+)";
+        asIScriptFunction* Function = BuildFunction("UObjectTestNewObject", Script, "int RunNewObject()");
+        ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
+    }
+
 	TEST_METHOD(NewObject_WithOuter)
 	{
 		static const char Script[] = R"(
