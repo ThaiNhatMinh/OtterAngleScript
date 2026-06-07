@@ -22,6 +22,8 @@ public class AngleScriptSDK : ModuleRules
         EnsureAngelScriptLibraryBuilt(Target, SdkRoot, CmakeListsPath, BuildDirectory, LibraryPath);
 
         PublicDefinitions.Add("ANGELSCRIPT_EXPORT");
+        if (UsesDebugLibrary(Target))
+            PublicDefinitions.Add("AS_DEBUG");
         PublicAdditionalLibraries.Add(LibraryPath);
     }
 

@@ -13,6 +13,7 @@
 #include "UObject/Object.h"
 #include "UObject/Package.h"
 #include "angelscript.h"
+#include "Interfaces/IPluginManager.h"
 
 namespace
 {
@@ -669,6 +670,23 @@ int RunNewObject()
     return 1;
 }
 )";
+        auto BaseDir = IPluginManager::Get().FindPlugin("OtterAngleScript")->GetBaseDir();
+		auto TestScriptPath = FPaths::Combine(BaseDir, "Scripts/Test/Test_NewClassObject.as");
+        if (IFileManager::Get().FileExists(*TestScriptPath))
+        {
+			FString ScriptCode;
+            FFileHelper::LoadFileToString(ScriptCode, *TestScriptPath);
+			if (ScriptCode.IsEmpty())
+			{
+				AddError(FString::Printf(TEXT("Failed to load script code from %s"), *TestScriptPath));
+				return;
+			}
+
+            asIScriptFunction* Function = BuildFunction("UObjectTestNewObject", TCHAR_TO_ANSI(*ScriptCode), "int RunNewObject()");
+            ASSERT_THAT(AreEqual(0, ExecuteIntFunction(Function)));
+            return;
+
+        }
         asIScriptFunction* Function = BuildFunction("UObjectTestNewObject", Script, "int RunNewObject()");
         ASSERT_THAT(IsTrue(ExecuteIntFunction(Function) == 1));
     }

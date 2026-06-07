@@ -187,6 +187,12 @@ namespace
 		auto Result = DuplicateObject<UObject>(SourceObject, Outer != nullptr ? Outer : GetTransientPackage(), Name != nullptr ? *Name : NAME_None);
 		Gen->SetReturnAddress(Result);
 	}
+
+	UObject* Ref_Factory()
+	{
+		SetScriptException("UObject cannot be created directly. Use NewObject or DuplicateObject instead.");
+		return nullptr;
+	}
 }
 
 void Bind_UObject(asIScriptEngine* Engine)
@@ -217,29 +223,32 @@ void OAS_RegisterMethods_UObject(asIScriptEngine* Engine, const FString& ChildNa
 {
 	check(Engine != nullptr);
 	int Result;
+	const char* TypeName = TCHAR_TO_ANSI(*ChildName);
+	REGISTER_METHOD_NAMED(TypeName, "UClass GetClass() const", asFUNCTION(UObject_GetClass), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "UObject GetOuter() const", asFUNCTION(UObject_GetOuter), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "UObject GetPackage() const", asFUNCTION(UObject_GetPackage), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "UObject GetOutermost() const", asFUNCTION(UObject_GetOutermost), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "FName GetFName() const", asFUNCTION(UObject_GetFName), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "FString GetName() const", asFUNCTION(UObject_GetName), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "FString GetPathName() const", asFUNCTION(UObject_GetPathName), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "FString GetPathName(UObject StopOuter) const", asFUNCTION(UObject_GetPathNameFromOuter), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "FString GetFullName() const", asFUNCTION(UObject_GetFullName), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "FString GetFullName(UObject StopOuter) const", asFUNCTION(UObject_GetFullNameFromOuter), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "FString GetDesc()", asFUNCTION(UObject_GetDesc), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "bool IsA(UClass Class) const", asFUNCTION(UObject_IsA), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "UObject GetTypedOuter(UClass Class) const", asFUNCTION(UObject_GetTypedOuter), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "bool IsIn(UObject SomeOuter) const", asFUNCTION(UObject_IsIn), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "bool IsInA(UClass SomeBaseClass) const", asFUNCTION(UObject_IsInA), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "int GetUniqueID() const", asFUNCTION(UObject_GetUniqueID), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "bool IsValidLowLevel() const", asFUNCTION(UObject_IsValidLowLevel), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "bool IsValidLowLevelFast() const", asFUNCTION(UObject_IsValidLowLevelFast), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "bool IsRooted() const", asFUNCTION(UObject_IsRooted), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "bool IsNative() const", asFUNCTION(UObject_IsNative), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "bool IsTemplate() const", asFUNCTION(UObject_IsTemplate), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "bool IsDefaultSubobject() const", asFUNCTION(UObject_IsDefaultSubobject), asCALL_CDECL_OBJFIRST);
+	REGISTER_METHOD_NAMED(TypeName, "bool IsAsset() const", asMETHOD(UObject, IsAsset), asCALL_THISCALL);
+	REGISTER_METHOD_NAMED(TypeName, "UObject GetWorld() const", asFUNCTION(UObject_GetWorld), asCALL_CDECL_OBJFIRST);
 
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "UClass GetClass() const", asFUNCTION(UObject_GetClass), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "UObject GetOuter() const", asFUNCTION(UObject_GetOuter), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "UObject GetPackage() const", asFUNCTION(UObject_GetPackage), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "UObject GetOutermost() const", asFUNCTION(UObject_GetOutermost), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "FName GetFName() const", asFUNCTION(UObject_GetFName), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "FString GetName() const", asFUNCTION(UObject_GetName), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "FString GetPathName() const", asFUNCTION(UObject_GetPathName), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "FString GetPathName(UObject StopOuter) const", asFUNCTION(UObject_GetPathNameFromOuter), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "FString GetFullName() const", asFUNCTION(UObject_GetFullName), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "FString GetFullName(UObject StopOuter) const", asFUNCTION(UObject_GetFullNameFromOuter), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "FString GetDesc()", asFUNCTION(UObject_GetDesc), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "bool IsA(UClass Class) const", asFUNCTION(UObject_IsA), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "UObject GetTypedOuter(UClass Class) const", asFUNCTION(UObject_GetTypedOuter), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "bool IsIn(UObject SomeOuter) const", asFUNCTION(UObject_IsIn), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "bool IsInA(UClass SomeBaseClass) const", asFUNCTION(UObject_IsInA), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "int GetUniqueID() const", asFUNCTION(UObject_GetUniqueID), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "bool IsValidLowLevel() const", asFUNCTION(UObject_IsValidLowLevel), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "bool IsValidLowLevelFast() const", asFUNCTION(UObject_IsValidLowLevelFast), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "bool IsRooted() const", asFUNCTION(UObject_IsRooted), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "bool IsNative() const", asFUNCTION(UObject_IsNative), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "bool IsTemplate() const", asFUNCTION(UObject_IsTemplate), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "bool IsDefaultSubobject() const", asFUNCTION(UObject_IsDefaultSubobject), asCALL_CDECL_OBJFIRST);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "bool IsAsset() const", asMETHOD(UObject, IsAsset), asCALL_THISCALL);
-	REGISTER_METHOD_NAMED(TCHAR_TO_ANSI(*ChildName), "UObject GetWorld() const", asFUNCTION(UObject_GetWorld), asCALL_CDECL_OBJFIRST);
+	// Registering the factory behaviour
+	Result = Engine->RegisterObjectBehaviour(TypeName, asBEHAVE_FACTORY, TCHAR_TO_ANSI(*FString::Printf(TEXT("%s f()"), *ChildName)), asFUNCTION(Ref_Factory), asCALL_CDECL); check(Result >= 0);
 }

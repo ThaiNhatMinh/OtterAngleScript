@@ -26,7 +26,8 @@ public class OtterAngleScriptTest : ModuleRules
 				"CoreUObject",
                 "Engine",
 				"OtterAngleScript",
-				"AudioExtensions"
+				"AudioExtensions",
+				"Projects"
 			}
 		);
 	}
