@@ -20,7 +20,7 @@ class TestB : TestBase
 
 int RunNewObject()
 {
-    FooDerived asdsd = FooDerived();
+    UWorld@ asdsd = UWorld();
     
 
     UDUMMYUOBJECT Value = NewObject<UDUMMYUOBJECT>(null, "DummyTestUObject");

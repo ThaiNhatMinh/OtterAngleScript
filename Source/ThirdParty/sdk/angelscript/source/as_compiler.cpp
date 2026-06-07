@@ -284,13 +284,18 @@ int asCCompiler::CompileDefaultConstructor(asCBuilder *in_builder, asCScriptCode
 	if( outFunc->objectType->derivedFrom )
 	{
 		// Make sure the base class really has a default constructor
-		if( outFunc->objectType->derivedFrom->beh.construct == 0 )
+		if (outFunc->objectType->derivedFrom->beh.construct != 0)
+		{
+			// Call the base class' default constructor
+			byteCode.InstrSHORT(asBC_PSF, 0);
+			byteCode.Instr(asBC_RDSPtr);
+			byteCode.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
+		}
+		else if (outFunc->objectType->derivedFrom->flags & asOBJ_SCRIPT_OBJECT)
+			// UE5-BEGIN: If base class is native C++ class, possible that there is no default 
+		{
 			Error(TXT_BASE_DOESNT_HAVE_DEF_CONSTR, in_node);
-
-		// Call the base class' default constructor
-		byteCode.InstrSHORT(asBC_PSF, 0);
-		byteCode.Instr(asBC_RDSPtr);
-		byteCode.Call(asBC_CALL, outFunc->objectType->derivedFrom->beh.construct, AS_PTR_SIZE);
+		}
 	}
 
 	// Initialize the class members that explicit expressions afterwards. This allow the expressions

@@ -3359,7 +3359,8 @@ void asCBuilder::DetermineTypeRelations()
 				{
 					AddInterfaceFromMixinToClass(decl, node, mixin);
 				}
-				else if (!(objType->flags & asOBJ_SCRIPT_OBJECT) ||
+				else if (
+					//!(objType->flags & asOBJ_SCRIPT_OBJECT) ||
 					(objType->flags & asOBJ_NOINHERIT))
 				{
 					// Either the class is not a script class or interface
@@ -3368,7 +3369,11 @@ void asCBuilder::DetermineTypeRelations()
 					str.Format(TXT_CANNOT_INHERIT_FROM_s_FINAL, objType->name.AddressOf());
 					WriteError(str, file, node);
 				}
-				else if (objType->size != 0)
+				else if (objType->size != 0
+					// UE5-BEGIN: objType can be native C++ class with asOBJ_REF flag
+					|| !(objType->flags & asOBJ_SCRIPT_OBJECT)
+					// UE5-END
+					)
 				{
 					// The class inherits from another script class
 					if (!decl->isExistingShared && CastToObjectType(decl->typeInfo)->derivedFrom != 0)
@@ -3424,6 +3429,9 @@ void asCBuilder::DetermineTypeRelations()
 							{
 								// Set the base class
 								CastToObjectType(decl->typeInfo)->derivedFrom = objType;
+								// If parent class is not a script class, copy flag to child class
+								if (!(objType->flags & asOBJ_SCRIPT_OBJECT))
+									decl->typeInfo->flags |=  objType->flags;
 								objType->AddRefInternal();
 							}
 						}
@@ -3577,7 +3585,11 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 					}
 				}
 
-				if( !found )
+				if( !found 
+					// UE5-BEGIN: If base type is C++ native type, virtualFunctionTable is empty
+					&& baseType->flags & asOBJ_SCRIPT_OBJECT
+					// UE5-END
+					)
 				{
 					// Push the base class function on the virtual function table
 					ot->virtualFunctionTable.PushLast(baseType->virtualFunctionTable[m]);
@@ -3597,7 +3609,7 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 			for( asUINT m = 0; m < ot->methods.GetLength(); m++ )
 			{
 				asCScriptFunction *func = GetFunctionDescription(ot->methods[m]);
-				if( func->funcType != asFUNC_VIRTUAL )
+				if( func->funcType != asFUNC_VIRTUAL && func->funcType != asFUNC_SYSTEM )
 				{
 					// Move the reference from the method list to the virtual function list
 					ot->methods.RemoveIndex(m);

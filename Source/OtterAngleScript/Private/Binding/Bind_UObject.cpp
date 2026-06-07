@@ -250,5 +250,5 @@ void OAS_RegisterMethods_UObject(asIScriptEngine* Engine, const FString& ChildNa
 	REGISTER_METHOD_NAMED(TypeName, "UObject GetWorld() const", asFUNCTION(UObject_GetWorld), asCALL_CDECL_OBJFIRST);
 
 	// Registering the factory behaviour
-	Result = Engine->RegisterObjectBehaviour(TypeName, asBEHAVE_FACTORY, TCHAR_TO_ANSI(*FString::Printf(TEXT("%s f()"), *ChildName)), asFUNCTION(Ref_Factory), asCALL_CDECL); check(Result >= 0);
+	//Result = Engine->RegisterObjectBehaviour(TypeName, asBEHAVE_FACTORY, TCHAR_TO_ANSI(*FString::Printf(TEXT("%s f()"), *ChildName)), asFUNCTION(Ref_Factory), asCALL_CDECL); check(Result >= 0);
 }
