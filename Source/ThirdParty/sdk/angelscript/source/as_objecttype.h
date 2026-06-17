@@ -102,7 +102,9 @@ class asCObjectType : public asCTypeInfo
 {
 public:
 	asITypeInfo       *GetBaseType() const;
-	bool               DerivesFrom(const asITypeInfo *objType) const;
+	bool               DerivesFrom(const asITypeInfo* objType) const;
+	bool               DerivesFromNative() const;
+	asCObjectType*	   GetNativeBaseType() const;
 	int                GetSubTypeId(asUINT subtypeIndex = 0) const;
 	asITypeInfo       *GetSubType(asUINT subtypeIndex = 0) const;
 	asUINT             GetSubTypeCount() const;
@@ -134,6 +136,7 @@ public:
 	bool IsInterface() const;
 
 	asCObjectProperty *AddPropertyToClass(const asCString &name, const asCDataType &dt, bool isPrivate, bool isProtected, bool isInherited);
+	asCObjectProperty *GetHiddenBaseProperty() const;
 	void ReleaseAllProperties();
 
 #ifdef WIP_16BYTE_ALIGN

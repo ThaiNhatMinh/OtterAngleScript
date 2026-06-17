@@ -183,6 +183,27 @@ bool asCObjectType::DerivesFrom(const asITypeInfo *objType) const
 	return false;
 }
 
+bool asCObjectType::DerivesFromNative() const
+{
+	if (!derivedFrom)
+		return false;
+	// If parent is a script object, check parent.
+	if (derivedFrom->flags & asOBJ_SCRIPT_OBJECT)
+		return derivedFrom->DerivesFromNative();
+	
+	return true;
+}
+
+asCObjectType* asCObjectType::GetNativeBaseType() const
+{
+	if (!derivedFrom)
+		return nullptr;
+	// If parent is a script object, check parent.
+	if (derivedFrom->flags & asOBJ_SCRIPT_OBJECT)
+		return derivedFrom->GetNativeBaseType();
+	return derivedFrom;
+}
+
 // interface
 int asCObjectType::GetSubTypeId(asUINT subtypeIndex) const
 {
@@ -586,6 +607,29 @@ asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &propName, 
 }
 
 // internal
+asCObjectProperty *asCObjectType::GetHiddenBaseProperty() const
+{
+	if (!derivedFrom || !(derivedFrom->flags & asOBJ_REF))
+		return nullptr;
+	// If the parent is a script object, check the parent for the hidden $base property.
+	if (derivedFrom->flags & asOBJ_SCRIPT_OBJECT)
+		return derivedFrom->GetHiddenBaseProperty();
+
+	// Returns the private $base property if this script class derives from a C++ registered REF type.
+	// The $base property represents the embedded C++ base sub-object and is not visible to scripts.
+	// For value types, the existing property-copying approach is used instead.
+
+	for (asUINT n = 0; n < properties.GetLength(); n++)
+	{
+		if (properties[n]->name == "$base" && properties[n]->isPrivate &&
+			properties[n]->type.GetTypeInfo() == derivedFrom)
+			return properties[n];
+	}
+
+	return 0;
+}
+
+// internal
 void asCObjectType::ReleaseAllProperties()
 {
 	for( asUINT n = 0; n < properties.GetLength(); n++ )
@@ -647,7 +691,7 @@ void asCObjectType::ReleaseAllFunctions()
 		engine->scriptFunctions[beh.listFactory]->ReleaseInternal();
 	beh.listFactory = 0;
 
-	if( beh.destruct )
+	if( beh.destruct && engine->scriptFunctions[beh.destruct]->funcType != asFUNC_SYSTEM)
 		engine->scriptFunctions[beh.destruct]->ReleaseInternal();
 	beh.destruct  = 0;
 

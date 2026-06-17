@@ -1232,6 +1232,16 @@ asCObjectProperty *asCBuilder::GetObjectProperty(asCDataType &obj, const char *p
 		}
 	}
 
+	// If the property was not found, search through the $base private property
+	// (used when a script class inherits from a C++ registered type)
+	asCObjectType *ot = CastToObjectType(obj.GetTypeInfo());
+	asCObjectProperty *baseProp = ot->GetHiddenBaseProperty();
+	if (baseProp)
+	{
+		asCDataType baseDt = baseProp->type;
+		return GetObjectProperty(baseDt, prop);
+	}
+
 	return 0;
 }
 #endif
@@ -1661,10 +1671,7 @@ int asCBuilder::CheckNameConflictMember(asCTypeInfo *t, const char *name, asCScr
 	if (ns)
 	{
 		// Check as if not a function as it doesn't matter the function signature
-		// UE5-BEGIN
-		return CheckNameConflict(name, node, code, ns, isProperty, isVirtualProperty, false);
-		// UE5-END
-		// return CheckNameConflict(name, node, code, ns, true, isVirtualProperty, false);
+		return CheckNameConflict(name, node, code, ns, true, isVirtualProperty, false);
 	}
 	
 	return 0;
@@ -3359,21 +3366,16 @@ void asCBuilder::DetermineTypeRelations()
 				{
 					AddInterfaceFromMixinToClass(decl, node, mixin);
 				}
-				else if (
-					//!(objType->flags & asOBJ_SCRIPT_OBJECT) ||
-					(objType->flags & asOBJ_NOINHERIT))
+				else if ((objType->flags & asOBJ_NOINHERIT))
 				{
-					// Either the class is not a script class or interface
-					// or the class has been declared as 'final'
+					// Either the class has been declared as 'final', or it is a
+					// non-script type with size 0 (interfaces/opaque handles).
+					// Application types with size>0 (both value and ref) can be inherited.
 					asCString str;
 					str.Format(TXT_CANNOT_INHERIT_FROM_s_FINAL, objType->name.AddressOf());
 					WriteError(str, file, node);
 				}
-				else if (objType->size != 0
-					// UE5-BEGIN: objType can be native C++ class with asOBJ_REF flag
-					|| !(objType->flags & asOBJ_SCRIPT_OBJECT)
-					// UE5-END
-					)
+				else if (objType->size != 0 || objType->beh.factory != 0)
 				{
 					// The class inherits from another script class
 					if (!decl->isExistingShared && CastToObjectType(decl->typeInfo)->derivedFrom != 0)
@@ -3429,13 +3431,17 @@ void asCBuilder::DetermineTypeRelations()
 							{
 								// Set the base class
 								CastToObjectType(decl->typeInfo)->derivedFrom = objType;
-								// If parent class is not a script class, copy flag to child class
-								if (!(objType->flags & asOBJ_SCRIPT_OBJECT))
-									decl->typeInfo->flags |=  objType->flags;
 								objType->AddRefInternal();
 							}
 						}
 					}
+				}
+				else if (objType->beh.factory == 0)
+				{
+					asCString str;
+					str.Format(TXT_CANNOT_INHERIT_FROM_s_NO_FACTORY, objType->name.AddressOf());
+					WriteError(str, file, node);
+					break;
 				}
 				else
 				{
@@ -3507,6 +3513,7 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 		if( !decl->isExistingShared && ot->derivedFrom )
 		{
 			asCObjectType *baseType = ot->derivedFrom;
+			bool isScriptBase = (baseType->flags & asOBJ_SCRIPT_OBJECT) != 0;
 
 			// The derived class inherits all interfaces from the base class
 			for( unsigned int m = 0; m < baseType->interfaces.GetLength(); m++ )
@@ -3518,88 +3525,125 @@ void asCBuilder::CompileClasses(asUINT numTempl)
 			// TODO: Need to check for name conflict with new class methods
 
 			// Copy properties from base class to derived class
-			for( asUINT p = 0; p < baseType->properties.GetLength(); p++ )
+			if (isScriptBase)
 			{
-				asCObjectProperty *prop = AddPropertyToClass(decl, baseType->properties[p]->name, baseType->properties[p]->type, baseType->properties[p]->isPrivate, baseType->properties[p]->isProtected, true);
+				for( asUINT p = 0; p < baseType->properties.GetLength(); p++ )
+				{
+					asCObjectProperty *prop = AddPropertyToClass(decl, baseType->properties[p]->name, baseType->properties[p]->type, baseType->properties[p]->isPrivate, baseType->properties[p]->isProtected, true);
 
-				// The properties must maintain the same offset
-				asASSERT(prop && prop->byteOffset == baseType->properties[p]->byteOffset); UNUSED_VAR(prop);
+					// The properties must maintain the correct offset
+					asASSERT(prop && prop->byteOffset == baseType->properties[p]->byteOffset);
+					UNUSED_VAR(prop);
+				}
 			}
-
-			// Copy methods from base class to derived class
-			for( asUINT m = 0; m < baseType->methods.GetLength(); m++ )
+			else if (baseType->flags & asOBJ_REF)
 			{
-				// If the derived class implements the same method, then don't add the base class' method
-				asCScriptFunction *baseFunc = GetFunctionDescription(baseType->methods[m]);
-				asCScriptFunction *derivedFunc = 0;
-				bool found = false;
-				for( asUINT d = 0; d < ot->methods.GetLength(); d++ )
+				// For C++ ref types, add a single private $base property that represents
+				// the embedded C++ sub-object. This avoids copying all base properties
+				// and provides a clean handle to the base for the compiler and runtime.
+				asCObjectProperty* baseProp = AddPropertyToClass(decl, "$base", asCDataType::CreateType(baseType, false), true, false, true);
+			}
+			else
+			{
+				// For C++ value types, keep the existing property-copying behavior
+				for( asUINT p = 0; p < baseType->properties.GetLength(); p++ )
 				{
-					derivedFunc = GetFunctionDescription(ot->methods[d]);
-					if( baseFunc->name == "opConv" || baseFunc->name == "opImplConv" ||
-						baseFunc->name == "opCast" || baseFunc->name == "opImplCast" )
+					asCObjectProperty *prop = AddPropertyToClass(decl, baseType->properties[p]->name, baseType->properties[p]->type, baseType->properties[p]->isPrivate, baseType->properties[p]->isProtected, true);
+					asASSERT(prop && prop->byteOffset == baseType->properties[p]->byteOffset + sizeof(asCScriptObject));
+					UNUSED_VAR(prop);
+				}
+			}
+			// Copy methods from base class to derived class
+			if (isScriptBase)
+			{
+				for( asUINT m = 0; m < baseType->methods.GetLength(); m++ )
+				{
+					// If the derived class implements the same method, then don't add the base class' method
+					asCScriptFunction *baseFunc = GetFunctionDescription(baseType->methods[m]);
+					asCScriptFunction *derivedFunc = 0;
+					bool found = false;
+					for( asUINT d = 0; d < ot->methods.GetLength(); d++ )
 					{
-						// For the opConv and opCast methods, the return type can differ if they are different methods
-						if( derivedFunc->name == baseFunc->name &&
-							derivedFunc->IsSignatureExceptNameEqual(baseFunc) )
+						derivedFunc = GetFunctionDescription(ot->methods[d]);
+						if( baseFunc->name == "opConv" || baseFunc->name == "opImplConv" ||
+							baseFunc->name == "opCast" || baseFunc->name == "opImplCast" )
 						{
-							if( baseFunc->IsFinal() )
+							// For the opConv and opCast methods, the return type can differ if they are different methods
+							if( derivedFunc->name == baseFunc->name &&
+								derivedFunc->IsSignatureExceptNameEqual(baseFunc) )
 							{
-								asCString msg;
-								msg.Format(TXT_METHOD_CANNOT_OVERRIDE_s, baseFunc->GetDeclaration());
-								WriteError(msg, decl->script, decl->node);
-							}
+								if( baseFunc->IsFinal() )
+								{
+									asCString msg;
+									msg.Format(TXT_METHOD_CANNOT_OVERRIDE_s, baseFunc->GetDeclaration());
+									WriteError(msg, decl->script, decl->node);
+								}
 
-							// Move the function from the methods array to the virtualFunctionTable
-							ot->methods.RemoveIndex(d);
-							ot->virtualFunctionTable.PushLast(derivedFunc);
-							found = true;
-							break;
+								// Move the function from the methods array to the virtualFunctionTable
+								ot->methods.RemoveIndex(d);
+								ot->virtualFunctionTable.PushLast(derivedFunc);
+								found = true;
+								break;
+							}
+						}
+						else
+						{
+							if( derivedFunc->name == baseFunc->name &&
+								derivedFunc->IsSignatureExceptNameAndReturnTypeEqual(baseFunc) )
+							{
+								if( baseFunc->returnType != derivedFunc->returnType )
+								{
+									asCString msg;
+									msg.Format(TXT_DERIVED_METHOD_MUST_HAVE_SAME_RETTYPE_s, baseFunc->GetDeclaration());
+									WriteError(msg, decl->script, decl->node);
+								}
+
+								if( baseFunc->IsFinal() )
+								{
+									asCString msg;
+									msg.Format(TXT_METHOD_CANNOT_OVERRIDE_s, baseFunc->GetDeclaration());
+									WriteError(msg, decl->script, decl->node);
+								}
+
+								// Move the function from the methods array to the virtualFunctionTable
+
+								ot->methods.RemoveIndex(d);
+								ot->virtualFunctionTable.PushLast(derivedFunc);
+								found = true;
+								break;
+							}
 						}
 					}
-					else
+
+					if( !found )
 					{
-						if( derivedFunc->name == baseFunc->name &&
-							derivedFunc->IsSignatureExceptNameAndReturnTypeEqual(baseFunc) )
+						// Push the base class function on the virtual function table
+						// The methods array may contain entries inherited from a non-script
+						// base that have no VFT counterpart, so check funcType and use
+						// vfTableIdx for correct indexing
+						if( baseFunc->funcType == asFUNC_VIRTUAL )
 						{
-							if( baseFunc->returnType != derivedFunc->returnType )
-							{
-								asCString msg;
-								msg.Format(TXT_DERIVED_METHOD_MUST_HAVE_SAME_RETTYPE_s, baseFunc->GetDeclaration());
-								WriteError(msg, decl->script, decl->node);
-							}
+							asUINT idx = baseFunc->vfTableIdx;
+							ot->virtualFunctionTable.PushLast(baseType->virtualFunctionTable[idx]);
+							baseType->virtualFunctionTable[idx]->AddRefInternal();
 
-							if( baseFunc->IsFinal() )
-							{
-								asCString msg;
-								msg.Format(TXT_METHOD_CANNOT_OVERRIDE_s, baseFunc->GetDeclaration());
-								WriteError(msg, decl->script, decl->node);
-							}
-
-							// Move the function from the methods array to the virtualFunctionTable
-							ot->methods.RemoveIndex(d);
-							ot->virtualFunctionTable.PushLast(derivedFunc);
-							found = true;
-							break;
+							CheckForConflictsDueToDefaultArgs(decl->script, decl->node, baseType->virtualFunctionTable[idx], ot);
 						}
 					}
-				}
 
-				if( !found 
-					// UE5-BEGIN: If base type is C++ native type, virtualFunctionTable is empty
-					&& baseType->flags & asOBJ_SCRIPT_OBJECT
-					// UE5-END
-					)
+					ot->methods.PushLast(baseType->methods[m]);
+					engine->scriptFunctions[baseType->methods[m]]->AddRefInternal();
+				}
+			}
+			else
+			{
+				// For application base types, simply add the base methods
+				// as non-virtual functions accessible from the derived class
+				for( asUINT m = 0; m < baseType->methods.GetLength(); m++ )
 				{
-					// Push the base class function on the virtual function table
-					ot->virtualFunctionTable.PushLast(baseType->virtualFunctionTable[m]);
-					baseType->virtualFunctionTable[m]->AddRefInternal();
-
-					CheckForConflictsDueToDefaultArgs(decl->script, decl->node, baseType->virtualFunctionTable[m], ot);
+					ot->methods.PushLast(baseType->methods[m]);
+					engine->scriptFunctions[baseType->methods[m]]->AddRefInternal();
 				}
-
-				ot->methods.PushLast(baseType->methods[m]);
-				engine->scriptFunctions[baseType->methods[m]]->AddRefInternal();
 			}
 		}
 
@@ -4473,7 +4517,7 @@ int asCBuilder::CreateVirtualFunction(asCScriptFunction *func, int idx)
 	vf->signatureId      = func->signatureId;
 	vf->vfTableIdx       = idx;
 	vf->traits           = func->traits;
-
+	//vf->funcType = func->funcType;
 	// Clear the shared trait since the virtual function should not have that
 	vf->SetShared(false);
 
@@ -5943,7 +5987,7 @@ void asCBuilder::GetFunctionDescriptions(const char *name, asCArray<int> &funcs,
 }
 
 // scope is only informed when looking for a base class' method
-void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst, const asCString &scope, asCScriptNode *errNode, asCScriptCode *script)
+void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *objectType, asCArray<int> &methods, bool objIsConst, const asCString &scope, asCScriptNode *errNode, asCScriptCode *script, int *outBaseOffset)
 {
 	asASSERT(objectType);
 
@@ -6008,6 +6052,20 @@ void asCBuilder::GetObjectMethodDescriptions(const char *name, asCObjectType *ob
 					f = objectType->virtualFunctionTable[f->vfTableIdx];
 				methods.PushLast(f->id);
 			}
+		}
+	}
+
+	// If no methods found and no scope specified, try the base class through the $base private property
+	if (methods.GetLength() == 0 && scope == "" && objectType->derivedFrom)
+	{
+		asCObjectProperty *baseProp = objectType->GetHiddenBaseProperty();
+		if (baseProp)
+		{
+			if (outBaseOffset)
+				*outBaseOffset = baseProp->byteOffset;
+
+			asCObjectType *baseType = CastToObjectType(baseProp->type.GetTypeInfo());
+			GetObjectMethodDescriptions(name, baseType, methods, objIsConst, scope, errNode, script, outBaseOffset);
 		}
 	}
 }

@@ -2076,7 +2076,7 @@ void asCContext::CallScriptFunction(asCScriptFunction *func)
 	asASSERT( func->scriptData );
 
 	// Push the framepointer, function id and programCounter on the stack
-	if (PushCallState() < 0 || !func->scriptData)
+	if (PushCallState() < 0)
 		return;
 
 	// Update the current function and program position before increasing the stack
@@ -3972,11 +3972,13 @@ static const void *const dispatch_table[256] = {
 				asCObjectType *objType = obj->objType;
 				asCObjectType *to = m_engine->GetObjectTypeFromTypeId(typeId);
 
-				// This instruction can only be used with script classes and interfaces
+				// This instruction can only be used with script class sources
 				asASSERT( objType->flags & asOBJ_SCRIPT_OBJECT );
-				asASSERT( to->flags & asOBJ_SCRIPT_OBJECT );
 
-				if( objType->Implements(to) || objType->DerivesFrom(to) )
+				// Only script-to-script hierarchy casts are supported here.
+				// For script-to-app casts, opImplCast should be used.
+				if( (to->flags & asOBJ_SCRIPT_OBJECT) &&
+					(objType->Implements(to) || objType->DerivesFrom(to)) )
 				{
 					m_regs.objectType = 0;
 					m_regs.objectRegister = obj;
