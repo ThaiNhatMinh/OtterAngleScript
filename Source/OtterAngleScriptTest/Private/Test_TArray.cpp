@@ -87,15 +87,15 @@ TEST_CLASS_WITH_FLAGS(
 int RunCreateAndBasicAccess()
 {
     TArray<int> arr;
-    if (!arr.isEmpty())
+    if (!arr.IsEmpty())
         return -1;
-    if (arr.length() != 0)
+    if (arr.Num() != 0)
         return -2;
 
-    arr.insertLast(10);
-    arr.insertLast(20);
-    arr.insertLast(30);
-    if (arr.length() != 3)
+    arr.Add(10);
+    arr.Add(20);
+    arr.Add(30);
+    if (arr.Num() != 3)
         return -3;
     if (arr[0] != 10)
         return -4;
@@ -116,9 +116,9 @@ int RunCreateAndBasicAccess()
 int RunLengthConstructor()
 {
     TArray<int> arr(5);
-    if (arr.length() != 5)
+    if (arr.Num() != 5)
         return -1;
-    for (uint i = 0; i < arr.length(); i++)
+    for (uint i = 0; i < arr.Num(); i++)
     {
         if (arr[i] != 0)
             return -2;
@@ -136,7 +136,7 @@ int RunLengthConstructor()
 int RunListInitializer()
 {
     TArray<int> arr = {10, 20, 30};
-    if (arr.length() != 3)
+    if (arr.Num() != 3)
         return -1;
     if (arr[0] != 10)
         return -2;
@@ -158,7 +158,7 @@ int RunAssign()
 {
     TArray<int> src = {1, 2, 3};
     TArray<int> dst = src;
-    if (dst.length() != 3)
+    if (dst.Num() != 3)
         return -1;
     if (dst[0] != 1 || dst[1] != 2 || dst[2] != 3)
         return -2;
@@ -180,22 +180,22 @@ int RunAssign()
 int RunInsertAndRemove()
 {
     TArray<int> arr = {1, 2, 3};
-    arr.insertAt(1, 99);
-    if (arr.length() != 4)
+    arr.Insert(1, 99);
+    if (arr.Num() != 4)
         return -1;
     if (arr[1] != 99)
         return -2;
 
-    arr.removeAt(1);
-    if (arr.length() != 3)
+    arr.RemoveAt(1);
+    if (arr.Num() != 3)
         return -3;
     if (arr[1] != 2)
         return -4;
 
-    arr.removeLast();
-    if (arr.length() != 2)
+    arr.Pop();
+    if (arr.Num() != 2)
         return -5;
-    if (arr[arr.length()-1] != 2)
+    if (arr[arr.Num()-1] != 2)
         return -6;
 
     return 0;
@@ -212,8 +212,8 @@ int RunInsertArrayAt()
 {
     TArray<int> arr = {1, 4};
     TArray<int> mid = {2, 3};
-    arr.insertAt(1, mid);
-    if (arr.length() != 4)
+    arr.Insert(1, mid);
+    if (arr.Num() != 4)
         return -1;
     if (arr[0] != 1 || arr[1] != 2 || arr[2] != 3 || arr[3] != 4)
         return -2;
@@ -230,16 +230,16 @@ int RunInsertArrayAt()
 int RunReserveAndResize()
 {
     TArray<int> arr;
-    arr.reserve(10);
-    if (arr.length() != 0)
+    arr.Reserve(10);
+    if (arr.Num() != 0)
         return -1;
 
-    arr.resize(5);
-    if (arr.length() != 5)
+    arr.SetNum(5);
+    if (arr.Num() != 5)
         return -2;
 
-    arr.resize(2);
-    if (arr.length() != 2)
+    arr.SetNum(2);
+    if (arr.Num() != 2)
         return -3;
 
     return 0;
@@ -255,8 +255,8 @@ int RunReserveAndResize()
 int RunRemoveRange()
 {
     TArray<int> arr = {1, 2, 3, 4, 5};
-    arr.removeRange(1, 3);
-    if (arr.length() != 2)
+    arr.RemoveAt(1, 3);
+    if (arr.Num() != 2)
         return -1;
     if (arr[0] != 1 || arr[1] != 5)
         return -2;
@@ -320,11 +320,11 @@ int RunReverse()
 int RunFindByValue()
 {
     TArray<int> arr = {10, 20, 30, 20};
-    if (arr.find(20) != 1)
+    if (arr.Find(20) != 1)
         return -1;
-    if (arr.find(2, 20) != 3)
+    if (arr.Find(2, 20) != 3)
         return -2;
-    if (arr.find(99) != -1)
+    if (arr.Find(99) != -1)
         return -3;
     return 0;
 }
@@ -373,11 +373,11 @@ int RunIndexOutOfBounds()
 int RunSortWithCallback()
 {
     TArray<int> arr = {5, 1, 4, 2, 3};
-    arr.sort(function(a, b) { return a < b; });
+    arr.Sort(function(a, b) { return a < b; });
     if (arr[0] != 1 || arr[4] != 5)
         return -1;
 
-    arr.sort(function(a, b) { return a > b; });
+    arr.Sort(function(a, b) { return a > b; });
     if (arr[0] != 5 || arr[4] != 1)
         return -2;
 

@@ -8,10 +8,13 @@
 
 #include <new>
 #include <algorithm>
+#include <as_datatype.h>
+#include <as_typeinfo.h>
 
 namespace
 {
 	static const asPWORD TARRAY_CACHE = 1001;
+	static const asPWORD TARRAY_META = 1002;
 
 	struct FScriptTArrayBuffer
 	{
@@ -37,6 +40,15 @@ namespace
 			FMemory::Free(Cache);
 		}
 	}
+
+
+	struct TArrayMetaData
+	{
+		bool bIsValid : 1 = false;
+		uint32 BytePerElement = 0;
+		uint32 Alignment;
+		asITypeInfo* TypeInfo;
+	};
 
 	static bool TArrayTemplateCallback(asITypeInfo* TypeInfo, bool& bDontGarbageCollect)
 	{
@@ -123,6 +135,16 @@ namespace
 					bDontGarbageCollect = true;
 				}
 			}
+		}
+
+		auto Metadata = (TArrayMetaData*)TypeInfo->GetUserData(TARRAY_META);
+		if (!Metadata)
+		{
+			Metadata = new TArrayMetaData();
+			Metadata->TypeInfo = TypeInfo->GetEngine()->GetTypeInfoById(TypeId);
+			auto dt = asCDataType::CreateType(reinterpret_cast<asCTypeInfo*>(Metadata->TypeInfo), true);
+			Metadata->BytePerElement = dt.GetSizeInMemoryBytes();
+			TypeInfo->SetUserData(Metadata, TARRAY_META);
 		}
 		return true;
 	}
@@ -1091,35 +1113,85 @@ namespace
 		}
 	};
 
+
 	// ---------------------------------------------------------------------------
 	// Value-type CONSTRUCT / DESTRUCT helpers (asCALL_CDECL_OBJLAST)
 	// AngelScript passes the pre-allocated memory as the last (object) parameter.
 	// ---------------------------------------------------------------------------
 
-	static void TArray_Construct(asITypeInfo* TypeInfo, FScriptTArray* Self)
+	static void TArray_Construct(asITypeInfo* TypeInfo, FScriptArray* Self)
 	{
-		new (Self) FScriptTArray(asUINT(0), TypeInfo);
+		new (Self) FScriptArray();
 	}
 
-	static void TArray_ConstructWithLength(asITypeInfo* TypeInfo, asUINT Length, FScriptTArray* Self)
+	static void TArray_ConstructWithLength(asITypeInfo* TypeInfo, asUINT Length, FScriptArray* Self)
 	{
-		new (Self) FScriptTArray(Length, TypeInfo);
+		new (Self) FScriptArray();
 	}
 
-	static void TArray_CopyConstruct(asITypeInfo* TypeInfo, const FScriptTArray& Other, FScriptTArray* Self)
+	static void TArray_CopyConstruct(asITypeInfo* TypeInfo, const FScriptArray& Other, FScriptArray* Self)
 	{
 		(void)TypeInfo;
-		new (Self) FScriptTArray(Other);
+		new (Self) FScriptArray(Other);
 	}
 
-	static void TArray_ListConstruct(asITypeInfo* TypeInfo, void* ListBuffer, FScriptTArray* Self)
+	static void TArray_ListConstruct(asITypeInfo* TypeInfo, void* ListBuffer, FScriptArray* Self)
 	{
-		new (Self) FScriptTArray(TypeInfo, ListBuffer);
+		(void)TypeInfo;
+		//new (Self) FScriptArray(TypeInfo, ListBuffer);
 	}
 
-	static void TArray_Destruct(FScriptTArray* Self)
+	static void TArray_Destruct(FScriptArray* Self)
 	{
-		Self->~FScriptTArray();
+		Self->~FScriptArray();
+	}
+
+	static void TArray_Add(asIScriptGeneric* gen)
+	{
+		auto Index = gen->GetArgDWord(0);
+		auto Array = (FScriptArray*)gen->GetObject();
+		auto TypeInfoId = gen->GetObjectTypeId();
+		auto TypeInfo = gen->GetEngine()->GetTypeInfoById(TypeInfoId);
+		auto Meta = (TArrayMetaData*)TypeInfo->GetUserData(TARRAY_META);
+		if (!TypeInfo || !Meta)
+		{
+			return;
+		}
+		auto ElementSize = Meta->BytePerElement;
+		if (ElementSize == 0)
+		{
+			return;
+		}
+		Array->Insert(Index, 1, ElementSize, Meta->Alignment);
+	}
+
+	static bool TArray_IsEmpty(const FScriptArray& Arr)
+	{
+		return Arr.IsEmpty();
+	}
+
+	// GC behaviors — value types with asOBJ_GC only need ENUMREFS and RELEASEREFS.
+	void TArray_EnumReferences(asIScriptEngine* Engine, FScriptArray& Arr)
+	{
+		//if (!Buffer || !(SubTypeId & asTYPEID_MASK_OBJECT)) return;
+
+		//void** d = (void**)Buffer->Data;
+		//asITypeInfo* SubType = Engine->GetTypeInfoById(SubTypeId);
+		//if (SubType->GetFlags() & asOBJ_REF)
+		//{
+		//	for (asUINT n = 0; n < Buffer->NumElements; n++)
+		//		if (d[n]) Engine->GCEnumCallback(d[n]);
+		//}
+		//else if ((SubType->GetFlags() & asOBJ_VALUE) && (SubType->GetFlags() & asOBJ_GC))
+		//{
+		//	for (asUINT n = 0; n < Buffer->NumElements; n++)
+		//		if (d[n]) Engine->ForwardGCEnumReferences(d[n], SubType);
+		//}
+	}
+
+	void TArray_ReleaseAllHandles(asIScriptEngine* engine, FScriptArray& Arr)
+	{
+		//Resize(0);
 	}
 
 	// ---------------------------------------------------------------------------
@@ -1143,7 +1215,7 @@ void Declare_TArray(asIScriptEngine* Engine)
 		asOBJ_APP_CLASS_COPY_CONSTRUCTOR | asOBJ_APP_CLASS_ASSIGNMENT |
 		asOBJ_APP_CLASS_MORE_CONSTRUCTORS;
 
-	int Result = Engine->RegisterObjectType("TArray<class T>", sizeof(FScriptTArray), TypeFlags);
+	int Result = Engine->RegisterObjectType("TArray<class T>", sizeof(FScriptArray), TypeFlags);
 	check(Result >= 0);
 }
 
@@ -1188,161 +1260,161 @@ void Bind_TArray(asIScriptEngine* Engine)
 		asFUNCTION(TArray_Destruct), asCALL_CDECL_OBJLAST);
 	check(Result >= 0);
 
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"T &opIndex(uint index)",
-		asMETHODPR(FScriptTArray, At, (asUINT), void*), asCALL_THISCALL);
-	check(Result >= 0);
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"T &opIndex(uint index)",
+	//	asMETHODPR(FScriptTArray, At, (asUINT), void*), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"const T &opIndex(uint index) const",
+	//	asMETHODPR(FScriptTArray, At, (asUINT) const, const void*), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"uint opForBegin() const",
+	//	asFUNCTIONPR(TArray_opForBegin, (const FScriptTArray*), asUINT), asCALL_CDECL_OBJLAST);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"bool opForEnd(uint) const",
+	//	asFUNCTIONPR(TArray_opForEnd, (asUINT, const FScriptTArray*), bool), asCALL_CDECL_OBJLAST);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"uint opForNext(uint) const",
+	//	asFUNCTIONPR(TArray_opForNext, (asUINT, const FScriptTArray*), asUINT), asCALL_CDECL_OBJLAST);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"const T &opForValue0(uint index) const",
+	//	asMETHODPR(FScriptTArray, At, (asUINT) const, const void*), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"uint opForValue1(uint index) const",
+	//	asFUNCTIONPR(TArray_opForValue1, (asUINT, const FScriptTArray*), asUINT), asCALL_CDECL_OBJLAST);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"TArray<T> &opAssign(const TArray<T>&in)",
+	//	asMETHOD(FScriptTArray, operator=), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"void Insert(uint index, const T&in value)",
+	//	asMETHODPR(FScriptTArray, InsertAt, (asUINT, void*), void), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"void Insert(uint index, const TArray<T>&in arr)",
+	//	asMETHODPR(FScriptTArray, InsertAt, (asUINT, const FScriptTArray&), void), asCALL_THISCALL);
+	//check(Result >= 0);
 
 	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"const T &opIndex(uint index) const",
-		asMETHODPR(FScriptTArray, At, (asUINT) const, const void*), asCALL_THISCALL);
+		"void Add(const T&in value)",
+		asFUNCTION(TArray_Add), asCALL_GENERIC);
 	check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"void RemoveAt(uint index)",
+	//	asMETHOD(FScriptTArray, RemoveAt), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"void Pop()",
+	//	asMETHOD(FScriptTArray, RemoveLast), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"void RemoveAt(uint start, uint count)",
+	//	asMETHOD(FScriptTArray, RemoveRange), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"uint Num() const",
+	//	asMETHOD(FScriptTArray, GetSize), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"void Reserve(uint length)",
+	//	asMETHOD(FScriptTArray, Reserve), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"void SetNum(uint length)",
+	//	asMETHODPR(FScriptTArray, Resize, (asUINT), void), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"void sortAsc()",
+	//	asMETHODPR(FScriptTArray, SortAsc, (), void), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"void sortAsc(uint startAt, uint count)",
+	//	asMETHODPR(FScriptTArray, SortAsc, (asUINT, asUINT), void), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"void sortDesc()",
+	//	asMETHODPR(FScriptTArray, SortDesc, (), void), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"void sortDesc(uint startAt, uint count)",
+	//	asMETHODPR(FScriptTArray, SortDesc, (asUINT, asUINT), void), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"void reverse()",
+	//	asMETHOD(FScriptTArray, Reverse), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"int Find(const T&in if_handle_then_const value) const",
+	//	asMETHODPR(FScriptTArray, Find, (const void*) const, int), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"int Find(uint startAt, const T&in if_handle_then_const value) const",
+	//	asMETHODPR(FScriptTArray, Find, (asUINT, const void*) const, int), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"int FindByRef(const T&in if_handle_then_const value) const",
+	//	asMETHODPR(FScriptTArray, FindByRef, (const void*) const, int), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"int FindByRef(uint startAt, const T&in if_handle_then_const value) const",
+	//	asMETHODPR(FScriptTArray, FindByRef, (asUINT, const void*) const, int), asCALL_THISCALL);
+	//check(Result >= 0);
+
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"bool opEquals(const TArray<T>&in) const",
+	//	asMETHOD(FScriptTArray, operator==), asCALL_THISCALL);
+	//check(Result >= 0);
 
 	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"uint opForBegin() const",
-		asFUNCTIONPR(TArray_opForBegin, (const FScriptTArray*), asUINT), asCALL_CDECL_OBJLAST);
+		"bool IsEmpty() const",
+		asFUNCTION(TArray_IsEmpty), asCALL_CDECL_OBJLAST);
 	check(Result >= 0);
 
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"bool opForEnd(uint) const",
-		asFUNCTIONPR(TArray_opForEnd, (asUINT, const FScriptTArray*), bool), asCALL_CDECL_OBJLAST);
-	check(Result >= 0);
+	//Result = Engine->RegisterFuncdef(
+	//	"bool TArray<T>::less(const T&in if_handle_then_const a, const T&in if_handle_then_const b)");
+	//check(Result >= 0);
 
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"uint opForNext(uint) const",
-		asFUNCTIONPR(TArray_opForNext, (asUINT, const FScriptTArray*), asUINT), asCALL_CDECL_OBJLAST);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"const T &opForValue0(uint index) const",
-		asMETHODPR(FScriptTArray, At, (asUINT) const, const void*), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"uint opForValue1(uint index) const",
-		asFUNCTIONPR(TArray_opForValue1, (asUINT, const FScriptTArray*), asUINT), asCALL_CDECL_OBJLAST);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"TArray<T> &opAssign(const TArray<T>&in)",
-		asMETHOD(FScriptTArray, operator=), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"void insertAt(uint index, const T&in value)",
-		asMETHODPR(FScriptTArray, InsertAt, (asUINT, void*), void), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"void insertAt(uint index, const TArray<T>&in arr)",
-		asMETHODPR(FScriptTArray, InsertAt, (asUINT, const FScriptTArray&), void), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"void insertLast(const T&in value)",
-		asMETHOD(FScriptTArray, InsertLast), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"void removeAt(uint index)",
-		asMETHOD(FScriptTArray, RemoveAt), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"void removeLast()",
-		asMETHOD(FScriptTArray, RemoveLast), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"void removeRange(uint start, uint count)",
-		asMETHOD(FScriptTArray, RemoveRange), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"uint length() const",
-		asMETHOD(FScriptTArray, GetSize), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"void reserve(uint length)",
-		asMETHOD(FScriptTArray, Reserve), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"void resize(uint length)",
-		asMETHODPR(FScriptTArray, Resize, (asUINT), void), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"void sortAsc()",
-		asMETHODPR(FScriptTArray, SortAsc, (), void), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"void sortAsc(uint startAt, uint count)",
-		asMETHODPR(FScriptTArray, SortAsc, (asUINT, asUINT), void), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"void sortDesc()",
-		asMETHODPR(FScriptTArray, SortDesc, (), void), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"void sortDesc(uint startAt, uint count)",
-		asMETHODPR(FScriptTArray, SortDesc, (asUINT, asUINT), void), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"void reverse()",
-		asMETHOD(FScriptTArray, Reverse), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"int find(const T&in if_handle_then_const value) const",
-		asMETHODPR(FScriptTArray, Find, (const void*) const, int), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"int find(uint startAt, const T&in if_handle_then_const value) const",
-		asMETHODPR(FScriptTArray, Find, (asUINT, const void*) const, int), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"int findByRef(const T&in if_handle_then_const value) const",
-		asMETHODPR(FScriptTArray, FindByRef, (const void*) const, int), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"int findByRef(uint startAt, const T&in if_handle_then_const value) const",
-		asMETHODPR(FScriptTArray, FindByRef, (asUINT, const void*) const, int), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"bool opEquals(const TArray<T>&in) const",
-		asMETHOD(FScriptTArray, operator==), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"bool isEmpty() const",
-		asMETHOD(FScriptTArray, IsEmpty), asCALL_THISCALL);
-	check(Result >= 0);
-
-	Result = Engine->RegisterFuncdef(
-		"bool TArray<T>::less(const T&in if_handle_then_const a, const T&in if_handle_then_const b)");
-	check(Result >= 0);
-
-	Result = Engine->RegisterObjectMethod("TArray<T>",
-		"void sort(const less &in, uint startAt = 0, uint count = uint(-1))",
-		asMETHODPR(FScriptTArray, Sort, (asIScriptFunction*, asUINT, asUINT), void), asCALL_THISCALL);
-	check(Result >= 0);
+	//Result = Engine->RegisterObjectMethod("TArray<T>",
+	//	"void Sort(const less &in, uint startAt = 0, uint count = uint(-1))",
+	//	asMETHODPR(FScriptTArray, Sort, (asIScriptFunction*, asUINT, asUINT), void), asCALL_THISCALL);
+	//check(Result >= 0);
 
 	// Value types with asOBJ_GC only need ENUMREFS and RELEASEREFS (no ref-count behaviors).
 	Result = Engine->RegisterObjectBehaviour("TArray<T>", asBEHAVE_ENUMREFS,
-		"void f(int&in)", asMETHOD(FScriptTArray, EnumReferences), asCALL_THISCALL);
+		"void f(int&in)", asFUNCTION(TArray_EnumReferences), asCALL_CDECL_OBJLAST);
 	check(Result >= 0);
 
 	Result = Engine->RegisterObjectBehaviour("TArray<T>", asBEHAVE_RELEASEREFS,
-		"void f(int&in)", asMETHOD(FScriptTArray, ReleaseAllHandles), asCALL_THISCALL);
+		"void f(int&in)", asFUNCTION(TArray_ReleaseAllHandles), asCALL_CDECL_OBJLAST);
 	check(Result >= 0);
 }

@@ -1671,7 +1671,7 @@ int asCBuilder::CheckNameConflictMember(asCTypeInfo *t, const char *name, asCScr
 	if (ns)
 	{
 		// Check as if not a function as it doesn't matter the function signature
-		return CheckNameConflict(name, node, code, ns, true, isVirtualProperty, false);
+		return CheckNameConflict(name, node, code, ns, isProperty, isVirtualProperty, false);
 	}
 	
 	return 0;

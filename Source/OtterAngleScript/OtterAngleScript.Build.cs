@@ -34,7 +34,6 @@ public class OtterAngleScript : ModuleRules
 			{
 				"Core",
                 "CoreUObject",
-                "AngleScriptSDK",
                 "AIModule",
                 "InputCore",
                 "PhysicsCore",
@@ -51,8 +50,9 @@ public class OtterAngleScript : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+                "AngleScriptSDK",
 				"Engine",
-				"Slate",
+                "Slate",
 				"SlateCore",
 				"PhysicsCore",
 				// ... add private dependencies that you statically link with here ...	
