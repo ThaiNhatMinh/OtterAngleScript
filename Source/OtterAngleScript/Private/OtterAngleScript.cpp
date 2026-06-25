@@ -7,6 +7,7 @@
 #include "Interfaces/IPluginManager.h"
 #include "Misc/Paths.h"
 #include "HAL/PlatformProcess.h"
+#include "ScriptBuilder/OtterAngelScriptBuilder.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4191 4996)
@@ -161,6 +162,8 @@ void FOtterAngleScriptModule::StartupModule()
 	IPluginManager& PluginManager = IPluginManager::Get();
 	auto Plugins = PluginManager.GetDiscoveredPlugins();
 	Plugins.RemoveAll([](const TSharedRef<IPlugin>& Plugin) { return Plugin->GetType() != EPluginType::Project; });
+
+	FOtterAngelScriptBuilder ScriptBuilder(Engine);
 	for (auto Plugin : Plugins)
 	{
 		auto BaseDir = Plugin->GetBaseDir();
@@ -173,6 +176,7 @@ void FOtterAngleScriptModule::StartupModule()
 			auto NewScriptModule = Engine->GetModule(TCHAR_TO_ANSI(*ScriptName), asGM_ALWAYS_CREATE);
 			FString ScriptCode;
 			FFileHelper::LoadFileToString(ScriptCode, *Script);
+			ScriptBuilder.ParseContent(ScriptCode, ScriptName);
 			Result = NewScriptModule->AddScriptSection(TCHAR_TO_UTF8(*ScriptName), TCHAR_TO_UTF8(*ScriptCode));
 			if (Result < 0)
 			{

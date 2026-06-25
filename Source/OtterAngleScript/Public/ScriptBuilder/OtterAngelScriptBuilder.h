@@ -86,17 +86,17 @@ struct OTTERANGLESCRIPT_API FScriptStruct
  * type information that can be used to generate C++ binding registration code.
  *
  * Usage:
- *   OtterAngelScriptBuilder Builder;
+ *   FOtterAngelScriptBuilder Builder;
  *   if (Builder.ParseFile(TEXT("Scripts/MyTypes.as")))
  *   {
  *       for (const FScriptClass& Cls : Builder.GetClasses()) { ... }
  *       FString Code = Builder.GenerateBindingCode();
  *   }
  */
-class OTTERANGLESCRIPT_API OtterAngelScriptBuilder
+class OTTERANGLESCRIPT_API FOtterAngelScriptBuilder
 {
 public:
-	OtterAngelScriptBuilder(asIScriptEngine* InEngine) : Engine(InEngine) {}
+	FOtterAngelScriptBuilder(asIScriptEngine* InEngine) : Engine(InEngine) {}
 
 	/** Parse all .as files in the given directory (recursive). */
 	bool ParseDirectory(const FString& DirectoryPath);
@@ -127,6 +127,7 @@ private:
 	void ParseSourceText(const FString& Content, const FString& SourceName);
 
 	// ── Internal parsing helpers ─────────────────────────────────────────
+	int SkipStatement(std::string& modifiedScript, int pos);
 
 	/** Extract content within the first set of balanced {} braces starting at Pos. */
 	static bool ExtractBlock(const FString& Text, int32 StartPos, int32& OutBlockStart, int32& OutBlockEnd);

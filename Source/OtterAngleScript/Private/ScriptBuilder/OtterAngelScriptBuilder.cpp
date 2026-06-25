@@ -7,10 +7,62 @@
 #include "Containers/Set.h"
 #include "Containers/Map.h"
 #include "angelscript.h"
+#include <string>
+#include <vector>
 
-// ── Internal utilities ──────────────────────────────────────────────────────
 
-FString OtterAngelScriptBuilder::Trim(const FString& S)
+// Overwrite all characters except line breaks with blanks
+void OverwriteCode(std::string& modifiedScript, int start, int len)
+{
+	char* code = &modifiedScript[start];
+	for (int n = 0; n < len; n++)
+	{
+		if (*code != '\n')
+			*code = ' ';
+		code++;
+	}
+}
+
+
+int FOtterAngelScriptBuilder::SkipStatement(std::string& modifiedScript, int pos)
+{
+	asUINT len = 0;
+
+	// Skip until ; or { whichever comes first
+	while (pos < (int)modifiedScript.length() && modifiedScript[pos] != ';' && modifiedScript[pos] != '{')
+	{
+		Engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+		pos += len;
+	}
+
+	// Skip entire statement block
+	if (pos < (int)modifiedScript.length() && modifiedScript[pos] == '{')
+	{
+		pos += 1;
+
+		// Find the end of the statement block
+		int level = 1;
+		while (level > 0 && pos < (int)modifiedScript.size())
+		{
+			asETokenClass t = Engine->ParseToken(&modifiedScript[pos], modifiedScript.size() - pos, &len);
+			if (t == asTC_KEYWORD)
+			{
+				if (modifiedScript[pos] == '{')
+					level++;
+				else if (modifiedScript[pos] == '}')
+					level--;
+			}
+
+			pos += len;
+		}
+	}
+	else
+		pos += 1;
+
+	return pos;
+}
+
+FString FOtterAngelScriptBuilder::Trim(const FString& S)
 {
 	int32 Start = 0;
 	while (Start < S.Len() && (S[Start] == ' ' || S[Start] == '\t'))
@@ -21,7 +73,7 @@ FString OtterAngelScriptBuilder::Trim(const FString& S)
 	return S.Mid(Start, End - Start);
 }
 
-TMap<FString, FString> OtterAngelScriptBuilder::ParseSpecifiers(const FString& SpecText)
+TMap<FString, FString> FOtterAngelScriptBuilder::ParseSpecifiers(const FString& SpecText)
 {
 	TMap<FString, FString> Result;
 	if (SpecText.IsEmpty())
@@ -84,7 +136,7 @@ TMap<FString, FString> OtterAngelScriptBuilder::ParseSpecifiers(const FString& S
 	return Result;
 }
 
-FString OtterAngelScriptBuilder::StripAnnotations(const FString& Line)
+FString FOtterAngelScriptBuilder::StripAnnotations(const FString& Line)
 {
 	// Replace annotation macros (UCLASS, USTRUCT, UENUM, UPROPERTY, UFUNCTION
 	// and parenthesised content) with spaces so line numbers stay stable.
@@ -139,7 +191,7 @@ FString OtterAngelScriptBuilder::StripAnnotations(const FString& Line)
 	return Result;
 }
 
-bool OtterAngelScriptBuilder::ExtractBlock(const FString& Text, int32 StartPos,
+bool FOtterAngelScriptBuilder::ExtractBlock(const FString& Text, int32 StartPos,
 										   int32& OutBlockStart, int32& OutBlockEnd)
 {
 	// Find the first '{' at or after StartPos
@@ -166,13 +218,13 @@ bool OtterAngelScriptBuilder::ExtractBlock(const FString& Text, int32 StartPos,
 				return true;
 			}
 		}
-	}
-	return false;*/
+	}*/
+	return false;
 }
 
 // ── Enum parsing ────────────────────────────────────────────────────────────
 
-bool OtterAngelScriptBuilder::TryParseEnum(const FString& Text, int32& InOutPos, FScriptEnum& OutEnum)
+bool FOtterAngelScriptBuilder::TryParseEnum(const FString& Text, int32& InOutPos, FScriptEnum& OutEnum)
 {
 	int32 Start = InOutPos;
 
@@ -327,7 +379,7 @@ bool OtterAngelScriptBuilder::TryParseEnum(const FString& Text, int32& InOutPos,
 
 // ── Struct parsing ──────────────────────────────────────────────────────────
 
-bool OtterAngelScriptBuilder::TryParseStruct(const FString& Text, int32& InOutPos, FScriptStruct& OutStruct)
+bool FOtterAngelScriptBuilder::TryParseStruct(const FString& Text, int32& InOutPos, FScriptStruct& OutStruct)
 {
 	int32 Start = InOutPos;
 	int32 Pos = Text.Find(TEXT("USTRUCT"), ESearchCase::CaseSensitive, ESearchDir::FromStart, Start);
@@ -455,7 +507,7 @@ bool OtterAngelScriptBuilder::TryParseStruct(const FString& Text, int32& InOutPo
 
 // ── Class parsing ───────────────────────────────────────────────────────────
 
-bool OtterAngelScriptBuilder::TryParseClass(const FString& Text, int32& InOutPos, FScriptClass& OutClass)
+bool FOtterAngelScriptBuilder::TryParseClass(const FString& Text, int32& InOutPos, FScriptClass& OutClass)
 {
 	int32 Start = InOutPos;
 	int32 Pos = Text.Find(TEXT("UCLASS"), ESearchCase::CaseSensitive, ESearchDir::FromStart, Start);
@@ -613,7 +665,7 @@ bool OtterAngelScriptBuilder::TryParseClass(const FString& Text, int32& InOutPos
 
 // ── Property parsing ────────────────────────────────────────────────────────
 
-bool OtterAngelScriptBuilder::TryParseProperty(const FString& Text, int32& InOutPos, FScriptProperty& OutProp)
+bool FOtterAngelScriptBuilder::TryParseProperty(const FString& Text, int32& InOutPos, FScriptProperty& OutProp)
 {
 	// Expect Text[InOutPos]... to contain UPROPERTY(...)
 	FString Line = Text.Mid(InOutPos);
@@ -728,7 +780,7 @@ bool OtterAngelScriptBuilder::TryParseProperty(const FString& Text, int32& InOut
 
 // ── Function parsing ────────────────────────────────────────────────────────
 
-bool OtterAngelScriptBuilder::TryParseFunction(const FString& Text, int32& InOutPos, FScriptFunction& OutFunc)
+bool FOtterAngelScriptBuilder::TryParseFunction(const FString& Text, int32& InOutPos, FScriptFunction& OutFunc)
 {
 	FString Line = Text.Mid(InOutPos);
 	if (!Line.StartsWith(TEXT("UFUNCTION"), ESearchCase::CaseSensitive))
@@ -876,12 +928,15 @@ bool OtterAngelScriptBuilder::TryParseFunction(const FString& Text, int32& InOut
 	return false;
 }
 
-// ── Source text parsing ─────────────────────────────────────────────────────
-
-void OtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FString& SourceName)
+void FOtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FString& SourceName)
 {
-	FString ModifiedContent = Content;
-	FString currentClass;
+	std::string ModifiedContent = TCHAR_TO_ANSI(*Content);
+	std::string CurrentClass;
+	std::string SectionName;
+	std::vector<std::string> Includes;
+
+	std::string                CurrentNamespace;
+	std::vector<int>           CurrentNamespaceStack;
 
 	// Then check for meta data and pre-processor directives
 	uint32 pos = 0;
@@ -894,7 +949,7 @@ void OtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FStr
 			pos += len;
 			continue;
 		}
-		FString TokenStr;
+		std::string TokenStr;
 		TokenStr.assign(&ModifiedContent[pos], len);
 
 		// Skip possible decorators before class and interface declarations
@@ -905,7 +960,7 @@ void OtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FStr
 		}
 
 		// Check if class or interface so the metadata for members can be gathered
-		if( currentClass == "" && (TokenStr == "class" || TokenStr == "interface") )
+		if( CurrentClass == "" && (TokenStr == "class" || TokenStr == "interface") )
 		{
 			// Get the identifier after "class"
 			do
@@ -921,7 +976,7 @@ void OtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FStr
 
 			if( TokenClass == asTC_IDENTIFIER )
 			{
-				currentClass = ModifiedContent.substr(pos,len);
+				CurrentClass = ModifiedContent.substr(pos,len);
 
 				// Search until first { or ; is encountered
 				while( pos < ModifiedContent.length() )
@@ -937,7 +992,7 @@ void OtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FStr
 					else if (ModifiedContent[pos] == ';')
 					{
 						// The class declaration has ended and there are no children
-						currentClass = "";
+						CurrentClass = "";
 						pos += len;
 						break;
 					}
@@ -951,9 +1006,9 @@ void OtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FStr
 		}
 
 		// Check if end of class
-		if( currentClass != "" && TokenStr == "}" )
+		if( CurrentClass != "" && TokenStr == "}" )
 		{
-			currentClass = "";
+			CurrentClass = "";
 			pos += len;
 			continue;
 		}
@@ -974,13 +1029,13 @@ void OtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FStr
 
 				if (TokenClass == asTC_IDENTIFIER)
 				{
-					if (currentNamespace != "")
-						currentNamespace += "::";
-					currentNamespace += ModifiedContent.substr(pos, len);
+					if (CurrentNamespace != "")
+						CurrentNamespace += "::";
+					CurrentNamespace += ModifiedContent.substr(pos, len);
 					nestedNamespaces++;
 				}
 			} while (TokenClass == asTC_IDENTIFIER || (TokenClass == asTC_KEYWORD && ModifiedContent.substr(pos, len) == "::"));
-			currentNamespaceStack.push_back(nestedNamespaces);
+			CurrentNamespaceStack.push_back(nestedNamespaces);
 
 			// Search until first { is encountered
 			while( pos < ModifiedContent.length() )
@@ -1002,21 +1057,21 @@ void OtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FStr
 		}
 
 		// Check if end of namespace
-		if( currentNamespace != "" && TokenStr == "}" )
+		if( CurrentNamespace != "" && TokenStr == "}" )
 		{
-			assert(currentNamespaceStack.size() > 0);
-			int nestedNamespaces = currentNamespaceStack[currentNamespaceStack.size()-1];
-			currentNamespaceStack.pop_back();
+			check(CurrentNamespaceStack.size() > 0);
+			int nestedNamespaces = CurrentNamespaceStack[CurrentNamespaceStack.size()-1];
+			CurrentNamespaceStack.pop_back();
 			while (nestedNamespaces-- > 0)
 			{
-				size_t found = currentNamespace.rfind("::");
-				if (found != FString::npos)
+				size_t found = CurrentNamespace.rfind("::");
+				if (found != std::string::npos)
 				{
-					currentNamespace.erase(found);
+					CurrentNamespace.erase(found);
 				}
 				else
 				{
-					currentNamespace = "";
+					CurrentNamespace = "";
 				}
 			}
 			pos += len;
@@ -1027,18 +1082,18 @@ void OtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FStr
 		if( TokenStr == "[" )
 		{
 			// Get the metadata string
-			pos = ExtractMetadata(pos, metadata);
+			//pos = ExtractMetadata(pos, metadata);
 
-			// Determine what this metadata is for
-			int type;
-			ExtractDeclaration(pos, name, declaration, type);
+			//// Determine what this metadata is for
+			//int type;
+			//ExtractDeclaration(pos, name, declaration, type);
 
-			// Store away the declaration in a map for lookup after the build has completed
-			if( type > 0 )
-			{
-				SMetadataDecl decl(metadata, name, declaration, type, currentClass, currentNamespace);
-				foundDeclarations.push_back(decl);
-			}
+			//// Store away the declaration in a map for lookup after the build has completed
+			//if( type > 0 )
+			//{
+			//	SMetadataDecl decl(metadata, name, declaration, type, CurrentClass, CurrentNamespace);
+			//	foundDeclarations.push_back(decl);
+			//}
 		}
 		else
 		// Is this a preprocessor directive?
@@ -1063,25 +1118,25 @@ void OtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FStr
 					if (TokenClass == asTC_VALUE && len > 2 && (ModifiedContent[pos] == '"' || ModifiedContent[pos] == '\''))
 					{
 						// Get the include file
-						FString includefile;
+						std::string includefile;
 						includefile.assign(&ModifiedContent[pos + 1], len - 2);
 						pos += len;
 
 						// Make sure the includeFile doesn't contain any line breaks
 						size_t p = includefile.find('\n');
-						if (p != FString::npos)
+						if (p != std::string::npos)
 						{
 							// TODO: Show the correct line number for the error
-							FString str = "Invalid file name for #include; it contains a line-break: '" + includefile.substr(0, p) + "'";
-							Engine->WriteMessage(sectionname, 0, 0, asMSGTYPE_ERROR, str.c_str());
+							std::string str = "Invalid file name for #include; it contains a line-break: '" + includefile.substr(0, p) + "'";
+							Engine->WriteMessage(SectionName.c_str(), 0, 0, asMSGTYPE_ERROR, str.c_str());
 						}
 						else
 						{
 							// Store it for later processing
-							includes.push_back(includefile);
+							Includes.push_back(includefile);
 
 							// Overwrite the include directive with space characters to avoid compiler error
-							OverwriteCode(start, pos - start);
+							OverwriteCode(ModifiedContent, start, pos - start);
 						}
 					}
 				}
@@ -1089,20 +1144,20 @@ void OtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FStr
 				{
 					// Read until the end of the line
 					pos += len;
-					for (; pos < ModifiedContent.size() && ModifiedContent[pos] != '\n'; pos++);
+					//for (; pos < ModifiedContent.size() && ModifiedContent[pos] != '\n'; pos++);
 
-					// Call the pragma callback
-					FString pragmaText(&ModifiedContent[start + 7], pos - start - 7);
-					int r = pragmaCallback ? pragmaCallback(pragmaText, *this, pragmaParam) : -1;
-					if (r < 0)
-					{
-						// TODO: Report the correct line number
-						Engine->WriteMessage(sectionname, 0, 0, asMSGTYPE_ERROR, "Invalid #pragma directive");
-						return r;
-					}
+					//// Call the pragma callback
+					//FString pragmaText(&ModifiedContent[start + 7], pos - start - 7);
+					//int r = pragmaCallback ? pragmaCallback(pragmaText, *this, pragmaParam) : -1;
+					//if (r < 0)
+					//{
+					//	// TODO: Report the correct line number
+					//	Engine->WriteMessage(SectionName.c_str(), 0, 0, asMSGTYPE_ERROR, "Invalid #pragma directive");
+					//	return r;
+					//}
 
 					// Overwrite the pragma directive with space characters to avoid compiler error
-					OverwriteCode(start, pos - start);
+					OverwriteCode(ModifiedContent, start, pos - start);
 				}
 			}
 			else
@@ -1115,21 +1170,21 @@ void OtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FStr
 					for (; pos < ModifiedContent.size() && ModifiedContent[pos] != '\n'; pos++);
 
 					// Overwrite the directive with space characters to avoid compiler error
-					OverwriteCode(start, pos - start);
+					OverwriteCode(ModifiedContent, start, pos - start);
 				}
 			}
 		}
 		// Don't search for metadata/includes within statement blocks or between tokens in statements
 		else
 		{
-			pos = SkipStatement(pos);
+			pos = SkipStatement(ModifiedContent, pos);
 		}
 	}
 }
 
 // ── Public API ──────────────────────────────────────────────────────────────
 
-bool OtterAngelScriptBuilder::ParseDirectory(const FString& DirectoryPath)
+bool FOtterAngelScriptBuilder::ParseDirectory(const FString& DirectoryPath)
 {
 	TArray<FString> Files;
 	IFileManager::Get().FindFilesRecursive(Files, *DirectoryPath, TEXT("*.as"), true, false);
@@ -1149,7 +1204,7 @@ bool OtterAngelScriptBuilder::ParseDirectory(const FString& DirectoryPath)
 	return bAny;
 }
 
-bool OtterAngelScriptBuilder::ParseFile(const FString& FilePath)
+bool FOtterAngelScriptBuilder::ParseFile(const FString& FilePath)
 {
 	FString Content;
 	if (!FFileHelper::LoadFileToString(Content, *FilePath))
@@ -1161,13 +1216,13 @@ bool OtterAngelScriptBuilder::ParseFile(const FString& FilePath)
 	return !Enums.IsEmpty() || !Structs.IsEmpty() || !Classes.IsEmpty();
 }
 
-bool OtterAngelScriptBuilder::ParseContent(const FString& Content, const FString& SourceName)
+bool FOtterAngelScriptBuilder::ParseContent(const FString& Content, const FString& SourceName)
 {
 	ParseSourceText(Content, SourceName);
 	return !Enums.IsEmpty() || !Structs.IsEmpty() || !Classes.IsEmpty();
 }
 
-void OtterAngelScriptBuilder::Reset()
+void FOtterAngelScriptBuilder::Reset()
 {
 	Enums.Reset();
 	Structs.Reset();
