@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "ScriptBuilder/OtterAngelScriptBuilder.h"
+#include "OtterAngelScriptClass.h"
+
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
@@ -9,7 +11,9 @@
 #include "angelscript.h"
 #include <string>
 #include <vector>
-
+#include <vector>
+#include <algorithm>
+#include <cctype>
 
 // Overwrite all characters except line breaks with blanks
 void OverwriteCode(std::string& modifiedScript, int start, int len)
@@ -23,6 +27,19 @@ void OverwriteCode(std::string& modifiedScript, int start, int len)
 	}
 }
 
+bool IsValidFunctionSpecifiers(std::string& Spec)
+{
+	static std::vector<std::string> SupportedSpecifiers = 
+	{
+		"blueprintevent",
+		"blueprintcallable",
+		"meta",
+	};
+	std::transform(Spec.begin(), Spec.end(), Spec.begin(), [](unsigned char c) {
+        return std::tolower(c);
+    });
+	return std::find(SupportedSpecifiers.begin(), SupportedSpecifiers.end(), Spec) != SupportedSpecifiers.end();
+}
 
 int FOtterAngelScriptBuilder::SkipStatement(std::string& modifiedScript, int pos)
 {
@@ -485,7 +502,7 @@ bool FOtterAngelScriptBuilder::TryParseStruct(const FString& Text, int32& InOutP
 		if (Line.StartsWith(TEXT("UFUNCTION"), ESearchCase::CaseSensitive))
 		{
 			FScriptFunction Func;
-			if (TryParseFunction(Body, LinePos, Func))
+			// if (TryParseFunction(Body, LinePos, Func))
 			{
 				OutStruct.Functions.Add(Func);
 			}
@@ -643,7 +660,7 @@ bool FOtterAngelScriptBuilder::TryParseClass(const FString& Text, int32& InOutPo
 		if (Line.StartsWith(TEXT("UFUNCTION"), ESearchCase::CaseSensitive))
 		{
 			FScriptFunction Func;
-			if (TryParseFunction(Body, LinePos, Func))
+			// if (TryParseFunction(Body, LinePos, Func))
 			{
 				OutClass.Functions.Add(Func);
 			}
@@ -779,156 +796,194 @@ bool FOtterAngelScriptBuilder::TryParseProperty(const FString& Text, int32& InOu
 }
 
 // ── Function parsing ────────────────────────────────────────────────────────
-
-bool FOtterAngelScriptBuilder::TryParseFunction(const FString& Text, int32& InOutPos, FScriptFunction& OutFunc)
+uint32 FOtterAngelScriptBuilder::TryParseMeta(std::string& ModifiedContent, uint32 Pos, TMap<FString, FString>& OutMeta)
 {
-	FString Line = Text.Mid(InOutPos);
-	if (!Line.StartsWith(TEXT("UFUNCTION"), ESearchCase::CaseSensitive))
+	std::string Meta_str("meta");
+	OverwriteCode(ModifiedContent, Pos, Meta_str.length());
+	Pos += Meta_str.length();
+	bool bHasOpen = false;
+	bool bHasClose = false;
+	while( Pos < ModifiedContent.size() )
 	{
-		return false;
-	}
-
-	// Find the matching close paren
-	int32 LocalPos = 9; // after "UFUNCTION"
-	if (LocalPos >= Line.Len() || Line[LocalPos] != '(')
-	{
-		return false;
-	}
-
-	int32 Depth = 1;
-	int32 ParenEnd = LocalPos;
-	while (++ParenEnd < Line.Len())
-	{
-		if (Line[ParenEnd] == '(')
+		asUINT len = 0;
+		asETokenClass TokenClass = Engine->ParseToken(&ModifiedContent[Pos], ModifiedContent.size() - Pos, &len);
+		if (TokenClass == asTC_COMMENT || TokenClass == asTC_WHITESPACE)
 		{
-			++Depth;
+			Pos += len;
+			continue;
 		}
-		else if (Line[ParenEnd] == ')')
+		
+		std::string TokenStr;
+		TokenStr.assign(&ModifiedContent[Pos], len);
+
+		if (!bHasOpen)
 		{
-			if (--Depth == 0)
+			if (TokenStr != "(" && TokenStr != "=")
 			{
-				break;
+				// TODO: Report parse failed
+				check(false);
 			}
-		}
-	}
-
-	FString SpecContent = Line.Mid(LocalPos + 1, ParenEnd - LocalPos - 1);
-	OutFunc.Specifiers = ParseSpecifiers(SpecContent);
-
-	// Advance past UFUNCTION(...)
-	int32 CurrentInText = InOutPos + ParenEnd + 1;
-
-	// Read the next non-empty declaration line
-	int32 NewlinePos = Text.Find(TEXT("\n"), ESearchCase::IgnoreCase, ESearchDir::FromStart, CurrentInText);
-	int32 NextLineStart = (NewlinePos != INDEX_NONE) ? NewlinePos + 1 : CurrentInText;
-	while (NextLineStart < Text.Len())
-	{
-		int32 EOL = Text.Find(TEXT("\n"), ESearchCase::IgnoreCase, ESearchDir::FromStart, NextLineStart);
-		if (EOL == INDEX_NONE)
-		{
-			EOL = Text.Len();
-		}
-		FString DeclLine = Text.Mid(NextLineStart, EOL - NextLineStart);
-		FString CleanLine = Trim(DeclLine);
-
-		int32 CommentIdx;
-		if (CleanLine.FindChar(TCHAR('/'), CommentIdx) && CommentIdx + 1 < CleanLine.Len() && CleanLine[CommentIdx + 1] == TCHAR('/'))
-		{
-			CleanLine = Trim(CleanLine.Left(CommentIdx));
-		}
-
-		if (!CleanLine.IsEmpty() && !CleanLine.StartsWith(TEXT("//")))
-		{
-			// Remove trailing ';' or '{'
-			FString NoSemi = CleanLine;
-			if (NoSemi.EndsWith(TEXT(";")) || NoSemi.EndsWith(TEXT("{")))
+			else if (TokenStr == "(")
 			{
-				NoSemi = NoSemi.Left(NoSemi.Len() - 1);
+				bHasOpen = true;
 			}
-			NoSemi.TrimEndInline();
-
-			// Parse: "ReturnType Name(Type1 Arg1, Type2 Arg2) const"
-			// Find the opening paren for parameters
-			int32 ParamOpen = NoSemi.Find(TEXT("("), ESearchCase::IgnoreCase, ESearchDir::FromStart);
-			if (ParamOpen == INDEX_NONE)
+			OverwriteCode(ModifiedContent, Pos, len);
+			Pos += len;
+			continue;
+		}
+		else if (!bHasClose)
+		{
+			if (TokenStr == ")")
 			{
-				InOutPos = NextLineStart + EOL - NextLineStart + 1;
-				return false;
-			}
-
-			FString RetAndName = Trim(NoSemi.Left(ParamOpen));
-			int32 SpaceIdx;
-			if (RetAndName.FindLastChar(TCHAR(' '), SpaceIdx))
-			{
-				OutFunc.ReturnType = Trim(RetAndName.Left(SpaceIdx));
-				OutFunc.Name = Trim(RetAndName.Mid(SpaceIdx + 1));
+				bHasClose = true;
 			}
 			else
 			{
-				OutFunc.Name = RetAndName;
-			}
-
-			// Check for "const" after parameters
-			FString AfterParen = Trim(NoSemi.Mid(ParamOpen));
-			if (AfterParen.EndsWith(TEXT("const"), ESearchCase::IgnoreCase) ||
-				AfterParen.EndsWith(TEXT("const "), ESearchCase::IgnoreCase))
-			{
-				OutFunc.bIsConst = true;
-			}
-			else
-			{
-				// Also check after the param list before any other tokens
-				int32 CloseIdx = AfterParen.Find(TEXT(")"));
-				if (CloseIdx != INDEX_NONE)
+				auto AssignPos = TokenStr.find('=');
+				if (AssignPos == std::string::npos)
 				{
-					FString AfterClose = Trim(AfterParen.Mid(CloseIdx + 1));
-					if (AfterClose.StartsWith(TEXT("const"), ESearchCase::IgnoreCase))
-					{
-						OutFunc.bIsConst = true;
-					}
+					OutMeta.Add(TokenStr.c_str());
+				}
+				else
+				{
+					std::string Key = TokenStr.substr(0, AssignPos);
+					std::string Val = TokenStr.substr(AssignPos + 1);
+					OutMeta.Add(Key.c_str(), Val.c_str());	
 				}
 			}
-
-			// Parse parameters
-			int32 CloseParen = NoSemi.Find(TEXT(")"), ESearchCase::IgnoreCase, ESearchDir::FromStart, ParamOpen + 1);
-			if (CloseParen != INDEX_NONE && CloseParen > ParamOpen + 1)
-			{
-				FString ParamList = NoSemi.Mid(ParamOpen + 1, CloseParen - ParamOpen - 1);
-				TArray<FString> ParamParts;
-				ParamList.ParseIntoArray(ParamParts, TEXT(","), true);
-				for (const FString& Param : ParamParts)
-				{
-					FString Trimmed = Trim(Param);
-					if (Trimmed.IsEmpty())
-					{
-						continue;
-					}
-					// Split on last space for type vs name
-					int32 LSpace;
-					if (Trimmed.FindLastChar(TCHAR(' '), LSpace))
-					{
-						OutFunc.ParamTypes.Add(Trim(Trimmed.Left(LSpace)));
-						OutFunc.ParamNames.Add(Trim(Trimmed.Mid(LSpace + 1)));
-					}
-					else
-					{
-						OutFunc.ParamTypes.Add(Trimmed);
-					}
-				}
-			}
-
-			InOutPos = NextLineStart + EOL - NextLineStart + 1;
-			return !OutFunc.Name.IsEmpty();
+			OverwriteCode(ModifiedContent, Pos, len);
+			Pos += len;
+			continue;
 		}
 
-		NextLineStart = EOL + 1;
+		if (bHasClose)
+		{
+			break;
+		}
+		OverwriteCode(ModifiedContent, Pos, len);
+		Pos += len;
 	}
 
-	InOutPos = NextLineStart;
-	return false;
+	if (!bHasClose)
+	{
+		// TODO: Report parse failed
+		check(false);
+	}
+
+	return Pos;
 }
 
-void FOtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FString& SourceName)
+uint32 FOtterAngelScriptBuilder::TryParseFunction(std::string& ModifiedContent, uint32 Pos, const std::string& CurrentClass, FScriptFunction& OutFunc)
+{
+	// Extract all metadata. They can be separated by , 
+	std::string UFUNCTION_str("UFUNCTION");
+	OverwriteCode(ModifiedContent, Pos, UFUNCTION_str.length());
+	Pos += UFUNCTION_str.length();
+	bool bHasOpen = false;
+	bool bHasClose = false;
+	bool bBeginParameteter = false;
+	bool bEndParameteter = false;
+	while( Pos < ModifiedContent.size() )
+	{
+		asUINT len = 0;
+		asETokenClass TokenClass = Engine->ParseToken(&ModifiedContent[Pos], ModifiedContent.size() - Pos, &len);
+		if (TokenClass == asTC_COMMENT || TokenClass == asTC_WHITESPACE)
+		{
+			Pos += len;
+			continue;
+		}
+		std::string TokenStr;
+		TokenStr.assign(&ModifiedContent[Pos], len);
+
+		if (!bHasOpen)
+		{
+			if (TokenStr != "(")
+			{
+				// TODO: Report parse failed
+				check(false);
+			}
+			else
+			{
+				bHasOpen = true;
+			}
+			OverwriteCode(ModifiedContent, Pos, len);
+			Pos += len;
+			continue;
+		}
+		else if (!bHasClose)
+		{
+			if (TokenStr == ")")
+			{
+				bHasClose = true;
+			}
+			else if (IsValidFunctionSpecifiers(TokenStr))
+			{
+				if (TokenStr == "meta")
+				{
+					Pos = TryParseMeta(ModifiedContent, Pos, OutFunc.Metas);
+					continue;
+				}
+				else
+				{
+					OutFunc.Specifiers.Add(TokenStr.c_str());
+				}
+			}
+			else if (TokenStr != ",")
+			{
+				// TODO: Report error
+				check(false);
+			}
+			OverwriteCode(ModifiedContent, Pos, len);
+			Pos += len;
+			continue;
+		}
+		else if (OutFunc.ReturnType.IsEmpty())
+		{
+			OutFunc.ReturnType = TokenStr.c_str();
+		}
+		else if (OutFunc.Name.IsEmpty())
+		{
+			OutFunc.Name = TokenStr.c_str();
+		}
+		else if (!bBeginParameteter && TokenStr == "(") // Begin parameter
+		{
+			bBeginParameteter = true;
+		}
+		else if (bBeginParameteter && !bEndParameteter)
+		{
+			if (TokenStr == ",")
+			{
+				Pos += len;
+				continue;
+			}
+			else if (TokenStr == ")")
+			{
+				Pos += len;
+				bEndParameteter = true;
+				continue;
+			}
+			if (OutFunc.ParamNames.Num() < OutFunc.ParamTypes.Num())
+			{
+				OutFunc.ParamNames.Add(TokenStr.c_str());
+			}
+			else
+			{
+				OutFunc.ParamTypes.Add(TokenStr.c_str());
+			}
+		}
+		else if (bEndParameteter)
+		{
+			// Done parse function, skip the rest
+			break;
+		}
+
+		Pos += len;
+
+	}
+	return Pos;
+}
+
+std::string FOtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FString& SourceName)
 {
 	std::string ModifiedContent = TCHAR_TO_ANSI(*Content);
 	std::string CurrentClass;
@@ -1079,21 +1134,14 @@ void FOtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FSt
 		}
 
 		// Is this the start of metadata?
-		if( TokenStr == "[" )
+		if (TokenStr == "UFUNCTION")
 		{
-			// Get the metadata string
-			//pos = ExtractMetadata(pos, metadata);
-
-			//// Determine what this metadata is for
-			//int type;
-			//ExtractDeclaration(pos, name, declaration, type);
-
-			//// Store away the declaration in a map for lookup after the build has completed
-			//if( type > 0 )
-			//{
-			//	SMetadataDecl decl(metadata, name, declaration, type, CurrentClass, CurrentNamespace);
-			//	foundDeclarations.push_back(decl);
-			//}
+			FScriptFunction outFunc;
+			pos = TryParseFunction(ModifiedContent, pos, CurrentClass, outFunc);
+			if (CurrentClass.size() == 0)
+			{
+				StaticFunctions.Add(outFunc);
+			}
 		}
 		else
 		// Is this a preprocessor directive?
@@ -1180,6 +1228,8 @@ void FOtterAngelScriptBuilder::ParseSourceText(const FString& Content, const FSt
 			pos = SkipStatement(ModifiedContent, pos);
 		}
 	}
+
+	return ModifiedContent;
 }
 
 // ── Public API ──────────────────────────────────────────────────────────────
@@ -1216,10 +1266,9 @@ bool FOtterAngelScriptBuilder::ParseFile(const FString& FilePath)
 	return !Enums.IsEmpty() || !Structs.IsEmpty() || !Classes.IsEmpty();
 }
 
-bool FOtterAngelScriptBuilder::ParseContent(const FString& Content, const FString& SourceName)
+std::string FOtterAngelScriptBuilder::ParseContent(const FString& Content, const FString& SourceName)
 {
-	ParseSourceText(Content, SourceName);
-	return !Enums.IsEmpty() || !Structs.IsEmpty() || !Classes.IsEmpty();
+	return ParseSourceText(Content, SourceName);
 }
 
 void FOtterAngelScriptBuilder::Reset()
@@ -1227,5 +1276,46 @@ void FOtterAngelScriptBuilder::Reset()
 	Enums.Reset();
 	Structs.Reset();
 	Classes.Reset();
+}
+
+UOtterAngelScriptClass* FOtterAngelScriptBuilder::CreateNewClass(const FString& ClassName, UClass* ParentClass)
+{
+	UOtterAngelScriptClass* NewClass = NewObject<UOtterAngelScriptClass>(GetTransientPackage(), *ClassName, RF_Public | RF_Transient);
+	if (ParentClass)
+	{
+		NewClass->SetSuperStruct(ParentClass);
+	}
+	else
+	{
+		NewClass->SetSuperStruct(UObject::StaticClass());
+	}
+	NewClass->AddToRoot();
+
+	// Finalize the class
+	NewClass->Bind();
+	NewClass->StaticLink(true);
+	NewClass->AssembleReferenceTokenStream();
+	NewClass->GetDefaultObject();
+	return NewClass;
+}
+
+bool FOtterAngelScriptBuilder::Build(asIScriptModule* Module, const FString& PluginName)
+{
+	for (TObjectIterator<UFunction> It; It; ++It)
+	{
+		UFunction* Function = *It;
+		auto Class = Cast<UClass>(Function->GetOuter());
+		if (Function->HasAnyFunctionFlags(FUNC_Static))
+		{
+			int a = 9;
+		}
+	}
+
+	auto FunctionLibraryClass = CreateNewClass(FString::Printf(TEXT("%s_FunctionLibrary"), *PluginName));
+	for (auto& Function : StaticFunctions)
+	{
+
+	}
+	return true;
 }
 

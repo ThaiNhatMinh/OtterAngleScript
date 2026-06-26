@@ -5,6 +5,7 @@
 #include "Containers/Array.h"
 #include "Containers/Map.h"
 #include "Containers/UnrealString.h"
+#include <string>
 
 class asIScriptEngine;
 
@@ -51,7 +52,8 @@ struct OTTERANGLESCRIPT_API FScriptFunction
 	FString Name;					// e.g. "TakeDamage", "IsAlive"
 	TArray<FString> ParamTypes;
 	TArray<FString> ParamNames;
-	TMap<FString, FString> Specifiers;
+	TArray<FString> Specifiers;
+	TMap<FString, FString> Metas;
 	bool bIsConst = false;
 };
 
@@ -105,7 +107,7 @@ public:
 	bool ParseFile(const FString& FilePath);
 
 	/** Parse a block of .as source text. */
-	bool ParseContent(const FString& Content, const FString& SourceName = TEXT("memory"));
+	std::string ParseContent(const FString& Content, const FString& SourceName = TEXT("memory"));
 
 	// ── Accessors ────────────────────────────────────────────────────────
 
@@ -116,6 +118,10 @@ public:
 	/** Clear all parsed data. */
 	void Reset();
 
+	class UOtterAngelScriptClass* CreateNewClass(const FString& ClassName, UClass* ParentClass = nullptr);
+
+	bool Build(asIScriptModule* Module, const FString& PluginName);
+
 private:
 	asIScriptEngine* Engine;
 	TArray<FScriptEnum>   Enums;
@@ -124,7 +130,7 @@ private:
 	TArray<FScriptFunction> StaticFunctions;
 
 	/** Parse source text and populate the arrays. */
-	void ParseSourceText(const FString& Content, const FString& SourceName);
+	std::string ParseSourceText(const FString& Content, const FString& SourceName);
 
 	// ── Internal parsing helpers ─────────────────────────────────────────
 	int SkipStatement(std::string& modifiedScript, int pos);
@@ -145,7 +151,8 @@ private:
 	static bool TryParseProperty(const FString& Text, int32& InOutPos, FScriptProperty& OutProp);
 
 	/** Parse a UFUNCTION(...) line + the following method declaration. */
-	static bool TryParseFunction(const FString& Text, int32& InOutPos, FScriptFunction& OutFunc);
+	uint32 TryParseFunction(std::string& ScriptContent, uint32 Pos, const std::string& CurrentClass, FScriptFunction& OutFunc);
+	uint32 TryParseMeta(std::string& ModifiedContent, uint32 Pos, TMap<FString, FString>& OutMeta);
 
 	/** Parse specifiers from a UENUM(...)/UCLASS(...)/etc. annotation line. */
 	static TMap<FString, FString> ParseSpecifiers(const FString& SpecText);

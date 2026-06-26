@@ -163,24 +163,41 @@ void FOtterAngleScriptModule::StartupModule()
 	auto Plugins = PluginManager.GetDiscoveredPlugins();
 	Plugins.RemoveAll([](const TSharedRef<IPlugin>& Plugin) { return Plugin->GetType() != EPluginType::Project; });
 
-	FOtterAngelScriptBuilder ScriptBuilder(Engine);
 	for (auto Plugin : Plugins)
 	{
 		auto BaseDir = Plugin->GetBaseDir();
 		auto ScriptDir = FPaths::Combine(BaseDir, TEXT("Scripts"));
+		auto PluginName = Plugin->GetName();
 		TArray<FString> FoundScripts;
 		IFileManager::Get().FindFilesRecursive(FoundScripts, *ScriptDir, TEXT("*.as"), true, false);
+		
+		auto NewScriptModule = Engine->GetModule(TCHAR_TO_ANSI(*PluginName), asGM_ALWAYS_CREATE);
+
 		for (auto Script : FoundScripts)
 		{
 			FString ScriptName = FPaths::GetBaseFilename(Script);
-			auto NewScriptModule = Engine->GetModule(TCHAR_TO_ANSI(*ScriptName), asGM_ALWAYS_CREATE);
 			FString ScriptCode;
 			FFileHelper::LoadFileToString(ScriptCode, *Script);
-			ScriptBuilder.ParseContent(ScriptCode, ScriptName);
-			Result = NewScriptModule->AddScriptSection(TCHAR_TO_UTF8(*ScriptName), TCHAR_TO_UTF8(*ScriptCode));
+			FOtterAngelScriptBuilder ScriptBuilder(Engine);
+			auto NewCode = ScriptBuilder.ParseContent(ScriptCode, ScriptName);
+			Result = NewScriptModule->AddScriptSection(TCHAR_TO_UTF8(*ScriptName), NewCode.c_str());
 			if (Result < 0)
 			{
 				UE_LOG(LogOtterAngleScript, Error, TEXT("Failed to add script section for %s"), *Script);
+			}
+
+			Result = NewScriptModule->Build();
+			if (Result < 0)
+			{
+				UE_LOG(LogOtterAngleScript, Error, TEXT("Failed to build script section for %s"), *Script);
+			}
+			if (ScriptBuilder.Build(NewScriptModule, PluginName))
+			{
+				UE_LOG(LogOtterAngleScript, Log, TEXT("Successfully built script section for %s"), *Script);
+			}
+			else
+			{
+				UE_LOG(LogOtterAngleScript, Error, TEXT("Failed to build script section for %s"), *Script);
 			}
 		}
 	}
