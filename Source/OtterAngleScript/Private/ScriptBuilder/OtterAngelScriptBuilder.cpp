@@ -14,6 +14,297 @@
 #include <vector>
 #include <algorithm>
 #include <cctype>
+#include "OtterAngelScriptFunction.h"
+#include "Binding.h"
+#include "BlueprintActionDatabase.h"
+
+DEFINE_LOG_CATEGORY_STATIC(LogOtterAngelScript, Log, All);
+
+class FOtterAngelScriptClassGenerator
+{
+public:
+
+	FOtterAngelScriptClassGenerator(const FString& InClassName, UClass* InSuperClass, asIScriptModule* InModule)
+		: ClassName(InClassName)
+		, Module(InModule)
+		, SuperClass(InSuperClass)
+	{
+		ScriptClass = NewObject<UOtterAngelScriptClass>(GetTransientPackage(), *ClassName, RF_Public | RF_Transient);
+		if (SuperClass)
+		{
+			ScriptClass->SetSuperStruct(SuperClass);
+		}
+		else
+		{
+			ScriptClass->SetSuperStruct(UObject::StaticClass());
+		}
+		ScriptClass->AddToRoot();
+	}
+
+	void AddFunctions(const TArray<FScriptFunction>& Functions)
+	{
+		for (const FScriptFunction& Func : Functions)
+		{
+			CreateFunctionFromDefinition(Func);
+		}
+	}
+
+	bool CreateFunctionFromDefinition(const FScriptFunction& Function)
+	{
+		if (Function.Name.IsEmpty())
+		{
+			UE_LOG(LogOtterAngelScript, Error, TEXT("Function name is empty"));
+			return false;
+		}
+
+		auto asFunc = Module->GetFunctionByName(TCHAR_TO_ANSI(*Function.Name));
+		if (!asFunc)
+		{
+			UE_LOG(LogOtterAngelScript, Error, TEXT("Failed to find AngelScript function: %s, module=%hs"), *Function.Name, Module->GetName());
+			return false;
+		}
+
+		auto SuperFunc = SuperClass->FindFunctionByName(*Function.Name);
+
+		// Create the function, either from the definition, or from the super-function found to override
+		ScriptClass->AddNativeFunction(*Function.Name, &UOtterAngelScriptClass::CallAngelScriptFunction); // Need to do this before the call to DuplicateObject in the case that the super-function already has FUNC_Native
+		UOtterAngelScriptFunction* NewFunc = nullptr;
+		if (!SuperFunc)
+		{
+			NewFunc = NewObject<UOtterAngelScriptFunction>(ScriptClass, *Function.Name, RF_Public | RF_Transient);
+			NewFunc->asFunction = asFunc;
+			// The function is not in the linked list of class fields, insert it so that field iterators & funcs work
+			NewFunc->Next = ScriptClass->Children;
+			ScriptClass->Children = NewFunc;
+		}
+		else
+		{
+			check(false); // TODO: Implement function overriding
+			return false;
+		}
+
+		if (!asFunc->GetObjectName())
+		{
+			NewFunc->FunctionFlags |= FUNC_Static;
+		}
+
+		NewFunc->FunctionFlags |= (FUNC_Native | FUNC_Event | FUNC_BlueprintEvent | FUNC_BlueprintCallable);
+		ScriptClass->AddFunctionToFunctionMap(NewFunc, NewFunc->GetFName());
+
+
+		// Build the arguments struct if not overriding a function
+		if (!SuperFunc)
+		{
+			// Make sure the number of function arguments matches the number of argument types specified
+			const int32 NumArgTypes = asFunc->GetParamCount();
+			if (NumArgTypes != Function.ParamTypes.Num() || NumArgTypes != Function.ParamNames.Num())
+			{
+				UE_LOG(LogOtterAngelScript, Error, TEXT("Incorrect number of arguments specified for '%s' (expected %d, got %d)"), *Function.Name, NumArgTypes, Function.ParamTypes.Num());
+				return false;
+			}
+
+
+			asDWORD RetFlags = 0;
+			int RetTypeId = asFunc->GetReturnTypeId(&RetFlags);
+			if (RetTypeId != asTYPEID_VOID)
+			{
+				auto ReturnProperty = CreateProperty(RetTypeId, ScriptClass, TEXT("ReturnValue"));
+
+				ReturnProperty->PropertyFlags |= (CPF_Parm | CPF_OutParm | CPF_ReturnParm);
+				NewFunc->AddCppProperty(ReturnProperty);
+			}
+
+			for (auto ArgIndex = 0; ArgIndex < NumArgTypes; ++ArgIndex)
+			{
+				asDWORD ArgFlags = 0;
+				int ArgTypeId = 0;
+				const char* ArgName = nullptr;
+				const char* ArgDefaultValue = nullptr;
+				asFunc->GetParam(ArgIndex, &ArgTypeId, &ArgFlags, &ArgName, &ArgDefaultValue);
+				auto ArgProperty = CreateProperty(ArgTypeId, ScriptClass, ArgName);
+				ArgProperty->PropertyFlags |= CPF_Parm;
+				NewFunc->AddCppProperty(ArgProperty);
+			}
+
+			NewFunc->Bind();
+			NewFunc->StaticLink(true);
+		}
+		return true;
+	}
+
+	FProperty* CreateProperty(int asTypeId, FFieldVariant InOuter, const FString& PropertyName, int32 InArrayDim = 1)
+	{
+		/** Class of the property to create */
+		FFieldClass* PropertyClass = nullptr;
+
+		/** Sub-type of the property (the class for object properties, the struct for struct properties, the enum for enum properties, the function for delegate properties) */
+		UObject* PropertySubType = nullptr;
+
+		TMap<FName, FFieldClass*>& ASD = FFieldClass::GetNameToFieldClassMap();
+		const char* PropertyTypeName = nullptr;
+
+		switch (asTypeId)
+		{
+			case asTYPEID_VOID: return nullptr;
+			case asTYPEID_BOOL: PropertyTypeName = "BoolProperty"; break;
+			case asTYPEID_INT8          : PropertyTypeName = "Int8Property"; break;
+			case asTYPEID_INT16: PropertyTypeName = "Int16Property"; break;
+			case asTYPEID_INT32: PropertyTypeName = "IntProperty"; break;
+			case asTYPEID_INT64: PropertyTypeName = "Int64Property"; break;
+			case asTYPEID_UINT8: PropertyTypeName = "UInt8Property"; break;
+			case asTYPEID_UINT16: PropertyTypeName = "UInt16Property"; break;
+			case asTYPEID_UINT32: PropertyTypeName = "UInt32Property"; break;
+			case asTYPEID_UINT64: PropertyTypeName = "UInt64Property"; break;
+			case asTYPEID_FLOAT: PropertyTypeName = "FloatProperty"; break;
+			case asTYPEID_DOUBLE: PropertyTypeName = "DoubleProperty"; break;
+			case asTYPEID_OBJHANDLE     :
+			case asTYPEID_HANDLETOCONST :
+			case asTYPEID_MASK_OBJECT   :
+			case asTYPEID_APPOBJECT     :
+			case asTYPEID_SCRIPTOBJECT  :
+			case asTYPEID_TEMPLATE      :
+			case asTYPEID_MASK_SEQNBR   :
+				return nullptr;
+		default:
+			break;
+		}
+
+		auto asParamType = Module->GetTypedefByIndex(asTypeId);
+
+		if (!PropertyTypeName)
+		{
+			if (!asParamType)
+			{
+				UE_LOG(LogOtterAngelScript, Error, TEXT("Failed to get AngelScript type info for type id %d"), asTypeId);
+				return nullptr;
+			}
+			PropertyTypeName = asParamType->GetName();
+		}
+
+		if (!PropertyTypeName)
+		{
+			UE_LOG(LogOtterAngelScript, Error, TEXT("Failed to determine property class for AngelScript type: %d"), asTypeId);
+			return nullptr;
+		}
+
+		auto NewProperty = CastFieldChecked<FProperty>(FField::Construct(PropertyTypeName, InOuter, *PropertyName, EObjectFlags::RF_NoFlags));
+		NewProperty->ArrayDim = InArrayDim;
+		if (asParamType)
+		{
+			auto asSubType = asParamType->GetSubType();
+			if (asSubType)
+				PropertySubType = (UObject*)asSubType->GetUserData(USERDATA_UNREAL_TYPE);
+
+			if (auto ObjectPropertyBase = CastField<FObjectPropertyBase>(NewProperty))
+			{
+				ObjectPropertyBase->SetPropertyClass(UClass::StaticClass());
+			}
+			if (auto ClassProperty = CastField<FClassProperty>(NewProperty))
+			{
+				if (!PropertySubType)
+				{
+					UE_LOG(LogOtterAngelScript, Error, TEXT("Failed to determine class property subtype for AngelScript type: %d"), asTypeId);
+					return nullptr;
+				}
+				ClassProperty->SetMetaClass(CastChecked<UClass>(PropertySubType));
+			}
+			else if (auto StructProperty = CastField<FStructProperty>(NewProperty))
+			{
+				if (!PropertySubType)
+				{
+					UE_LOG(LogOtterAngelScript, Error, TEXT("Failed to determine struct property subtype for AngelScript type: %d"), asTypeId);
+					return nullptr;
+				}
+				StructProperty->Struct = CastChecked<UScriptStruct>(PropertySubType);
+			}
+			else if (auto EnumProperty = CastField<FEnumProperty>(NewProperty))
+			{
+				if (!PropertySubType)
+				{
+					UE_LOG(LogOtterAngelScript, Error, TEXT("Failed to determine enum property subtype for AngelScript type: %d"), asTypeId);
+					return nullptr;
+				}
+				EnumProperty->SetEnum(CastChecked<UEnum>(PropertySubType));
+				EnumProperty->AddCppProperty(new FByteProperty(EnumProperty, TEXT("UnderlyingType"), RF_NoFlags));
+			}
+			else if (auto DelegateProperty = CastField<FDelegateProperty>(NewProperty))
+			{
+				if (!PropertySubType)
+				{
+					UE_LOG(LogOtterAngelScript, Error, TEXT("Failed to determine delegate property subtype for AngelScript type: %d"), asTypeId);
+					return nullptr;
+				}
+				DelegateProperty->SignatureFunction = CastChecked<UFunction>(PropertySubType);
+			}
+			else if (auto MulticastDelegateProperty = CastField<FMulticastDelegateProperty>(NewProperty))
+			{
+				if (!PropertySubType)
+				{
+					UE_LOG(LogOtterAngelScript, Error, TEXT("Failed to determine multicast delegate property subtype for AngelScript type: %d"), asTypeId);
+					return nullptr;
+				}
+				MulticastDelegateProperty->SignatureFunction = CastChecked<UFunction>(PropertySubType);
+			}
+			else if (auto WeakObjectProperty = CastField<FWeakObjectProperty>(NewProperty))
+			{
+				if (!PropertySubType)
+				{
+					UE_LOG(LogOtterAngelScript, Error, TEXT("Failed to determine weak object property subtype for AngelScript type: %d"), asTypeId);
+					return nullptr;
+				}
+				WeakObjectProperty->SetPropertyClass(CastChecked<UClass>(PropertySubType));
+			}
+			else if (auto SoftObjectProperty = CastField<FSoftObjectProperty>(NewProperty))
+			{
+				if (!PropertySubType)
+				{
+					UE_LOG(LogOtterAngelScript, Error, TEXT("Failed to determine soft object property subtype for AngelScript type: %d"), asTypeId);
+					return nullptr;
+				}
+				SoftObjectProperty->SetPropertyClass(CastChecked<UClass>(PropertySubType));
+			}
+			else if (auto SoftClassProperty = CastField<FSoftClassProperty>(NewProperty))
+			{
+				if (!PropertySubType)
+				{
+					UE_LOG(LogOtterAngelScript, Error, TEXT("Failed to determine soft class property subtype for AngelScript type: %d"), asTypeId);
+					return nullptr;
+				}
+				SoftClassProperty->SetMetaClass(CastChecked<UClass>(PropertySubType));
+			}
+		}
+
+		// Need to manually call Link to fix-up some data (such as the C++ property flags) that are only set during Link
+		{
+			FArchive Ar;
+			NewProperty->LinkWithoutChangingOffset(Ar);
+		}
+		return NewProperty;
+	}
+
+	UOtterAngelScriptClass* Build()
+	{
+		// Finalize the class
+		ScriptClass->Bind();
+		ScriptClass->StaticLink(true);
+		ScriptClass->AssembleReferenceTokenStream();
+		ScriptClass->GetDefaultObject();
+
+		if (FBlueprintActionDatabase* ActionDB = FBlueprintActionDatabase::TryGet())
+		{
+				// Notify Blueprints that there is a new class to add to the action list
+				ActionDB->RefreshClassActions(ScriptClass);
+
+		}
+		return ScriptClass;
+	}
+
+private:
+	FString ClassName;
+	asIScriptModule* Module;
+	UClass* SuperClass;
+	UOtterAngelScriptClass* ScriptClass;
+};
 
 // Overwrite all characters except line breaks with blanks
 void OverwriteCode(std::string& modifiedScript, int start, int len)
@@ -1278,27 +1569,6 @@ void FOtterAngelScriptBuilder::Reset()
 	Classes.Reset();
 }
 
-UOtterAngelScriptClass* FOtterAngelScriptBuilder::CreateNewClass(const FString& ClassName, UClass* ParentClass)
-{
-	UOtterAngelScriptClass* NewClass = NewObject<UOtterAngelScriptClass>(GetTransientPackage(), *ClassName, RF_Public | RF_Transient);
-	if (ParentClass)
-	{
-		NewClass->SetSuperStruct(ParentClass);
-	}
-	else
-	{
-		NewClass->SetSuperStruct(UObject::StaticClass());
-	}
-	NewClass->AddToRoot();
-
-	// Finalize the class
-	NewClass->Bind();
-	NewClass->StaticLink(true);
-	NewClass->AssembleReferenceTokenStream();
-	NewClass->GetDefaultObject();
-	return NewClass;
-}
-
 bool FOtterAngelScriptBuilder::Build(asIScriptModule* Module, const FString& PluginName)
 {
 	for (TObjectIterator<UFunction> It; It; ++It)
@@ -1311,10 +1581,11 @@ bool FOtterAngelScriptBuilder::Build(asIScriptModule* Module, const FString& Plu
 		}
 	}
 
-	auto FunctionLibraryClass = CreateNewClass(FString::Printf(TEXT("%s_FunctionLibrary"), *PluginName));
-	for (auto& Function : StaticFunctions)
+	if (!StaticFunctions.IsEmpty())
 	{
-
+		FOtterAngelScriptClassGenerator FunctionLibraryGenerator(FString::Printf(TEXT("%sFunctionLibrary"), *PluginName), UBlueprintFunctionLibrary::StaticClass(), Module);
+		FunctionLibraryGenerator.AddFunctions(StaticFunctions);
+		FunctionLibraryGenerator.Build();
 	}
 	return true;
 }

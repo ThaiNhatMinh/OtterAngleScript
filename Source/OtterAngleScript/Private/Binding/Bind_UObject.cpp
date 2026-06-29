@@ -144,7 +144,7 @@ namespace
 		UObject* Template = (UObject*)Gen->GetArgAddress(3);
 		auto TypeId = Gen->GetReturnTypeId();
 		auto TypeInfo = Gen->GetEngine()->GetTypeInfoById(TypeId);
-		UClass* Class = (UClass*)TypeInfo->GetUserData();
+		UClass* Class = (UClass*)TypeInfo->GetUserData(USERDATA_UNREAL_TYPE);
 		if (!Class)
 		{
 			SetScriptException(TCHAR_TO_ANSI(*FString::Printf(TEXT("Type '%s' is not a UObject class"), ANSI_TO_TCHAR(TypeInfo->GetName()))));

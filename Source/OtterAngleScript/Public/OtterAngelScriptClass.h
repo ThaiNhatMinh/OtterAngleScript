@@ -15,7 +15,6 @@ class OTTERANGLESCRIPT_API UOtterAngelScriptClass : public UClass
 
 public:
 	void Build(asIScriptModule* Module);
-protected:
 
 	/** Native function used to call the AngelScript functions from C code */
 	DECLARE_FUNCTION(CallAngelScriptFunction);

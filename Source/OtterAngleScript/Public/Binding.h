@@ -7,6 +7,8 @@
 #endif
 #include "angelscript.h"
 
+extern int USERDATA_UNREAL_TYPE;
+
 void Declare_Types(asIScriptEngine* Engine);
 
 #define REGISTER_BEHAVIOUR(ClassType, Behaviour, Declaration, Function, CallConv) \

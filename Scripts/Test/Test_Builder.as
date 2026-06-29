@@ -1,7 +1,8 @@
 
 
 UFUNCTION(BlueprintEvent, BlueprintCallable, meta=(ASDSADSAd))
-void Dummy(float Value, int Value2)
+int Dummy(float Value, int Value2)
 {
     Log("Call from Dummy");
+    return 0;
 }

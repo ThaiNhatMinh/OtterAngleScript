@@ -190,6 +190,7 @@ void FOtterAngleScriptModule::StartupModule()
 			if (Result < 0)
 			{
 				UE_LOG(LogOtterAngleScript, Error, TEXT("Failed to build script section for %s"), *Script);
+				continue;
 			}
 			if (ScriptBuilder.Build(NewScriptModule, PluginName))
 			{
