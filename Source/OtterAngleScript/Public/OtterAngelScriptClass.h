@@ -19,11 +19,16 @@ public:
 	/** Native function used to call the AngelScript functions from C code */
 	DECLARE_FUNCTION(CallAngelScriptFunction);
 
+	virtual void BeginDestroy() override;
+	virtual bool IsAsset() const override
+	{
+		return false;
+	}
+
+	//~ UClass interface
+	virtual void PostInitInstance(UObject* InObj, FObjectInstancingGraph* InstanceGraph) override;
+
 protected:
 	/** The AngelScript module associated with this class */
 	asIScriptModule* ScriptModule;
-	/** The AngelScript context used for executing functions */
-	asIScriptContext* ScriptContext;
-
-	TMap<UFunction*, asIScriptFunction*> ScriptFunctions;
 };

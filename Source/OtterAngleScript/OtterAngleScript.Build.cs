@@ -45,9 +45,32 @@ public class OtterAngleScript : ModuleRules
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
-			
-		
-		PrivateDependencyModuleNames.AddRange(
+
+        if (Target.bBuildEditor == true)
+        {
+            PublicDependencyModuleNames.AddRange(
+                new string[] {
+                        "ToolMenus"
+                }
+            );
+
+            PrivateDependencyModuleNames.AddRange(
+                new string[] {
+                        "DesktopPlatform",
+                        "LevelEditor",
+                        "EditorFramework",
+                        "UnrealEd",
+                        "EditorSubsystem",
+                        "BlueprintGraph",
+                        "KismetCompiler",
+                        "AssetTools",
+                        "ContentBrowserData",
+                        "ContentBrowserFileDataSource",
+                }
+            );
+        }
+
+        PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
                 "AngleScriptSDK",

@@ -425,7 +425,7 @@ namespace OtterAngleScriptUbtPlugin
         {
             sb.AppendLine($"void OAS_RegisterMethods_{cls.SourceName}(asIScriptEngine* Engine)");
             sb.AppendLine("{");
-            sb.AppendLine($"    {{auto TypeInfo = Engine->GetTypeInfoByName(\"{cls.SourceName}\"); TypeInfo->SetUserData({cls.SourceName}::StaticClass(), USERDATA_UNREAL_TYPE); }}");
+            sb.AppendLine($"    {{auto TypeInfo = Engine->GetTypeInfoByName(\"{cls.SourceName}\"); RegisterClassDatabase(Engine, {cls.SourceName}::StaticClass(), TypeInfo); }}");
 
             sb.AppendLine("    int Result = 0;");
 

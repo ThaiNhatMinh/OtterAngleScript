@@ -25,37 +25,23 @@ void Declare_Types(asIScriptEngine* Engine)
 {
     int Result = Engine->RegisterObjectType("UObject", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
     check(Result >= 0);
-	if (auto TypeInfo = Engine->GetTypeInfoById(Result))
-	{
-		TypeInfo->SetUserData(UObject::StaticClass(), USERDATA_UNREAL_TYPE);
-	}
+	RegisterClassDatabase(Engine, UObject::StaticClass(), Result);
+
 	Result = Engine->RegisterObjectType("UInterface", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
 	check(Result >= 0);
-	if (auto TypeInfo = Engine->GetTypeInfoById(Result))
-	{
-		TypeInfo->SetUserData(UInterface::StaticClass(), USERDATA_UNREAL_TYPE);
-	}
-	
+	RegisterClassDatabase(Engine, UInterface::StaticClass(), Result);
+
 	Result = Engine->RegisterObjectType("UScriptStruct", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
 	check(Result >= 0);
-	if (auto TypeInfo = Engine->GetTypeInfoById(Result))
-	{
-		TypeInfo->SetUserData(UScriptStruct::StaticClass(), USERDATA_UNREAL_TYPE);
-	}
+	RegisterClassDatabase(Engine, UScriptStruct::StaticClass(), Result);
 
 	Result = Engine->RegisterObjectType("UClass", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
 	check(Result >= 0);
-	if (auto TypeInfo = Engine->GetTypeInfoById(Result))
-	{
-		TypeInfo->SetUserData(UClass::StaticClass(), USERDATA_UNREAL_TYPE);
-	}
+	RegisterClassDatabase(Engine, UClass::StaticClass(), Result);
 
 	Result = Engine->RegisterObjectType("UPhysicalMaterial", 0, asOBJ_REF | asOBJ_NOCOUNT | asOBJ_IMPLICIT_HANDLE);
 	check(Result >= 0);
-	if (auto TypeInfo = Engine->GetTypeInfoById(Result))
-	{
-		TypeInfo->SetUserData(UPhysicalMaterial::StaticClass(), USERDATA_UNREAL_TYPE);
-	}
+	RegisterClassDatabase(Engine, UPhysicalMaterial::StaticClass(), Result);
 
 	Result = Engine->RegisterObjectType("FQuat", sizeof(FQuat), asOBJ_VALUE | asGetTypeTraits<FQuat>() | asOBJ_APP_CLASS_MORE_CONSTRUCTORS | asOBJ_APP_CLASS_ALLFLOATS);
 	check(Result >= 0);
@@ -287,4 +273,40 @@ void Declare_Types(asIScriptEngine* Engine)
 	Declare_TSubclassOf(Engine);
 	Declare_TSoftClassPtr(Engine);
 	Declare_FName(Engine);
+}
+
+struct FClassInfo
+{
+	asITypeInfo* asType;
+	asIScriptFunction* Factory;
+};
+
+static TMap<UClass*, asITypeInfo*> ClassDatabase;
+
+
+void RegisterClassDatabase(asIScriptEngine* Engine, UClass* Class, asITypeInfo* asType)
+{
+	check(Engine);
+	check(Class);
+	check(asType);
+	asType->SetUserData(Class, USERDATA_UNREAL_TYPE);
+	ensureAlwaysMsgf(ClassDatabase.Contains(Class) == false, TEXT("RegisterClassDatabase: Class %s is already registered"), *Class->GetName());
+
+	ClassDatabase.Add(Class, asType);
+}
+
+void RegisterClassDatabase(asIScriptEngine* Engine, UClass* Class, int asTypeId)
+{
+	auto asType = Engine->GetTypeInfoById(asTypeId);
+	RegisterClassDatabase(Engine, Class, asType);
+}
+
+asITypeInfo* GetClassTypeInfo(UClass* Class)
+{
+	check(Class);
+	if (auto* TypeInfo = ClassDatabase.Find(Class))
+	{
+		return *TypeInfo;
+	}
+	return nullptr;
 }

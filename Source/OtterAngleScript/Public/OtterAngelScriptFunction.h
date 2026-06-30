@@ -10,4 +10,5 @@ class OTTERANGLESCRIPT_API UOtterAngelScriptFunction : public UFunction
 	GENERATED_BODY()
 public:
 	class asIScriptFunction* asFunction;
+	class asIScriptContext* asContext;
 };
