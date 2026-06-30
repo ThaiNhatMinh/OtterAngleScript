@@ -71,6 +71,20 @@ DEFINE_FUNCTION(UOtterAngelScriptClass::CallAngelScriptFunction)
 		Func->asContext->SetArgAddress(Index, ValueAddress);
 		++Index;
 	}
+
+
+	// Validate we reached the end of the parameters when stepping the bytecode stack
+	if (Stack.Code)
+	{
+		checkSlow(*Stack.Code == EX_EndFunctionParms);
+		++Stack.Code;
+	}
+	int r = Func->asContext->Execute();
+	if (r == asEXECUTION_FINISHED)
+	{
+		// The return value is only valid if the execution finished successfully
+		asDWORD ret = Func->asContext->GetReturnDWord();
+	}
 }
 
 
