@@ -24,12 +24,12 @@ class FOtterAngelScriptClassGenerator
 {
 public:
 
-	FOtterAngelScriptClassGenerator(const FString& InClassName, UClass* InSuperClass, asIScriptModule* InModule)
+	FOtterAngelScriptClassGenerator(const FString& InClassName, UClass* InSuperClass, asIScriptModule* InModule, UPackage* InPackage)
 		: ClassName(InClassName)
 		, Module(InModule)
 		, SuperClass(InSuperClass)
 	{
-		ScriptClass = NewObject<UOtterAngelScriptClass>(GetTransientPackage(), *ClassName, RF_Public | RF_Transient);
+		ScriptClass = NewObject<UOtterAngelScriptClass>(InPackage, *ClassName, RF_Public | RF_Transient);
 		if (SuperClass)
 		{
 			ScriptClass->SetSuperStruct(SuperClass);
@@ -72,7 +72,10 @@ public:
 		if (!SuperFunc)
 		{
 			NewFunc = NewObject<UOtterAngelScriptFunction>(ScriptClass, *Function.Name, RF_Public | RF_Transient);
+			NewFunc->asFuncId = asFunc->GetId();
+			NewFunc->asModule = Module;
 			NewFunc->asFunction = asFunc;
+			NewFunc->asContext = Module->GetEngine()->CreateContext();
 			// The function is not in the linked list of class fields, insert it so that field iterators & funcs work
 			NewFunc->Next = ScriptClass->Children;
 			ScriptClass->Children = NewFunc;
@@ -108,7 +111,7 @@ public:
 			int RetTypeId = asFunc->GetReturnTypeId(&RetFlags);
 			if (RetTypeId != asTYPEID_VOID)
 			{
-				auto ReturnProperty = CreateProperty(RetTypeId, ScriptClass, TEXT("ReturnValue"));
+				auto ReturnProperty = CreateProperty(RetTypeId, NewFunc, TEXT("ReturnValue"));
 
 				ReturnProperty->PropertyFlags |= (CPF_Parm | CPF_OutParm | CPF_ReturnParm);
 				NewFunc->AddCppProperty(ReturnProperty);
@@ -121,7 +124,7 @@ public:
 				const char* ArgName = nullptr;
 				const char* ArgDefaultValue = nullptr;
 				asFunc->GetParam(ArgIndex, &ArgTypeId, &ArgFlags, &ArgName, &ArgDefaultValue);
-				auto ArgProperty = CreateProperty(ArgTypeId, ScriptClass, ArgName);
+				auto ArgProperty = CreateProperty(ArgTypeId, NewFunc, ArgName);
 				ArgProperty->PropertyFlags |= CPF_Parm;
 				NewFunc->AddCppProperty(ArgProperty);
 			}
@@ -277,13 +280,14 @@ public:
 		// Need to manually call Link to fix-up some data (such as the C++ property flags) that are only set during Link
 		{
 			FArchive Ar;
-			NewProperty->LinkWithoutChangingOffset(Ar);
+			NewProperty->Link(Ar);
 		}
 		return NewProperty;
 	}
 
 	UOtterAngelScriptClass* Build()
 	{
+		ScriptClass->ScriptModule = Module;
 		// Finalize the class
 		ScriptClass->Bind();
 		ScriptClass->StaticLink(true);
@@ -1571,6 +1575,15 @@ void FOtterAngelScriptBuilder::Reset()
 
 bool FOtterAngelScriptBuilder::Build(asIScriptModule* Module, const FString& PluginName)
 {
+	FString TypePackageName = FString::Printf(TEXT("/%s"), *PluginName);
+	// This filename resolved into a stable package path, so put the generated type in that package
+	UPackage* TypePackage = FindObject<UPackage>(nullptr, *TypePackageName);
+	if (!TypePackage)
+	{
+		TypePackage = NewObject<UPackage>(nullptr, *TypePackageName, RF_Public | RF_Transient);
+		TypePackage->SetPackageFlags(PKG_ContainsScript);
+	}
+
 	for (TObjectIterator<UFunction> It; It; ++It)
 	{
 		UFunction* Function = *It;
@@ -1583,7 +1596,7 @@ bool FOtterAngelScriptBuilder::Build(asIScriptModule* Module, const FString& Plu
 
 	if (!StaticFunctions.IsEmpty())
 	{
-		FOtterAngelScriptClassGenerator FunctionLibraryGenerator(FString::Printf(TEXT("%sFunctionLibrary"), *PluginName), UBlueprintFunctionLibrary::StaticClass(), Module);
+		FOtterAngelScriptClassGenerator FunctionLibraryGenerator(FString::Printf(TEXT("%sFunctionLibrary"), *PluginName), UBlueprintFunctionLibrary::StaticClass(), Module, TypePackage);
 		FunctionLibraryGenerator.AddFunctions(StaticFunctions);
 		FunctionLibraryGenerator.Build();
 	}

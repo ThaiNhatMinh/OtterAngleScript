@@ -30,9 +30,9 @@ void Declare_Types(asIScriptEngine* Engine);
 	Result = Engine->RegisterObjectProperty(ClassType, Declaration, asOFFSET(ClassType, Member)); \
 	check(Result >= 0)
 
-void RegisterClassDatabase(asIScriptEngine* Engine, UClass* Class, asITypeInfo* asType)
+void RegisterClassDatabase(asIScriptEngine* Engine, UClass* Class, asITypeInfo* asType);
 void RegisterClassDatabase(asIScriptEngine* Engine, UClass* Class, int asTypeId);
-asITypeInfo* GetClassTypeInfo(UClass* Class)
+asITypeInfo* GetClassTypeInfo(UClass* Class);
 
 /**
  * Registers FName as a value type in the AngelScript engine.

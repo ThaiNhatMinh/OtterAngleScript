@@ -25,13 +25,12 @@ bool IsOutputParameter(const FProperty* InParam)
 
 DEFINE_FUNCTION(UOtterAngelScriptClass::CallAngelScriptFunction)
 {
-
-
 	// Stores information about inputs and outputs
 	FOutParmRec* OutParms = nullptr;
 
 	// Get the function name from the stack
 	auto Func = CastChecked<UOtterAngelScriptFunction>(Stack.CurrentNativeFunction);
+	auto asFunc = Func->asModule->GetFunctionByIndex(Func->asFuncId);
 	Func->asContext->Prepare(Func->asFunction);
 	Func->asContext->SetObject(Context);
 
@@ -79,6 +78,8 @@ DEFINE_FUNCTION(UOtterAngelScriptClass::CallAngelScriptFunction)
 		checkSlow(*Stack.Code == EX_EndFunctionParms);
 		++Stack.Code;
 	}
+	P_FINISH;
+
 	int r = Func->asContext->Execute();
 	if (r == asEXECUTION_FINISHED)
 	{

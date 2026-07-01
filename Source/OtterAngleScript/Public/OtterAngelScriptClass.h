@@ -29,6 +29,8 @@ public:
 	virtual void PostInitInstance(UObject* InObj, FObjectInstancingGraph* InstanceGraph) override;
 
 protected:
+	friend class FOtterAngelScriptClassGenerator;
+
 	/** The AngelScript module associated with this class */
 	asIScriptModule* ScriptModule;
 };
